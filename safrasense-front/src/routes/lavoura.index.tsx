@@ -1,0 +1,832 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import {
+  CloudSun,
+  ClipboardList,
+  AlertTriangle,
+  ArrowRight,
+  Bell,
+  Siren,
+  FileText,
+  Download,
+  Loader2,
+  CheckCircle2,
+  X,
+  ChevronDown,
+  RefreshCcw,
+} from "lucide-react";
+import { MobileFrame } from "@/components/MobileFrame";
+import { NdviChart } from "@/components/NdviChart";
+import { appStore, useAppState } from "@/lib/app-store";
+import { t, useTranslation } from "@/lib/i18n";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../../firebase";
+
+export const Route = createFileRoute("/lavoura/")({
+  head: () => {
+    const lang = appStore.get().language || "es";
+    return {
+      meta: [{ title: `${t("dashboard.headTitle", lang)}` }],
+    };
+  },
+  component: LavouraScreen,
+});
+
+function LavouraScreen() {
+  const {
+    status,
+    farmer,
+    protected: isProtected,
+    fieldPhotoUploaded,
+    inspectionsRequested,
+    activeTerrenoId,
+    documentoValidado,
+    documentoArquivoNome,
+  } = useAppState();
+  const { t, language } = useTranslation();
+  const navigate = useNavigate();
+
+  const [homologationModalOpen, setHomologationModalOpen] = useState(false);
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+
+  useEffect(() => {
+    const syncFarmerFromDb = async () => {
+      const uid = farmer.firebaseUid || auth.currentUser?.uid;
+      if (!uid) return;
+
+      try {
+        const snap = await getDoc(doc(db, "usuarios", uid));
+        if (!snap.exists()) return;
+
+        const data = snap.data() as any;
+        const crops = Array.isArray(data.produtosCultivados) ? data.produtosCultivados : [];
+        const cropLabel = data.sistema
+          ? `${crops.join(" + ")} (${data.sistema})`
+          : crops.join(" + ");
+
+        appStore.set({
+          documentoValidado: data.documentoValidado ?? false,
+          documentoArquivoNome: data.documentoArquivoNome || "",
+          farmer: {
+            ...farmer,
+            firebaseUid: uid,
+            name: data.nome || farmer.name,
+            cpf: data.cpf || farmer.cpf,
+            phone: data.telefone || farmer.phone,
+            property: data.nomePropriedade || data.regiaoMapa || farmer.property,
+            location: data.enderecoInformado || farmer.location,
+            area: Number(data.hectares || farmer.area),
+            crop: cropLabel || farmer.crop,
+            car: data.numeroCAR || farmer.car,
+            avatar: data.avatar || farmer.avatar,
+            terrenos: data.terrenos || farmer.terrenos,
+          },
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    syncFarmerFromDb();
+  }, [farmer.firebaseUid]);
+
+  const cfg = {
+    healthy: {
+      bg: "bg-primary",
+      emoji: "🟢",
+      pill: t("dashboard.pill_healthy"),
+      title: t("dashboard.title_healthy"),
+      sub: t("dashboard.sub_healthy"),
+      update: t("dashboard.update_prefix") + t("dashboard.update_healthy"),
+    },
+    alert: {
+      bg: "bg-amber-warn",
+      emoji: "🟡",
+      pill: t("dashboard.pill_alert"),
+      title: t("dashboard.title_alert"),
+      sub: t("dashboard.sub_alert"),
+      update: t("dashboard.update_alert"),
+    },
+    emergency: {
+      bg: "bg-alert",
+      emoji: "🔴",
+      pill: t("dashboard.pill_emergency"),
+      title: t("dashboard.title_emergency"),
+      sub: t("dashboard.sub_emergency"),
+      update: t("dashboard.update_emergency"),
+    },
+  }[status];
+
+  const confidenceCfg = {
+    healthy: {
+      percent: "96%",
+      label: t("dashboard.confidence_high"),
+      desc: t("dashboard.confidence_high_desc"),
+      bg: "bg-emerald-500/20 border-emerald-400/30",
+      textColor: "text-emerald-100",
+      accent: "text-emerald-300",
+    },
+    alert: {
+      percent: "74%",
+      label: t("dashboard.confidence_medium"),
+      desc: t("dashboard.confidence_medium_desc"),
+      bg: "bg-amber-500/20 border-amber-400/30",
+      textColor: "text-amber-100",
+      accent: "text-amber-300",
+    },
+    emergency: {
+      percent: "48%",
+      label: t("dashboard.confidence_low"),
+      desc: t("dashboard.confidence_low_desc"),
+      bg: "bg-rose-500/25 border-rose-400/30",
+      textColor: "text-rose-100",
+      accent: "text-rose-300",
+    },
+  }[status];
+
+  const isEmergency = status === "emergency";
+  const isAlert = status === "alert";
+
+  const currentTerreno =
+    farmer.terrenos?.find((t) => t.id === activeTerrenoId) || farmer.terrenos?.[0];
+
+  const firstCrop = currentTerreno?.crops?.[0] || "Milho";
+  const cropText = t("crops." + firstCrop);
+
+  const rawSystem = currentTerreno?.system || "second_harvest";
+  let systemLabel = "";
+  if (rawSystem === "first_harvest" || rawSystem.toLowerCase() === "primeira safra") {
+    systemLabel =
+      language === "es" ? "Safra Actual" : language === "en" ? "Current Crop" : "Safra Atual";
+  } else if (rawSystem === "second_harvest" || rawSystem.toLowerCase() === "safrinha") {
+    systemLabel =
+      language === "es"
+        ? "Safrinha Actual"
+        : language === "en"
+          ? "Current Safrinha"
+          : "Safrinha Atual";
+  } else if (
+    rawSystem === "rotation" ||
+    rawSystem.toLowerCase() === "rotação" ||
+    rawSystem.toLowerCase() === "rotacao"
+  ) {
+    systemLabel =
+      language === "es"
+        ? "Rotación Actual"
+        : language === "en"
+          ? "Current Rotation"
+          : "Rotação Atual";
+  } else {
+    systemLabel =
+      language === "es" ? "Safra Actual" : language === "en" ? "Current Crop" : "Safra Atual";
+  }
+
+  const dynamicLegendLabel = `${systemLabel} (${cropText}: 🟢/🟡/🔴)`;
+
+  return (
+    <MobileFrame withNav>
+      <section className={`${cfg.bg} text-white px-5 pt-6 pb-10 relative`}>
+        <div className="flex items-center justify-between">
+          <div className="flex-1 min-w-0 pr-2">
+            <p className="text-[13px] text-white font-medium">{cfg.update}</p>
+            {farmer.terrenos && farmer.terrenos.length > 1 ? (
+              <div className="relative mt-1 max-w-[240px]">
+                <select
+                  value={activeTerrenoId || "1"}
+                  onChange={(e) => appStore.setActiveTerreno(e.target.value)}
+                  className="bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl pl-3 pr-8 py-1.5 text-[14px] font-bold text-white outline-none cursor-pointer appearance-none w-full transition-all truncate"
+                >
+                  {farmer.terrenos.map((t) => (
+                    <option key={t.id} value={t.id} className="text-navy bg-white">
+                      {t.name} ·{" "}
+                      {t.status === "healthy"
+                        ? "🟢 Saudável"
+                        : t.status === "alert"
+                          ? "🟡 Atenção"
+                          : "🔴 Crítico"}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-white/90">
+                  <ChevronDown size={15} />
+                </div>
+              </div>
+            ) : (
+              <p className="text-[13.5px] font-bold mt-1.5 truncate">
+                {currentTerreno
+                  ? `${currentTerreno.name} · ${currentTerreno.address}`
+                  : `${farmer.property} · ${farmer.location}`}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Notification Bell Button */}
+            <button
+              type="button"
+              onClick={() => setNotificationModalOpen(true)}
+              className="relative p-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur text-white cursor-pointer transition-all flex items-center justify-center"
+              aria-label="Notificações"
+            >
+              <Bell size={18} />
+              {/* Badge dot logic */}
+              {documentoValidado !== undefined && (
+                <span
+                  className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full border border-white animate-pulse ${
+                    documentoValidado === "pendente"
+                      ? "bg-amber-400"
+                      : documentoValidado === true ||
+                          documentoValidado === "valido" ||
+                          documentoValidado === "validado"
+                        ? "bg-emerald-400"
+                        : documentoArquivoNome
+                          ? "bg-rose-500" // Red for rejected
+                          : "bg-blue-400" // Blue for never uploaded
+                  }`}
+                />
+              )}
+            </button>
+
+            <button
+              onClick={() => appStore.cycleStatus()}
+              className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 rounded-xl text-[13px] font-bold cursor-pointer"
+              aria-label={t("dashboard.demo_btn")}
+            >
+              <RefreshCcw size={13} />
+              {t("dashboard.demo_btn")}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center mt-5">
+          <div className="w-28 h-28 rounded-full border-[3px] border-white/70 flex items-center justify-center bg-white/5 backdrop-blur shadow-[0_0_30px_rgba(255,255,255,0.15)]">
+            <div className="relative flex items-center justify-center w-12 h-12">
+              <span
+                className={`absolute w-12 h-12 rounded-full opacity-60 animate-ping duration-1000 ${
+                  status === "healthy"
+                    ? "bg-emerald-400"
+                    : status === "alert"
+                      ? "bg-amber-400"
+                      : "bg-red-500"
+                }`}
+              />
+              <span
+                className={`w-9 h-9 rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.15)] border-2 border-white/60 ${
+                  status === "healthy"
+                    ? "bg-emerald-500"
+                    : status === "alert"
+                      ? "bg-amber-500"
+                      : "bg-red-600"
+                }`}
+              />
+            </div>
+          </div>
+          <span className="mt-3 text-[12.5px] tracking-[0.15em] font-bold text-white">
+            {cfg.pill}
+          </span>
+          <h1 className="text-[22px] font-bold mt-1 text-center">{cfg.title}</h1>
+          <p className="text-[14px] text-white/95 mt-1.5 text-center max-w-[280px]">{cfg.sub}</p>
+
+          {/* Model Confidence Glassmorphic Badge */}
+          <button
+            onClick={() => setHomologationModalOpen(true)}
+            className={`mt-4 mx-auto max-w-[290px] w-full rounded-2xl p-3.5 border backdrop-blur-md flex items-center gap-3.5 text-left ${
+              status === "emergency" && fieldPhotoUploaded
+                ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-100"
+                : confidenceCfg.bg
+            } shadow-md hover:scale-[1.01] transition-transform cursor-pointer block`}
+          >
+            <div
+              className={`text-2xl font-black ${
+                status === "emergency" && fieldPhotoUploaded
+                  ? "text-emerald-300"
+                  : confidenceCfg.accent
+              } shrink-0 tabular-nums`}
+            >
+              {status === "emergency" && fieldPhotoUploaded ? "96%" : confidenceCfg.percent}
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-[12px] tracking-wider uppercase font-bold block opacity-90">
+                {language === "es"
+                  ? "CONFIANZA DEL MODELO"
+                  : language === "en"
+                    ? "MODEL CONFIDENCE"
+                    : "CONFIANÇA DO MODELO"}
+              </span>
+              <span className="text-[13.5px] font-bold block leading-snug">
+                {status === "emergency" && fieldPhotoUploaded
+                  ? language === "es"
+                    ? "Validado por foto de campo y agrónomo"
+                    : language === "en"
+                      ? "Verified by field photo & agronomist"
+                      : "Validado por foto de campo e agrônomo"
+                  : confidenceCfg.label}
+              </span>
+              <p className="text-[12px] opacity-90 mt-0.5 leading-normal truncate max-w-full">
+                {status === "emergency" && fieldPhotoUploaded
+                  ? language === "es"
+                    ? "Validado por foto de campo y agrónomo"
+                    : language === "en"
+                      ? "Verified by field photo & agronomist"
+                      : "Validado por foto de campo e agrônomo"
+                  : confidenceCfg.desc}
+              </p>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <section className="bg-background rounded-t-3xl -mt-5 px-5 pt-6 pb-6 flex flex-col gap-4 relative z-10">
+        <div className="rounded-2xl bg-card p-3 shadow-card border border-border/60">
+          <NdviChart status={status} />
+          <div className="flex flex-col gap-1.5 px-2 pt-2.5 text-[13px] text-foreground/80 border-t border-border/40 mt-1">
+            <div className="flex items-center gap-4 flex-wrap">
+              <Legend swatch color="#FFD700" label={dynamicLegendLabel} />
+              <Legend dashed color="#9E9E9E" label={t("dashboard.legend_historical")} />
+            </div>
+          </div>
+        </div>
+
+        {/* Guia Didático do Gráfico */}
+        <div className="rounded-2xl bg-primary/5 border border-primary/20 p-4 flex flex-col gap-2.5 shadow-soft">
+          <h3 className="font-bold text-[14.5px] text-primary flex items-center gap-1.5">
+            {language === "es"
+              ? "🌱 Entenda la saúde de su tierra de forma sencilla:"
+              : language === "en"
+                ? "🌱 Understand the health of your land in a simple way:"
+                : "🌱 Entenda a saúde da sua terra de forma simples:"}
+          </h3>
+          <div className="text-[14px] flex flex-col gap-2.5 text-foreground/85 leading-relaxed">
+            <div className="flex gap-2">
+              <span className="shrink-0 mt-0.5" aria-hidden>
+                🟢
+              </span>
+              <p>{t("dashboard.green_corn_text")}</p>
+            </div>
+            <div className="flex gap-2">
+              <span className="shrink-0 mt-0.5" aria-hidden>
+                🟡
+              </span>
+              <p>{t("dashboard.yellow_corn_text")}</p>
+            </div>
+            <div className="flex gap-2">
+              <span className="shrink-0 mt-0.5" aria-hidden>
+                🔴
+              </span>
+              <p>{t("dashboard.red_corn_text")}</p>
+            </div>
+          </div>
+        </div>
+
+        {isEmergency ? (
+          <div className="rounded-2xl bg-alert/5 border-l-4 border-alert p-4 shadow-card">
+            <div className="flex items-center gap-2 font-bold text-[15px] text-alert">
+              <Siren size={16} />
+              {t("dashboard.emergency_card_title")}
+            </div>
+            <p className="text-[14px] text-foreground/90 mt-1.5 leading-relaxed">
+              {isProtected
+                ? t("dashboard.emergency_card_desc_protected")
+                : `${language === "es" ? "Tu propiedad está con vigor severamente por debajo de lo normal hace 21 dias. " : language === "en" ? "Your property has been severely below normal for 21 days. " : "Sua propriedade está com vigor severamente abaixo do normal há 21 dias. "}${t("dashboard.emergency_card_desc_unprotected")}`}
+            </p>
+          </div>
+        ) : isAlert ? (
+          <div className="rounded-2xl bg-card border-l-4 border-amber-warn p-4 shadow-card">
+            <div className="flex items-center gap-2 font-bold text-[15px]">
+              <AlertTriangle size={16} className="text-amber-warn" />
+              {t("dashboard.alert_card_title")}
+            </div>
+            <p className="text-[14px] text-foreground/80 mt-1.5 leading-relaxed">
+              {t("dashboard.alert_card_desc")}
+            </p>
+          </div>
+        ) : (
+          <>
+            <InfoCard
+              icon={<ClipboardList size={18} className="text-primary" />}
+              title={t("dashboard.healthy_card_title")}
+              body={t("dashboard.healthy_card_desc")}
+            />
+            <InfoCard
+              icon={<CloudSun size={18} className="text-navy" />}
+              title={t("dashboard.forecast_card_title")}
+              body={t("dashboard.forecast_card_desc")}
+            />
+          </>
+        )}
+
+        {isEmergency && !isProtected && (
+          <button
+            onClick={() => navigate({ to: "/lavoura/acao" })}
+            className="h-14 rounded-2xl bg-alert text-alert-foreground font-semibold text-[16px] flex items-center justify-center gap-2 active:scale-[0.99] shadow-soft"
+          >
+            {t("dashboard.btn_what_to_do_now")} <ArrowRight size={18} />
+          </button>
+        )}
+
+        {isAlert && (
+          <button
+            onClick={() => navigate({ to: "/lavoura/acao" })}
+            className="h-14 rounded-2xl bg-amber-warn text-amber-warn-foreground font-semibold text-[16px] flex items-center justify-center gap-2 active:scale-[0.99] shadow-soft"
+          >
+            {t("dashboard.btn_what_to_do_now")} <ArrowRight size={18} />
+          </button>
+        )}
+      </section>
+      {/* Homologation Modal */}
+      {homologationModalOpen && (
+        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-[340px] shadow-2xl border border-border/80 flex flex-col max-h-[90%] overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-slate-900 text-white shrink-0">
+              <span className="text-[14px] font-bold tracking-wide uppercase">
+                {language === "es"
+                  ? "Homologación de Datos"
+                  : language === "en"
+                    ? "Data Verification"
+                    : "Homologação de Dados"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setHomologationModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-300 cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-4">
+              <div className="text-center">
+                <span className="text-3xl">🛡️</span>
+                <h4 className="font-bold text-[15.5px] text-foreground mt-2">
+                  {language === "es"
+                    ? "Garantía de Acuracidad para Seguradoras"
+                    : language === "en"
+                      ? "Accuracy Guarantee for Insurers"
+                      : "Garantia de Acurácia para Seguradoras"}
+                </h4>
+                <p className="text-[13.5px] text-foreground/80 mt-1 leading-relaxed">
+                  {language === "es"
+                    ? "Para que el laudo de satélite sea aceptado por las seguradoras, es necesario aumentar la acuracidad de los datos por medio de validación complementaria."
+                    : language === "en"
+                      ? "For the satellite report to be accepted by insurers, it is necessary to increase data accuracy through complementary verification."
+                      : "Para que o laudo de satélite seja aceito pelas seguradoras, é necessário elevar a acurácia dos dados por meio de validação complementar."}
+                </p>
+              </div>
+
+              {/* Status Atual */}
+              <div className="p-3.5 rounded-xl border border-border bg-slate-50 flex items-center justify-between text-[13.5px]">
+                <span className="text-muted-foreground">
+                  {language === "es"
+                    ? "Acuracidad Actual:"
+                    : language === "en"
+                      ? "Current Accuracy:"
+                      : "Acurácia Atual:"}
+                </span>
+                <span
+                  className={`font-bold ${fieldPhotoUploaded ? "text-emerald-600" : "text-amber-600"}`}
+                >
+                  {fieldPhotoUploaded ? "96% (Alta)" : "48% (Baixa - Pendente)"}
+                </span>
+              </div>
+
+              {/* Método 1: Fotos de Campo */}
+              <div className="p-4 rounded-xl border border-border flex flex-col gap-2.5">
+                <h5 className="font-bold text-[14px] text-foreground flex items-center gap-1.5">
+                  📸{" "}
+                  {language === "es"
+                    ? "1. Fotos Georreferenciadas"
+                    : language === "en"
+                      ? "1. Georeferenced Photos"
+                      : "1. Fotos Georreferenciadas"}
+                </h5>
+                <p className="text-[13px] text-foreground/85 leading-relaxed">
+                  {language === "es"
+                    ? "Tome fotos de su plantación seca. El app firmará las fotos con fecha y GPS del lote para comprobación sin fraude."
+                    : language === "en"
+                      ? "Take photos of your dry crop. The app signs the photos with date and GPS coordinates to prevent fraud."
+                      : "Tire fotos de sua plantação seca. O app assina as fotos com a data e coordenadas GPS do lote para comprovação sem fraudes."}
+                </p>
+                {fieldPhotoUploaded ? (
+                  <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-[12.5px] font-bold rounded-lg flex items-center gap-1.5">
+                    <CheckCircle2 size={14} />
+                    {language === "es"
+                      ? "Foto de campo enviada (GPS validado)"
+                      : language === "en"
+                        ? "Field photo uploaded (GPS validated)"
+                        : "Foto de campo enviada (GPS verificado)"}
+                  </div>
+                ) : (
+                  <label className="h-12 border border-dashed border-primary/50 bg-primary/5 rounded-lg flex items-center justify-center text-primary text-[14px] font-bold cursor-pointer hover:bg-primary/10 transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={() => appStore.set({ fieldPhotoUploaded: true })}
+                    />
+                    {language === "es"
+                      ? "Subir Foto de la Lavoura"
+                      : language === "en"
+                        ? "Upload Crop Photo"
+                        : "Subir Foto da Lavoura"}
+                  </label>
+                )}
+              </div>
+
+              {/* Método 2: Revisão de Agrônomo (CREA) */}
+              <div className="p-4 rounded-xl border border-border flex flex-col gap-2.5">
+                <h5 className="font-bold text-[14px] text-foreground flex items-center gap-1.5">
+                  👷{" "}
+                  {language === "es"
+                    ? "2. Laudo CREA / Vistoria"
+                    : language === "en"
+                      ? "2. Agronomist Verification (CREA)"
+                      : "2. Laudo CREA / Vistoria"}
+                </h5>
+                <p className="text-[13px] text-foreground/85 leading-relaxed">
+                  {language === "es"
+                    ? "Solicite una revisión remota o presencial de un agrónomo credenciado de su cooperativa para emitir la firma ART."
+                    : language === "en"
+                      ? "Request a remote or on-site review from a certified agronomist from your cooperative to issue the ART signature."
+                      : "Solicite uma revisão remota ou presencial de um agrônomo credenciado de sua cooperativa para emissão da assinatura ART."}
+                </p>
+                {inspectionsRequested ? (
+                  <div className="p-2.5 bg-primary/10 border border-primary/20 text-primary text-[12.5px] font-bold rounded-lg flex items-center gap-1.5">
+                    <CheckCircle2 size={14} />
+                    {language === "es"
+                      ? "Vistoria Solicitada"
+                      : language === "en"
+                        ? "Inspection Requested"
+                        : "Vistoria Solicitada (Eng. Clara Mendes)"}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      appStore.set({
+                        inspectionsRequested: true,
+                        fieldPhotoUploaded: true,
+                      });
+                    }}
+                    className="h-12 bg-primary text-primary-foreground rounded-lg text-[14px] font-bold flex items-center justify-center hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer w-full"
+                  >
+                    {language === "es"
+                      ? "Solicitar Validación CREA"
+                      : language === "en"
+                        ? "Request CREA Validation"
+                        : "Solicitar Validação CREA"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-border bg-slate-50 shrink-0">
+              <button
+                type="button"
+                onClick={() => setHomologationModalOpen(false)}
+                className="h-12 w-full bg-slate-900 text-white rounded-xl font-bold text-[14px] hover:opacity-90 transition-all cursor-pointer"
+              >
+                {language === "es" ? "Confirmar" : language === "en" ? "Confirm" : "Confirmar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Modal */}
+      {notificationModalOpen && (
+        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-[340px] shadow-2xl border border-border/80 flex flex-col max-h-[90%] overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-slate-900 text-white shrink-0">
+              <span className="text-[14px] font-bold tracking-wide uppercase flex items-center gap-1.5">
+                <Bell size={15} />{" "}
+                {language === "es"
+                  ? "Notificaciones"
+                  : language === "en"
+                    ? "Notifications"
+                    : "Notificações"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setNotificationModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-300 cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-4">
+              {/* Notification 1: CAR verification status */}
+              <div className="p-4 rounded-2xl border border-border bg-slate-50 flex flex-col gap-2.5">
+                <div className="flex items-start gap-2.5">
+                  <div className="mt-0.5 shrink-0">
+                    {documentoValidado === "pendente" ? (
+                      <span className="text-amber-500 text-xl font-semibold">⏳</span>
+                    ) : documentoValidado === true ||
+                      documentoValidado === "valido" ||
+                      documentoValidado === "validado" ? (
+                      <span className="text-emerald-500 text-xl font-semibold">✅</span>
+                    ) : documentoArquivoNome ? (
+                      <span className="text-rose-500 text-xl font-semibold">❌</span>
+                    ) : (
+                      <span className="text-blue-500 text-xl font-semibold">ℹ️</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-[14px] text-foreground">
+                      {documentoValidado === "pendente"
+                        ? language === "es"
+                          ? "Documento en análisis"
+                          : language === "en"
+                            ? "Document under analysis"
+                            : "Documento em análise"
+                        : documentoValidado === true ||
+                            documentoValidado === "valido" ||
+                            documentoValidado === "validado"
+                          ? language === "es"
+                            ? "Documento CAR Validado"
+                            : language === "en"
+                              ? "CAR Document Validated"
+                              : "Documento do CAR Validado"
+                          : documentoArquivoNome
+                            ? language === "es"
+                              ? "Documento no válido"
+                              : language === "en"
+                                ? "Document not valid"
+                                : "Documento Não Válido"
+                            : language === "es"
+                              ? "Comprobar titularidad"
+                              : language === "en"
+                                ? "Verify ownership"
+                                : "Comprovar titularidade"}
+                    </h4>
+                    <p className="text-[12.5px] text-foreground/80 mt-1 leading-relaxed">
+                      {documentoValidado === "pendente"
+                        ? language === "es"
+                          ? "El recibo del CAR enviado está en revisión. Te avisaremos cuando sea validado."
+                          : language === "en"
+                            ? "The uploaded CAR receipt is under review. We'll notify you once validated."
+                            : "O recibo do CAR enviado está em análise. Notificaremos você assim que for validado."
+                        : documentoValidado === true ||
+                            documentoValidado === "valido" ||
+                            documentoValidado === "validado"
+                          ? language === "es"
+                            ? "¡Tu documento fue aprobado con éxito! Tu seguro y acceso a programas están activos."
+                            : language === "en"
+                              ? "Your document was successfully approved! Your insurance and program access are active."
+                              : "Seu documento do CAR foi aprovado com sucesso! Seus programas de governo e proteção estão ativos."
+                          : documentoArquivoNome
+                            ? language === "es"
+                              ? "El comprobante del CAR no fue aceptado. Por favor, reenvía un documento válido."
+                              : language === "en"
+                                ? "The CAR receipt was rejected. Please re-upload a valid document."
+                                : "O comprovante enviado foi marcado como não válido. Por favor, envie um documento de recibo do CAR correto."
+                            : language === "es"
+                              ? "Envía el recibo de inscripción del CAR para activar la protección paramétrica de tu lote."
+                              : language === "en"
+                                ? "Submit your CAR registration receipt to activate your parametric protection."
+                                : "Envie o recibo de inscrição do CAR para habilitar a proteção paramétrica e acessar os programas de governo."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action button if not validated or pending */}
+                {((documentoValidado !== "pendente" &&
+                  documentoValidado !== true &&
+                  documentoValidado !== "valido" &&
+                  documentoValidado !== "validado") ||
+                  !documentoArquivoNome) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNotificationModalOpen(false);
+                      navigate({ to: "/comprovar" });
+                    }}
+                    className="h-10 w-full mt-1.5 bg-primary text-primary-foreground font-bold text-[13px] rounded-xl flex items-center justify-center hover:bg-primary/90 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    {documentoArquivoNome
+                      ? language === "es"
+                        ? "Reenviar comprobante"
+                        : language === "en"
+                          ? "Re-upload proof"
+                          : "Reenviar Comprovante"
+                      : language === "es"
+                        ? "Subir comprobante CAR"
+                        : language === "en"
+                          ? "Upload CAR proof"
+                          : "Enviar Comprovante do CAR"}
+                  </button>
+                )}
+              </div>
+
+              {/* Notification 2: Crop/Terrain Health Status */}
+              <div className="p-4 rounded-2xl border border-border bg-slate-50 flex flex-col gap-2.5">
+                <div className="flex items-start gap-2.5">
+                  <div className="mt-0.5 shrink-0 text-xl font-semibold">
+                    {status === "healthy" ? "🟢" : status === "alert" ? "🟡" : "🔴"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-[14px] text-foreground">
+                      {status === "healthy"
+                        ? language === "es"
+                          ? "Lote saludable"
+                          : language === "en"
+                            ? "Healthy plot"
+                            : "Lote saudável"
+                        : status === "alert"
+                          ? language === "es"
+                            ? "Lote en alerta"
+                            : language === "en"
+                              ? "Plot in alert"
+                              : "Lote em alerta"
+                          : language === "es"
+                            ? "Lote en estado crítico"
+                            : language === "en"
+                              ? "Plot in critical state"
+                              : "Lote em estado crítico"}
+                    </h4>
+                    <p className="text-[12.5px] text-foreground/80 mt-1 leading-relaxed">
+                      {status === "healthy"
+                        ? language === "es"
+                          ? "El satélite indica que tu plantación tiene un excelente desarrollo vegetativo."
+                          : language === "en"
+                            ? "Satellite data shows your crop has excellent vegetative development."
+                            : "O satélite indica que sua plantação apresenta excelente desenvolvimento vegetativo."
+                        : status === "alert"
+                          ? language === "es"
+                            ? "Se detectó estrés hídrico moderado en tu lote en los últimos 8 dias."
+                            : language === "en"
+                              ? "Moderate water stress detected in your plot over the past 8 days."
+                              : "Foi detectado estresse hídrico moderado em seu lote nos últimos 8 dias."
+                          : language === "es"
+                            ? "¡Seca severa confirmada! El vigor está muy por debajo de la media durante 3 semanas."
+                            : language === "en"
+                              ? "Severe drought confirmed! Vigor is severely below average for 3 weeks."
+                              : "Seca severa confirmada! O vigor está muito abaixo do normal há 3 semanas seguidas."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-border bg-slate-50 shrink-0">
+              <button
+                type="button"
+                onClick={() => setNotificationModalOpen(false)}
+                className="h-12 w-full bg-slate-900 text-white rounded-xl font-bold text-[14px] hover:opacity-90 transition-all cursor-pointer animate-in fade-in"
+              >
+                {language === "es" ? "Cerrar" : language === "en" ? "Close" : "Fechar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </MobileFrame>
+  );
+}
+
+function InfoCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+  return (
+    <div className="rounded-2xl bg-card p-4 shadow-card border border-border/60">
+      <div className="flex items-center gap-2 font-bold text-[15px]">
+        {icon} {title}
+      </div>
+      <p className="text-[14px] text-foreground/80 mt-1.5 leading-relaxed">{body}</p>
+    </div>
+  );
+}
+
+function Legend({
+  color,
+  label,
+  dashed,
+  swatch,
+}: {
+  color: string;
+  label: string;
+  dashed?: boolean;
+  swatch?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {swatch ? (
+        <span className="inline-block w-3 h-3 rounded-sm" style={{ background: color }} />
+      ) : (
+        <span
+          className="inline-block w-4 h-0.5"
+          style={{
+            background: color,
+            borderTop: dashed ? `2px dashed ${color}` : undefined,
+            backgroundColor: dashed ? "transparent" : color,
+            height: dashed ? 0 : 2,
+          }}
+        />
+      )}
+      {label}
+    </div>
+  );
+}
