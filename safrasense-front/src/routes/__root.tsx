@@ -80,21 +80,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "SafraSense — Sua propriedade, monitorada por satélite" },
+      { title: "SafraSense: Sua propriedade, monitorada por satélite" },
       {
         name: "description",
         content:
           "Monitoramento de propriedade por satélite e proteção financeira paramétrica para pequenos produtores rurais com SafraSense.",
       },
       { name: "theme-color", content: "#15803D" },
-      { property: "og:title", content: "SafraSense — Sua propriedade, monitorada por satélite" },
+      { property: "og:title", content: "SafraSense: Sua propriedade, monitorada por satélite" },
       {
         property: "og:description",
         content:
           "Monitoramento de propriedade por satélite e proteção financeira paramétrica para pequenos produtores rurais com SafraSense.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:title", content: "SafraSense — Sua propriedade, monitorada por satélite" },
+      { name: "twitter:title", content: "SafraSense: Sua propriedade, monitorada por satélite" },
       {
         name: "twitter:description",
         content:
@@ -135,8 +135,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang={langCode}>
       <head>
         <HeadContent />
-        <script dangerouslySetInnerHTML={{
-          __html: `
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
             try {
               const theme = localStorage.getItem('accessibility-theme');
               const size = localStorage.getItem('accessibility-size');
@@ -155,8 +156,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
                 document.documentElement.classList.add('accessibility-high-contrast');
               }
             } catch (e) {}
-          `
-        }} />
+          `,
+          }}
+        />
       </head>
       <body>
         {children}

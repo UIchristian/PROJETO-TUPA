@@ -64,10 +64,32 @@ export default function AccessibilityControls() {
   return (
     <div className="flex flex-col gap-3">
       <div className="accessibility-bar" role="toolbar" aria-label="Acessibilidade">
-        <button aria-pressed={size === "normal"} title="Tamanho normal" onClick={() => setSize("normal")}>A</button>
-        <button aria-pressed={size === "large"} title="Aumentar fonte" onClick={() => setSize("large")}>A+</button>
-        <button aria-pressed={size === "xlarge"} title="Fonte muito grande" onClick={() => setSize("xlarge")}>A++</button>
-        <button aria-pressed={contrast} title="Alto contraste" onClick={() => setContrast((value) => !value)}>
+        <button
+          aria-pressed={size === "normal"}
+          title="Tamanho normal"
+          onClick={() => setSize("normal")}
+        >
+          A
+        </button>
+        <button
+          aria-pressed={size === "large"}
+          title="Aumentar fonte"
+          onClick={() => setSize("large")}
+        >
+          A+
+        </button>
+        <button
+          aria-pressed={size === "xlarge"}
+          title="Fonte muito grande"
+          onClick={() => setSize("xlarge")}
+        >
+          A++
+        </button>
+        <button
+          aria-pressed={contrast}
+          title="Alto contraste"
+          onClick={() => setContrast((value) => !value)}
+        >
           <Sun size={18} />
         </button>
       </div>

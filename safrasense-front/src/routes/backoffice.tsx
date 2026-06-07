@@ -13,7 +13,15 @@ import {
   Search,
   XCircle,
 } from "lucide-react";
-import { Timestamp, arrayUnion, collection, doc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  Timestamp,
+  arrayUnion,
+  collection,
+  doc,
+  getDocs,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { db, storage } from "../../firebase";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -143,7 +151,9 @@ function PendingTimer({ value }: { value: any }) {
     low: "text-slate-500 bg-slate-50 border-slate-200",
   }[urgency];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}
+    >
       <Clock size={11} /> {label}
     </span>
   );
@@ -330,7 +340,9 @@ function BackofficeScreen() {
   const [savingUid, setSavingUid] = useState<string>("");
   const [error, setError] = useState("");
   const [rows, setRows] = useState<BackofficeUser[]>([]);
-  const [viewingDocument, setViewingDocument] = useState<{ url: string; nome: string } | null>(null);
+  const [viewingDocument, setViewingDocument] = useState<{ url: string; nome: string } | null>(
+    null,
+  );
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
@@ -384,16 +396,19 @@ function BackofficeScreen() {
   }, [rows]);
 
   const totalDocs = useMemo(() => allArquivoRows.length, [allArquivoRows]);
-  const approvedDocs = useMemo(() => allArquivoRows.filter((r) => r.status === true).length, [allArquivoRows]);
-  const rejectedDocs = useMemo(() => allArquivoRows.filter((r) => r.status === false).length, [allArquivoRows]);
+  const approvedDocs = useMemo(
+    () => allArquivoRows.filter((r) => r.status === true).length,
+    [allArquivoRows],
+  );
+  const rejectedDocs = useMemo(
+    () => allArquivoRows.filter((r) => r.status === false).length,
+    [allArquivoRows],
+  );
 
   const normalizeSearch = (s: string) => s.toLowerCase().trim();
   const matchesSearch = (nome: string, cpf: string, q: string) => {
     if (!q) return true;
-    return (
-      nome.toLowerCase().includes(q) ||
-      cpf.replace(/\D/g, "").includes(q.replace(/\D/g, ""))
-    );
+    return nome.toLowerCase().includes(q) || cpf.replace(/\D/g, "").includes(q.replace(/\D/g, ""));
   };
 
   const filteredPendentes = useMemo(() => {
@@ -738,7 +753,9 @@ function BackofficeScreen() {
         <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold">Backoffice</h1>
-            <p className="text-sm text-slate-500">Painel interno para validação de documentos dos usuários.</p>
+            <p className="text-sm text-slate-500">
+              Painel interno para validação de documentos dos usuários.
+            </p>
           </div>
           <button
             type="button"
@@ -753,10 +770,12 @@ function BackofficeScreen() {
 
       <main className="mx-auto max-w-6xl px-4 py-5">
         {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </div>
         )}
 
-        {/* Stats — documentos */}
+        {/* Stats: documentos */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <p className="text-xs uppercase tracking-wide text-slate-500">Total de documentos</p>
@@ -772,7 +791,7 @@ function BackofficeScreen() {
           </div>
         </section>
 
-        {/* Stats — usuários */}
+        {/* Stats: usuários */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <p className="text-xs uppercase tracking-wide text-slate-500">Usuários cadastrados</p>
@@ -790,7 +809,10 @@ function BackofficeScreen() {
 
         {/* Global search */}
         <div className="mb-4 relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+          />
           <input
             type="text"
             placeholder="Buscar por nome ou CPF..."
@@ -833,7 +855,9 @@ function BackofficeScreen() {
               </div>
             ) : filteredPendentes.length === 0 ? (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-800">
-                {search ? "Nenhum resultado para a busca." : "Nenhum documento pendente no momento."}
+                {search
+                  ? "Nenhum resultado para a busca."
+                  : "Nenhum documento pendente no momento."}
               </div>
             ) : (
               <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
@@ -852,14 +876,22 @@ function BackofficeScreen() {
                     </thead>
                     <tbody>
                       {paginatedPendentes.map((user) => (
-                        <tr key={user.uid} className="border-b last:border-b-0 border-slate-100 align-top">
+                        <tr
+                          key={user.uid}
+                          className="border-b last:border-b-0 border-slate-100 align-top"
+                        >
                           <td className="px-4 py-3 font-medium">{user.nome}</td>
                           <td className="px-4 py-3">{user.cpf}</td>
                           <td className="px-4 py-3">{user.telefone}</td>
-                          <td className="px-4 py-3 max-w-[180px] truncate" title={user.documentoArquivoNome}>
+                          <td
+                            className="px-4 py-3 max-w-[180px] truncate"
+                            title={user.documentoArquivoNome}
+                          >
                             {user.documentoArquivoNome || "Arquivo sem nome"}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap">{formatDate(user.documentoEnviadoEm)}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {formatDate(user.documentoEnviadoEm)}
+                          </td>
                           <td className="px-4 py-3">
                             <PendingTimer value={user.documentoEnviadoEm} />
                           </td>
@@ -887,7 +919,10 @@ function BackofficeScreen() {
                 <button
                   key={f}
                   type="button"
-                  onClick={() => { setStatusFilter(f); setArquivosPage(1); }}
+                  onClick={() => {
+                    setStatusFilter(f);
+                    setArquivosPage(1);
+                  }}
                   className={`h-8 px-3 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
                     statusFilter === f
                       ? "bg-slate-900 text-white border-slate-900"
@@ -937,15 +972,19 @@ function BackofficeScreen() {
                           <td className="px-4 py-3 max-w-[160px] truncate" title={row.arquivoNome}>
                             {row.arquivoNome || "Arquivo sem nome"}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap">{formatDate(row.enviadoEm)}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {formatDate(row.enviadoEm)}
+                          </td>
                           <td className="px-4 py-3">
                             <StatusBadge status={row.status} />
                           </td>
                           <td className="px-4 py-3 max-w-[200px]">
                             {row.status === false && row.motivoRejeicao ? (
-                              <span className="text-xs text-slate-600 italic">{row.motivoRejeicao}</span>
+                              <span className="text-xs text-slate-600 italic">
+                                {row.motivoRejeicao}
+                              </span>
                             ) : (
-                              <span className="text-xs text-slate-300">—</span>
+                              <span className="text-xs text-slate-300">-</span>
                             )}
                           </td>
                           <td className="px-4 py-3">{renderArquivoActions(row)}</td>
@@ -972,7 +1011,9 @@ function BackofficeScreen() {
           <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
             <header className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
               <div>
-                <h3 className="font-bold text-base text-slate-900 truncate max-w-[500px]">Visualizar Documento</h3>
+                <h3 className="font-bold text-base text-slate-900 truncate max-w-[500px]">
+                  Visualizar Documento
+                </h3>
                 <p className="text-xs text-slate-500 truncate mt-0.5">{viewingDocument.nome}</p>
               </div>
               <button

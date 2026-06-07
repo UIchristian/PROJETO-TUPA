@@ -1,6 +1,6 @@
 {
   "login": {
-    "title": "Sign In — SafraSense",
+    "title": "Sign In: SafraSense",
     "description": "Access SafraSense with CPF and phone.",
     "subtitle": "Your land, connected to the protection you already have a right to",
     "cpf": "CPF / CNPJ",
@@ -30,7 +30,8 @@
     "btnRegister": "Create Account",
     "btnEntrar": "Entrar",
     "loginTitle": "Access your account",
-    "registerTitle": "Create your account"
+    "registerTitle": "Create your account",
+    "useDemoMode": "Access demo mode"
   },
   "nav": {
     "property": "Property",
@@ -50,7 +51,7 @@
     "deleteError": "Could not delete the account. Please try again."
   },
   "onboarding": {
-    "headTitle": "Welcome — SafraSense",
+    "headTitle": "Welcome: SafraSense",
     "title": "Ready, {name}. Your property is on the map.",
     "subtitle": "See what is available on this platform",
     "path1_title": "Monitor my property",
@@ -64,10 +65,10 @@
     "btnStart": "Start monitoring"
   },
   "dashboard": {
-    "headTitle": "My property — SafraSense",
+    "headTitle": "My property: SafraSense",
     "title_healthy": "Your property is healthy",
-    "sub_healthy": "Stable vegetation — within historical average",
-    "title_alert": "Signs of stress — warning",
+    "sub_healthy": "Stable vegetation, within historical average",
+    "title_alert": "Signs of stress: warning",
     "sub_alert": "Your property has been below normal for 8 days",
     "title_emergency": "Property in critical situation",
     "sub_emergency": "Severe stress confirmed for 3 consecutive weeks",
@@ -81,11 +82,12 @@
     "confidence_medium_desc": "We will review before any action",
     "confidence_low_desc": "Analysis pending review",
     "update_prefix": "Last update: ",
+    "update_pending": "Update pending",
     "update_healthy": "Thursday, 05/22",
     "update_alert": "Updated 2 hours ago",
     "update_emergency": "Updated 20 minutes ago",
     "demo_btn": "Status Change",
-    "chart_title": "Your Land's Health — 6 months",
+    "chart_title": "Your Land's Health: 6 months",
     "chart_sub": "Satellite tracking of your property",
     "legend_current": "Current Harvest (Corn Cobs: 🟢/🟡/🔴)",
     "legend_historical": "Expected historical average (Dashed line)",
@@ -116,10 +118,13 @@
     "forecast_card_title": "15-day forecast",
     "forecast_card_desc": "Rainfall within average. No climate warnings.",
     "btn_view_payout": "View fund payout",
-    "btn_what_to_do_now": "What to do now?"
+    "btn_what_to_do_now": "What to do now?",
+    "empty_title": "No terrains registered",
+    "empty_subtitle": "Outline your first terrain on the map to start satellite monitoring and check insurance options.",
+    "empty_btn": "Register my first terrain"
   },
   "programs": {
-    "title": "Government programs — SafraSense",
+    "title": "Government programs: SafraSense",
     "header": "We checked your eligibility based on {property}, {location} · {area} ha · corn (second harvest)",
     "subtitle": "3 programs you're entitled to. 1 that requires a different profile. We show you only what's true for you.",
     "disclaimer": "SafraSense is not a government agency. We gather your data and guide you to Emater or the local rural union.",
@@ -213,7 +218,7 @@
     "btn_know_conditions": "Conocer condiciones"
   },
   "cadastro": {
-    "title": "Property registration — SafraSense",
+    "title": "Property registration: SafraSense",
     "where": "Where is your property?",
     "demarcate": "Mark the area on the map and provide the address.",
     "success": "Land successfully marked!",
@@ -254,10 +259,16 @@
     "map_empty": "Tap multiple points to outline your land plot",
     "clear_btn": "Clear",
     "undo_btn": "Undo",
-    "confirm_land_btn": "Confirm Land"
+    "confirm_land_btn": "Confirm Land",
+    "map_instruction": "Tap on the map to outline the boundaries of your land",
+    "ndvi_error_title": "Could not load satellite data",
+    "ndvi_error_desc": "An error occurred fetching the NDVI for the area. You can try again or proceed without historical data.",
+    "prosseguir_sem_ndvi": "Proceed without historical data",
+    "preencher_manualmente": "Fill manually",
+    "tentar_novamente": "Try again"
   },
   "gatilho": {
-    "headTitle": "Payout triggered — SafraSense",
+    "headTitle": "Payout triggered: SafraSense",
     "main_title": "Payout Triggered!",
     "payout_sent": "Payout Sent",
     "payout_received": "Payout Received",
@@ -285,8 +296,8 @@
     "min_vigor": "minimum vigor",
     "historical_avg": "historical average: 0.72",
     "below_normal": "below normal",
-    "event_desc": "Satellite monitoring detected 3 consecutive weeks with critical vegetative vigor. The contracted trigger was automatically activated — no field inspection, no bureaucracy.",
-    "help_line": "You will receive an SMS when the Pix is confirmed by the bank. In case of doubt, call (61) 3000-0000 — human support."
+    "event_desc": "Satellite monitoring detected 3 consecutive weeks with critical vegetative vigor. The contracted trigger was automatically activated: no field inspection, no bureaucracy.",
+    "help_line": "You will receive an SMS when the Pix is confirmed by the bank. In case of doubt, call (61) 3000-0000: human support."
   },
   "action": {
     "title": "What to do now",
@@ -303,7 +314,7 @@
     "card3_btn": "Learn about the fund"
   },
   "confirm": {
-    "headTitle": "Contact requested! — SafraSense",
+    "headTitle": "Contact requested!: SafraSense",
     "title": "Interest registered!",
     "subtitle": "Simulation request sent",
     "summary_title": "REQUEST SUMMARY",

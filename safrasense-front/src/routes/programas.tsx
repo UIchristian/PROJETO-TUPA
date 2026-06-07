@@ -176,7 +176,7 @@ function ProgramasScreen() {
       )}
 
       <header className="px-5 pt-6 pb-2">
-        <h1 className="text-xl font-bold">{t("programs.title").split(" — ")[0]}</h1>
+        <h1 className="text-xl font-bold">{t("programs.title").split(":")[0].split(" — ")[0]}</h1>
         <p className="text-sm text-navy font-semibold mt-2 leading-snug">
           {t("programs.subtitle")}
         </p>
@@ -230,7 +230,7 @@ function ProgramasScreen() {
           </button>
         </div>
 
-        {/* PASSO 0 — Documento para validação */}
+        {/* PASSO 0: Documento para validação */}
         <div className="rounded-2xl bg-card p-4 shadow-card border-2 border-dashed border-border/60">
           <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5 justify-between">
             <span>
@@ -252,12 +252,28 @@ function ProgramasScreen() {
               }`}
             >
               {documentoEstaValido
-                ? language === "es" ? "Concluido" : language === "en" ? "Completed" : "Concluido"
+                ? language === "es"
+                  ? "Concluido"
+                  : language === "en"
+                    ? "Completed"
+                    : "Concluido"
                 : documentoPendente
-                  ? language === "es" ? "Pendiente" : language === "en" ? "Pending" : "Aguardando aprovação"
+                  ? language === "es"
+                    ? "Pendiente"
+                    : language === "en"
+                      ? "Pending"
+                      : "Aguardando aprovação"
                   : documentoRejeitado
-                    ? language === "es" ? "Rechazado" : language === "en" ? "Rejected" : "Não aprovado"
-                    : language === "es" ? "No enviado" : language === "en" ? "Not sent" : "Nao enviado"}
+                    ? language === "es"
+                      ? "Rechazado"
+                      : language === "en"
+                        ? "Rejected"
+                        : "Não aprovado"
+                    : language === "es"
+                      ? "No enviado"
+                      : language === "en"
+                        ? "Not sent"
+                        : "Nao enviado"}
             </span>
           </h3>
           <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
@@ -290,14 +306,29 @@ function ProgramasScreen() {
             <div className="mt-3 rounded-xl border border-border bg-soft/60 p-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center shrink-0">
-                  <FileText size={16} className={documentoPendente ? "text-amber-warn" : "text-destructive"} />
+                  <FileText
+                    size={16}
+                    className={documentoPendente ? "text-amber-warn" : "text-destructive"}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-foreground truncate">{documentoArquivoNome}</p>
-                  <p className={`text-xs mt-0.5 font-medium ${documentoPendente ? "text-amber-warn" : "text-destructive"}`}>
+                  <p className="text-xs font-semibold text-foreground truncate">
+                    {documentoArquivoNome}
+                  </p>
+                  <p
+                    className={`text-xs mt-0.5 font-medium ${documentoPendente ? "text-amber-warn" : "text-destructive"}`}
+                  >
                     {documentoPendente
-                      ? language === "es" ? "⏳ En análisis" : language === "en" ? "⏳ Under review" : "⏳ Aguardando aprovação"
-                      : language === "es" ? "✕ Não aprovado" : language === "en" ? "✕ Not approved" : "✕ Não aprovado"}
+                      ? language === "es"
+                        ? "⏳ En análisis"
+                        : language === "en"
+                          ? "⏳ Under review"
+                          : "⏳ Aguardando aprovação"
+                      : language === "es"
+                        ? "✕ Não aprovado"
+                        : language === "en"
+                          ? "✕ Not approved"
+                          : "✕ Não aprovado"}
                   </p>
                 </div>
               </div>
@@ -323,7 +354,11 @@ function ProgramasScreen() {
               ) : (
                 <div className="mt-2.5 rounded-lg bg-destructive/10 border border-destructive/20 p-2.5 flex flex-col gap-2">
                   <p className="text-xs font-bold text-destructive text-center">
-                    {language === "es" ? "¿Confirmar eliminación?" : language === "en" ? "Confirm deletion?" : "Confirmar remoção do arquivo?"}
+                    {language === "es"
+                      ? "¿Confirmar eliminación?"
+                      : language === "en"
+                        ? "Confirm deletion?"
+                        : "Confirmar remoção do arquivo?"}
                   </p>
                   <div className="flex gap-2">
                     <button
@@ -339,7 +374,13 @@ function ProgramasScreen() {
                       disabled={deletingDoc}
                       className="flex-1 h-8 rounded-lg bg-destructive text-white text-xs font-semibold disabled:opacity-60 active:scale-95 cursor-pointer"
                     >
-                      {deletingDoc ? "..." : language === "es" ? "Confirmar" : language === "en" ? "Confirm" : "Confirmar"}
+                      {deletingDoc
+                        ? "..."
+                        : language === "es"
+                          ? "Confirmar"
+                          : language === "en"
+                            ? "Confirm"
+                            : "Confirmar"}
                     </button>
                   </div>
                 </div>
@@ -369,13 +410,21 @@ function ProgramasScreen() {
               className="mt-3 h-10 w-full rounded-xl bg-navy text-navy-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-soft"
             >
               {documentoRejeitado
-                ? language === "es" ? "Enviar nuevo documento" : language === "en" ? "Send new document" : "Enviar novo documento"
-                : language === "es" ? "Enviar documento en Comprobar" : language === "en" ? "Send document in Verify" : "Enviar documento em Comprovar"}
+                ? language === "es"
+                  ? "Enviar nuevo documento"
+                  : language === "en"
+                    ? "Send new document"
+                    : "Enviar novo documento"
+                : language === "es"
+                  ? "Enviar documento en Comprobar"
+                  : language === "en"
+                    ? "Send document in Verify"
+                    : "Enviar documento em Comprovar"}
             </a>
           )}
         </div>
 
-        {/* CARD 1 — Pronaf Custeio */}
+        {/* CARD 1: Pronaf Custeio */}
         <article className="rounded-2xl bg-card p-4 shadow-card border border-border/60">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-soft flex items-center justify-center shrink-0">
@@ -430,12 +479,18 @@ function ProgramasScreen() {
               className="mt-4 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
             >
               <Lock size={12} />{" "}
-              {isEligible.pronaf ? t("programs_custom.locked_action") : language === "es" ? "No elegible al programa" : language === "en" ? "Not eligible for this program" : "Não elegível ao programa"}
+              {isEligible.pronaf
+                ? t("programs_custom.locked_action")
+                : language === "es"
+                  ? "No elegible al programa"
+                  : language === "en"
+                    ? "Not eligible for this program"
+                    : "Não elegível ao programa"}
             </button>
           )}
         </article>
 
-        {/* CARD 2 — Garantía-Zafra */}
+        {/* CARD 2: Garantía-Zafra */}
         <article className="rounded-2xl bg-card p-4 shadow-card border border-border/60 bg-muted/30">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-soft flex items-center justify-center shrink-0">
@@ -499,12 +554,16 @@ function ProgramasScreen() {
               <Lock size={12} />{" "}
               {isEligible.garantia
                 ? t("programs_custom.locked_action")
-                : language === "es" ? "No elegible al programa" : language === "en" ? "Not eligible for this program" : "Não elegível ao programa"}
+                : language === "es"
+                  ? "No elegible al programa"
+                  : language === "en"
+                    ? "Not eligible for this program"
+                    : "Não elegível ao programa"}
             </button>
           )}
         </article>
 
-        {/* CARD 3 — Proagro Más */}
+        {/* CARD 3: Proagro Más */}
         <article className="rounded-2xl bg-card p-4 shadow-card border border-border/60">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-soft flex items-center justify-center shrink-0">
@@ -567,12 +626,18 @@ function ProgramasScreen() {
               className="mt-3 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
             >
               <Lock size={12} />{" "}
-              {isEligible.proagro ? t("programs_custom.locked_action") : language === "es" ? "No elegible al programa" : language === "en" ? "Not eligible for this program" : "Não elegível ao programa"}
+              {isEligible.proagro
+                ? t("programs_custom.locked_action")
+                : language === "es"
+                  ? "No elegible al programa"
+                  : language === "en"
+                    ? "Not eligible for this program"
+                    : "Não elegível ao programa"}
             </button>
           )}
         </article>
 
-        {/* CARD 4 — PSR */}
+        {/* CARD 4: PSR */}
         <article className="rounded-2xl bg-card p-4 shadow-card border border-border/60">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-soft flex items-center justify-center shrink-0">
@@ -631,7 +696,13 @@ function ProgramasScreen() {
               className="mt-3 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
             >
               <Lock size={12} />{" "}
-              {isEligible.psr ? t("programs_custom.locked_action") : language === "es" ? "No elegible al programa" : language === "en" ? "Not eligible for this program" : "Não elegível ao programa"}
+              {isEligible.psr
+                ? t("programs_custom.locked_action")
+                : language === "es"
+                  ? "No elegible al programa"
+                  : language === "en"
+                    ? "Not eligible for this program"
+                    : "Não elegível ao programa"}
             </button>
           )}
         </article>
@@ -648,7 +719,7 @@ function ProgramasScreen() {
           <div className="bg-background w-full max-w-[390px] rounded-t-3xl p-5 flex flex-col gap-4 animate-in slide-in-from-bottom duration-300 max-h-[85vh]">
             <header className="flex justify-between items-center border-b border-border pb-3 shrink-0">
               <h3 className="font-bold text-base text-foreground">
-                Documentos —{" "}
+                Documentos:{" "}
                 {selectedProgram === "Pronaf"
                   ? t("programs.pronaf_title")
                   : selectedProgram === "Proagro"

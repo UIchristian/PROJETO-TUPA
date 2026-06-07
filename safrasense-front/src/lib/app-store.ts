@@ -57,43 +57,28 @@ export interface AppState {
 }
 
 const defaultInitial: AppState = {
-  status: "alert",
-  protected: true, // Proteção ativa
+  status: "healthy",
+  protected: false,
   payout: "pending",
   language: "es", // Espanhol como padrão
-  carVerified: false, // Inicia sem comprovante de CAR enviado
+  carVerified: false,
   documentoValidado: false,
   documentoArquivoNome: "",
   fieldPhotoUploaded: false,
   inspectionsRequested: false,
-  activeTerrenoId: "1",
+  activeTerrenoId: "",
   farmer: {
-    name: "Geraldo Dias",
-    property: "Sítio Boa Esperança",
-    location: "Unaí, MG",
-    area: 12,
-    crop: "Milho (safrinha)",
+    name: "",
+    property: "",
+    location: "",
+    area: 0,
+    crop: "",
     areaPolygon: [],
-    cpf: "123.456.789-00",
-    phone: "(61) 99999-9999",
-    avatar: "/avatars/sprout.png",
+    cpf: "",
+    phone: "",
+    avatar: "",
     car: "",
-    terrenos: [
-      {
-        id: "1",
-        name: "Terreno 1",
-        points: [],
-        sizeVal: "12",
-        sizeUnit: "ha",
-        hectares: 12,
-        carNumber: "",
-        address: "Unaí, MG",
-        status: "alert",
-        selectedCar: null,
-        crops: ["Milho"],
-        system: "Safrinha",
-      },
-    ],
+    terrenos: [],
   },
 };
 
@@ -191,6 +176,47 @@ export const appStore = {
   subscribe: (cb: () => void) => {
     listeners.add(cb);
     return () => listeners.delete(cb);
+  },
+  loadDemoData: () => {
+    appStore.set({
+      status: "alert",
+      protected: true,
+      payout: "pending",
+      carVerified: false,
+      documentoValidado: false,
+      documentoArquivoNome: "",
+      fieldPhotoUploaded: false,
+      inspectionsRequested: false,
+      activeTerrenoId: "1",
+      farmer: {
+        name: "Geraldo Dias",
+        property: "Sítio Boa Esperança",
+        location: "Unaí, MG",
+        area: 12,
+        crop: "Milho (safrinha)",
+        areaPolygon: [],
+        cpf: "123.456.789-00",
+        phone: "(61) 99999-9999",
+        avatar: "/avatars/sprout.png",
+        car: "",
+        terrenos: [
+          {
+            id: "1",
+            name: "Terreno 1",
+            points: [],
+            sizeVal: "12",
+            sizeUnit: "ha",
+            hectares: 12,
+            carNumber: "",
+            address: "Unaí, MG",
+            status: "alert",
+            selectedCar: null,
+            crops: ["Milho"],
+            system: "Safrinha",
+          },
+        ],
+      },
+    });
   },
   reset: () => {
     state = { ...defaultInitial };

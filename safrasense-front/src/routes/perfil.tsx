@@ -12,7 +12,7 @@ import { auth, db } from "../../firebase";
 
 const FarmMap = lazy(() => import("@/components/FarmMap"));
 
-const BUSCAR_CARS_ENDPOINT = "http://localhost:8000/buscar-cars";
+import { BUSCAR_CARS_ENDPOINT } from "@/lib/api-config";
 
 type CarItem = {
   codigo_imovel?: string;
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/perfil")({
   head: () => {
     const lang = appStore.get().language || "es";
     return {
-      meta: [{ title: `${t("profile.title", lang)} — SafraSense` }],
+      meta: [{ title: `${t("profile.title", lang)}: SafraSense` }],
     };
   },
   component: PerfilScreen,
@@ -220,8 +220,7 @@ function PerfilScreen() {
   );
   const currentDocStatus = String(documentoValidado);
   const hasUnreadDocNotification =
-    (!!documentoArquivoNome || documentoValidado !== false) &&
-    currentDocStatus !== seenDocStatus;
+    (!!documentoArquivoNome || documentoValidado !== false) && currentDocStatus !== seenDocStatus;
   const hasUnreadLoteNotification = status !== "healthy";
   const hasUnread = hasUnreadDocNotification || hasUnreadLoteNotification;
 
@@ -548,7 +547,6 @@ function PerfilScreen() {
     }
   };
 
-
   const profileName = profileData?.nome || "";
   const profileCpf = profileData?.cpf || "";
   const profilePhone = profileData?.telefone || "";
@@ -748,11 +746,15 @@ function PerfilScreen() {
                                 ? "Submit your CAR registration receipt to activate your parametric protection."
                                 : "Envie o recibo de inscrição do CAR para habilitar a proteção paramétrica e acessar os programas de governo."}
                     </p>
-                    {/* Rejection reason block — shown only when document was rejected */}
+                    {/* Rejection reason block: shown only when document was rejected */}
                     {documentoValidado === false && documentoArquivoNome && (
                       <div className="mt-2 rounded-lg bg-destructive/10 border border-destructive/20 px-2.5 py-2">
                         <p className="text-xs font-bold text-destructive">
-                          {language === "es" ? "Motivo" : language === "en" ? "Reason" : "Motivo da rejeição"}
+                          {language === "es"
+                            ? "Motivo"
+                            : language === "en"
+                              ? "Reason"
+                              : "Motivo da rejeição"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {documentoMotivoRejeicao ||
@@ -892,9 +894,7 @@ function PerfilScreen() {
         {showAvatarPicker && (
           <div className="rounded-2xl bg-card p-4 shadow-card border border-border/60 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex justify-between items-center mb-2.5">
-              <h3 className="font-bold text-base text-foreground">
-                {t("profile.avatarTitle")}
-              </h3>
+              <h3 className="font-bold text-base text-foreground">{t("profile.avatarTitle")}</h3>
               <button
                 onClick={() => setShowAvatarPicker(false)}
                 className="text-sm text-primary hover:underline font-bold cursor-pointer"
@@ -939,9 +939,7 @@ function PerfilScreen() {
 
         {/* Personal data card */}
         <div className="rounded-2xl bg-card p-4 shadow-card border border-border/60">
-          <h3 className="font-bold text-base text-foreground mb-3">
-            {t("profile.personalData")}
-          </h3>
+          <h3 className="font-bold text-base text-foreground mb-3">{t("profile.personalData")}</h3>
           <dl className="text-base font-semibold grid grid-cols-2 gap-y-3.5 items-center">
             <dt className="text-foreground/85 font-normal">{t("profile.nameLabel")}</dt>
             <dd className="font-bold text-foreground truncate max-w-[150px]">{profileName}</dd>
@@ -1135,7 +1133,6 @@ function PerfilScreen() {
             </button>
           </div>
         </div>
-
       </div>
 
       {editPersonalOpen && (
@@ -1170,7 +1167,10 @@ function PerfilScreen() {
 
             <div className="flex flex-col gap-4 flex-1">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="edit-profile-name" className="text-sm font-medium text-foreground/80">
+                <label
+                  htmlFor="edit-profile-name"
+                  className="text-sm font-medium text-foreground/80"
+                >
                   {t("profile.nameLabel")}
                 </label>
                 <input
@@ -1191,7 +1191,10 @@ function PerfilScreen() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="edit-profile-phone" className="text-sm font-medium text-foreground/80">
+                <label
+                  htmlFor="edit-profile-phone"
+                  className="text-sm font-medium text-foreground/80"
+                >
                   {t("profile.phone")}
                 </label>
                 <input
@@ -1304,15 +1307,50 @@ function PerfilScreen() {
             </header>
 
             {carError && (
-              <div className="text-sm font-bold text-destructive bg-destructive/5 border border-destructive/20 rounded-lg p-2 text-center">
-                ⚠️ {carError}
+              <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 flex flex-col gap-2.5 mt-1 text-left animate-in fade-in duration-200">
+                <span className="text-sm font-bold text-destructive flex items-center gap-1.5">
+                  ⚠️ {carError}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const terrainToFind = parsedTerrenos.find((t) => t.id === editingTerrenoId);
+                      if (terrainToFind) {
+                        await handleFetchCarForTerreno(terrainToFind.id, terrainToFind.points);
+                      }
+                    }}
+                    className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground font-bold text-xs active:scale-95 transition-all shadow-soft cursor-pointer"
+                  >
+                    {t("cadastro.tentar_novamente")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCarError("");
+                      setTimeout(() => {
+                        const input = document.getElementById("edit-terrain-car");
+                        if (input) {
+                          input.focus();
+                          input.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }
+                      }, 100);
+                    }}
+                    className="flex-1 h-9 rounded-lg border border-border bg-card font-bold text-xs text-foreground/85 hover:bg-secondary active:scale-95 transition-all cursor-pointer"
+                  >
+                    {t("cadastro.preencher_manualmente")}
+                  </button>
+                </div>
               </div>
             )}
 
             <div className="flex flex-col gap-4 flex-1">
               {/* Terrain Name */}
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="edit-terrain-name" className="text-sm font-medium text-foreground/80">
+                <label
+                  htmlFor="edit-terrain-name"
+                  className="text-sm font-medium text-foreground/80"
+                >
                   {language === "es"
                     ? "Nombre de la Tierra"
                     : language === "en"
@@ -1331,7 +1369,10 @@ function PerfilScreen() {
 
               {/* Terrain Size */}
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="edit-terrain-size" className="text-sm font-medium text-foreground/80">
+                <label
+                  htmlFor="edit-terrain-size"
+                  className="text-sm font-medium text-foreground/80"
+                >
                   {t("cadastro.size_label_v2")}
                 </label>
                 <div className="flex gap-2">
@@ -1362,7 +1403,10 @@ function PerfilScreen() {
               {/* CAR Number */}
               <div className="flex flex-col gap-1.5 bg-soft/30 p-3 rounded-2xl border border-border/40">
                 <div className="flex justify-between items-center">
-                  <label htmlFor="edit-terrain-car" className="text-sm font-medium text-foreground/80">
+                  <label
+                    htmlFor="edit-terrain-car"
+                    className="text-sm font-medium text-foreground/80"
+                  >
                     {t("cadastro.car_number")}
                   </label>
                   {/* Fetch CAR trigger */}
@@ -1390,7 +1434,11 @@ function PerfilScreen() {
 
                 {carSearchingId === editingTerrenoId && (
                   <div className="text-sm text-muted-foreground bg-soft border border-border rounded-lg p-2.5 text-center mt-1">
-                    {language === "es" ? "Verificando datos. Puede tardar hasta 2 minutos..." : language === "en" ? "Querying data. This can take up to 2 minutes..." : "Verificando dados. Pode levar até 2 minutos..."}
+                    {language === "es"
+                      ? "Verificando datos. Puede tardar hasta 2 minutos..."
+                      : language === "en"
+                        ? "Querying data. This can take up to 2 minutes..."
+                        : "Verificando dados. Pode levar até 2 minutos..."}
                   </div>
                 )}
 
@@ -1451,7 +1499,11 @@ function PerfilScreen() {
                     {tempTerrenoSelectedCar && (
                       <div className="flex items-center justify-between gap-1.5 bg-primary/5 p-1 px-2 rounded-lg border border-primary/20">
                         <span className="text-sm text-primary font-bold">
-                          {language === "es" ? "CAR seleccionado y listo para guardar." : language === "en" ? "CAR selected and ready to save." : "CAR selecionado e pronto para salvar."}
+                          {language === "es"
+                            ? "CAR seleccionado y listo para guardar."
+                            : language === "en"
+                              ? "CAR selected and ready to save."
+                              : "CAR selecionado e pronto para salvar."}
                         </span>
                         <button
                           type="button"
@@ -1504,7 +1556,10 @@ function PerfilScreen() {
 
               {/* Crop System Dropdown */}
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="edit-terrain-system" className="text-sm font-medium text-foreground/80">
+                <label
+                  htmlFor="edit-terrain-system"
+                  className="text-sm font-medium text-foreground/80"
+                >
                   {t("cadastro.system")}
                 </label>
                 <select
@@ -1630,9 +1685,7 @@ function PerfilScreen() {
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   <CheckCircle2 size={32} />
                 </div>
-                <h4 className="font-bold text-base text-foreground">
-                  {t("profile.successTitle")}
-                </h4>
+                <h4 className="font-bold text-base text-foreground">{t("profile.successTitle")}</h4>
                 <p className="text-sm text-muted-foreground leading-relaxed px-4">
                   {t("profile.successDesc")}
                 </p>
@@ -1666,7 +1719,10 @@ function PerfilScreen() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="confirm-password" className="text-sm font-medium text-foreground/80">
+                  <label
+                    htmlFor="confirm-password"
+                    className="text-sm font-medium text-foreground/80"
+                  >
                     {t("profile.confirmPassword")}
                   </label>
                   <input
@@ -1733,7 +1789,10 @@ function PerfilScreen() {
                 </p>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="verification-code" className="text-sm font-medium text-foreground/80">
+                  <label
+                    htmlFor="verification-code"
+                    className="text-sm font-medium text-foreground/80"
+                  >
                     {t("profile.codeLabel")}
                   </label>
                   <input
@@ -1814,7 +1873,10 @@ function PerfilScreen() {
 
           <div className="p-5 flex flex-col gap-4 flex-1 overflow-y-auto">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="terrain-map-search" className="text-sm font-medium text-foreground/80">
+              <label
+                htmlFor="terrain-map-search"
+                className="text-sm font-medium text-foreground/80"
+              >
                 {t("cadastro.address_label")}
               </label>
               <div className="relative">
@@ -1837,7 +1899,13 @@ function PerfilScreen() {
                   onClick={handleSearchAddress}
                   disabled={searchingAddress || !address.trim()}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-muted-foreground hover:text-primary active:scale-95 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center"
-                  title={language === "es" ? "Buscar en el mapa" : language === "en" ? "Search on map" : "Buscar no mapa"}
+                  title={
+                    language === "es"
+                      ? "Buscar en el mapa"
+                      : language === "en"
+                        ? "Search on map"
+                        : "Buscar no mapa"
+                  }
                 >
                   {searchingAddress ? (
                     <span className="block w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
@@ -1862,49 +1930,27 @@ function PerfilScreen() {
               </label>
 
               <div className="relative flex-1 rounded-2xl overflow-hidden border border-border select-none min-h-[260px] bg-secondary">
-                <div className="absolute top-3 left-3 z-[500] bg-navy/80 backdrop-blur text-navy-foreground text-sm px-2.5 py-1.5 rounded-lg shadow pointer-events-none">
-                  {t("cadastro.map_helper")}
-                </div>
-
                 <Suspense
                   fallback={
                     <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-muted-foreground bg-soft/40">
-                      {language === "es" ? "Cargando mapa..." : language === "en" ? "Loading map..." : "Carregando mapa..."}
+                      {language === "es"
+                        ? "Cargando mapa..."
+                        : language === "en"
+                          ? "Loading map..."
+                          : "Carregando mapa..."}
                     </div>
                   }
                 >
                   <FarmMap points={points} setPoints={setPoints} center={mapCenter} />
                 </Suspense>
-
-                {points.length === 0 && (
-                  <div className="absolute inset-x-4 bottom-4 z-[500] rounded-xl bg-card/90 backdrop-blur px-3 py-2 text-sm font-medium text-navy shadow pointer-events-none text-center">
-                    {t("cadastro.map_empty")}
-                  </div>
-                )}
               </div>
             </div>
 
-            <div className="flex gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setPoints([])}
-                disabled={points.length === 0}
-                className="h-12 px-3 rounded-xl border border-border font-semibold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
-              >
-                {t("cadastro.clear_btn")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setPoints(points.slice(0, -1))}
-                disabled={points.length === 0}
-                className="h-12 px-3 rounded-xl border border-border font-semibold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
-              >
-                {t("cadastro.undo_btn")}
-              </button>
+            <div className="flex shrink-0">
               <button
                 type="button"
                 onClick={handleConfirmMap}
-                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
               >
                 {t("cadastro.confirm_land_btn")}
               </button>

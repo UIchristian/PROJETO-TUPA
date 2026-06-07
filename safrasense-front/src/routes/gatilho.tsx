@@ -137,9 +137,7 @@ function GatilhoScreen() {
         {/* Help line */}
         <div className="rounded-xl bg-soft border border-border/60 p-3 flex items-start gap-2">
           <Clock size={16} className="text-navy mt-0.5 shrink-0" />
-          <p className="text-sm text-foreground/80 leading-relaxed">
-            {t("gatilho.help_line")}
-          </p>
+          <p className="text-sm text-foreground/80 leading-relaxed">{t("gatilho.help_line")}</p>
         </div>
 
         <Link

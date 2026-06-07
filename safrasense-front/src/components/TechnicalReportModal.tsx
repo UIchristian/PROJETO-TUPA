@@ -11,7 +11,12 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useAppState, appStore } from "@/lib/app-store";
-import { buildHistoricalAverage, getLatestNdviAverage, parseNdviDataset } from "@/lib/ndvi";
+import {
+  buildHistoricalAverage,
+  getLatestNdviAverage,
+  parseNdviDataset,
+  aggregateWeeklyToMonthly,
+} from "@/lib/ndvi";
 import { useTranslation, translateCropString } from "@/lib/i18n";
 import { NdviChart } from "./NdviChart";
 import { jsPDF } from "jspdf";
@@ -63,6 +68,7 @@ const reportTranslations = {
     sec4_table_historical: "Promedio esperado",
     sec4_table_dev: "Desviación",
     sec4_table_status: "Estado",
+    sec4_table_unavailable: "Serie histórica no disponible para este período",
 
     sec5_title: "V. Evento Climático Detectado",
     sec5_desc:
@@ -156,6 +162,7 @@ const reportTranslations = {
     sec4_table_historical: "Média esperada",
     sec4_table_dev: "Desvio",
     sec4_table_status: "Classificação",
+    sec4_table_unavailable: "Série histórica indisponível para este período",
 
     sec5_title: "V. Evento Climático Detectado",
     sec5_desc:
@@ -249,6 +256,7 @@ const reportTranslations = {
     sec4_table_historical: "Expected average",
     sec4_table_dev: "Deviation",
     sec4_table_status: "Classification",
+    sec4_table_unavailable: "Historical series unavailable for this period",
 
     sec5_title: "V. Detected Climate Event",
     sec5_desc:
@@ -338,8 +346,22 @@ export function TechnicalReportModal({
     relatorios_mensais: currentTerreno?.ndviRelatorioMensal,
     relatorios: currentTerreno?.ndviHistorico12m,
   });
-  const monthlyRows =
-    ndviDataset.monthly.length > 0 ? ndviDataset.monthly : ndviDataset.all.filter((row) => row.granularidade !== "weekly");
+  let monthlyRows =
+    ndviDataset.monthly.length > 0
+      ? ndviDataset.monthly
+      : ndviDataset.all.filter((row) => row.granularidade !== "weekly");
+
+  if (monthlyRows.length === 0 && ndviDataset.weekly.length > 0) {
+    const aggregated = aggregateWeeklyToMonthly(ndviDataset.weekly);
+    if (aggregated.length > 0) {
+      monthlyRows = aggregated;
+    }
+  }
+
+  if (monthlyRows.length === 0 && ndviDataset.weekly.length > 0) {
+    monthlyRows = ndviDataset.weekly;
+  }
+
   const latestAverage = getLatestNdviAverage(ndviDataset);
 
   // Determine actual values based on state status
@@ -386,12 +408,15 @@ export function TechnicalReportModal({
           month: "long",
           year: "numeric",
         });
-    const historical = monthlyAverage[monthlyAverage.length - (monthlyRows.slice(-6).length - index)] ?? row.ndviMedio;
-    const details = row.ndviMedio >= 0.65
-      ? { status: rt.sec3_status_healthy, color: "text-primary" }
-      : row.ndviMedio >= 0.5
-        ? { status: rt.sec3_status_alert, color: "text-amber-warn" }
-        : { status: rt.sec3_status_emergency, color: "text-destructive font-bold" };
+    const historical =
+      monthlyAverage[monthlyAverage.length - (monthlyRows.slice(-6).length - index)] ??
+      row.ndviMedio;
+    const details =
+      row.ndviMedio >= 0.65
+        ? { status: rt.sec3_status_healthy, color: "text-primary" }
+        : row.ndviMedio >= 0.5
+          ? { status: rt.sec3_status_alert, color: "text-amber-warn" }
+          : { status: rt.sec3_status_emergency, color: "text-destructive font-bold" };
 
     return {
       period,
@@ -428,7 +453,7 @@ export function TechnicalReportModal({
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
       doc.text("SafraSense", margin, y);
-      
+
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(120, 120, 120);
@@ -442,8 +467,13 @@ export function TechnicalReportModal({
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(120, 120, 120);
-      doc.text(`${rt.issued}: ${new Date().toLocaleDateString(lang === "pt" ? "pt-BR" : "es-ES")}`, docWidth - margin, y + 4.5, { align: "right" });
-      
+      doc.text(
+        `${rt.issued}: ${new Date().toLocaleDateString(lang === "pt" ? "pt-BR" : "es-ES")}`,
+        docWidth - margin,
+        y + 4.5,
+        { align: "right" },
+      );
+
       y += 14;
 
       // Title
@@ -563,7 +593,7 @@ export function TechnicalReportModal({
       doc.setFont("helvetica", "normal");
       doc.text(rt.sec3_class + ":", margin, y);
       doc.setFont("helvetica", "bold");
-      
+
       let statusColor = [34, 197, 94];
       if (status === "alert") statusColor = [245, 158, 11];
       else if (status === "emergency") statusColor = [239, 68, 68];
@@ -588,13 +618,23 @@ export function TechnicalReportModal({
       doc.line(margin, y + 1.5, docWidth - margin, y + 1.5);
       y += 4;
 
-      const tableHeaders = [[rt.sec4_table_period, rt.sec4_table_current, rt.sec4_table_historical, rt.sec4_table_status]];
-      const tableRows = monthsData.map((m) => [
-        m.period,
-        m.current.toFixed(3),
-        m.historical.toFixed(3),
-        m.status,
-      ]);
+      const tableHeaders = [
+        [
+          rt.sec4_table_period,
+          rt.sec4_table_current,
+          rt.sec4_table_historical,
+          rt.sec4_table_status,
+        ],
+      ];
+      const tableRows =
+        monthsData.length > 0
+          ? monthsData.map((m) => [
+              m.period,
+              typeof m.current === "number" ? m.current.toFixed(3) : String(m.current),
+              typeof m.historical === "number" ? m.historical.toFixed(3) : String(m.historical),
+              m.status,
+            ])
+          : [[rt.sec4_table_unavailable, "-", "-", "-"]];
 
       autoTable(doc, {
         startY: y,
@@ -620,16 +660,17 @@ export function TechnicalReportModal({
       doc.setTextColor(0, 0, 0);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      const eventDesc = status === "healthy"
-        ? (lang === "es"
+      const eventDesc =
+        status === "healthy"
+          ? lang === "es"
             ? "No se detectaron eventos climáticos adversos en el período analizado."
             : lang === "pt"
               ? "Não foram detectados eventos climáticos adversos no período analisado."
-              : "No adverse climate events were detected in the analyzed period.")
-        : rt.sec5_desc
-            .replace("{pct}", status === "alert" ? rt.sec5_pct_alert : rt.sec5_pct_emergency)
-            .replace("{start}", rt.sec5_start)
-            .replace("{end}", rt.sec5_end);
+              : "No adverse climate events were detected in the analyzed period."
+          : rt.sec5_desc
+              .replace("{pct}", status === "alert" ? rt.sec5_pct_alert : rt.sec5_pct_emergency)
+              .replace("{start}", rt.sec5_start)
+              .replace("{end}", rt.sec5_end);
 
       const eventLines = doc.splitTextToSize(eventDesc, contentWidth);
       doc.text(eventLines, margin, y);
@@ -645,11 +686,12 @@ export function TechnicalReportModal({
       doc.setTextColor(0, 0, 0);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      const sevLabel = status === "healthy"
-        ? rt.sec5_sev_healthy
-        : status === "alert"
-          ? rt.sec5_sev_alert
-          : rt.sec5_sev_emergency;
+      const sevLabel =
+        status === "healthy"
+          ? rt.sec5_sev_healthy
+          : status === "alert"
+            ? rt.sec5_sev_alert
+            : rt.sec5_sev_emergency;
       doc.text(sevLabel, margin, y);
       doc.text(confidenceLevel, margin + 85, y);
       y += 6.5;
@@ -747,7 +789,7 @@ export function TechnicalReportModal({
           ? "Error al exportar PDF."
           : lang === "pt"
             ? "Erro ao exportar PDF."
-            : "Error exporting PDF."
+            : "Error exporting PDF.",
       );
     } finally {
       setExporting(false);
@@ -866,9 +908,7 @@ export function TechnicalReportModal({
                   </div>
                 </div>
                 <div className="text-right text-sm font-mono text-muted-foreground">
-                  <div className="font-bold text-foreground">
-                    REF: SS-2026-0001
-                  </div>
+                  <div className="font-bold text-foreground">REF: SS-2026-0001</div>
                   <div>
                     {rt.issued}: {new Date().toLocaleDateString(lang === "pt" ? "pt-BR" : "es-ES")}
                   </div>
@@ -882,7 +922,7 @@ export function TechnicalReportModal({
               <p className="text-sm text-muted-foreground leading-tight italic">{rt.data_source}</p>
             </header>
 
-            {/* Seção 1 — Identificación */}
+            {/* Seção 1: Identificación */}
             <section className="flex flex-col gap-1.5">
               <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary border-b border-border pb-0.5">
                 {rt.sec1_title}
@@ -892,9 +932,7 @@ export function TechnicalReportModal({
                   <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec1_farmer}
                   </span>
-                  <span className="font-bold text-foreground">
-                    {farmer.name || "Geraldo Dias"}
-                  </span>
+                  <span className="font-bold text-foreground">{farmer.name || "Geraldo Dias"}</span>
                 </div>
                 <div>
                   <span className="text-sm uppercase font-bold text-muted-foreground block">
@@ -926,9 +964,7 @@ export function TechnicalReportModal({
                   <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec1_area}
                   </span>
-                  <span className="font-bold text-foreground">
-                    {farmer.area} ha
-                  </span>
+                  <span className="font-bold text-foreground">{farmer.area} ha</span>
                 </div>
                 <div>
                   <span className="text-sm uppercase font-bold text-muted-foreground block">
@@ -941,7 +977,7 @@ export function TechnicalReportModal({
               </div>
             </section>
 
-            {/* Seção 2 — Período analizado */}
+            {/* Seção 2: Período analizado */}
             <section className="flex flex-col gap-1.5">
               <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary border-b border-border pb-0.5">
                 {rt.sec2_title}
@@ -951,22 +987,18 @@ export function TechnicalReportModal({
                   <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec2_window}
                   </span>
-                  <span className="font-medium text-foreground">
-                    {rt.sec2_window_val}
-                  </span>
+                  <span className="font-medium text-foreground">{rt.sec2_window_val}</span>
                 </div>
                 <div>
                   <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec2_recent}
                   </span>
-                  <span className="font-medium text-foreground">
-                    {rt.sec2_recent_val}
-                  </span>
+                  <span className="font-medium text-foreground">{rt.sec2_recent_val}</span>
                 </div>
               </div>
             </section>
 
-            {/* Seção 3 — Estado actual de la tierra */}
+            {/* Seção 3: Estado actual de la tierra */}
             <section className="flex flex-col gap-1.5">
               <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary border-b border-border pb-0.5">
                 {rt.sec3_title}
@@ -996,7 +1028,7 @@ export function TechnicalReportModal({
               </div>
             </section>
 
-            {/* Seção 4 — Serie histórica */}
+            {/* Seção 4: Serie histórica */}
             <section
               className={`flex flex-col gap-2 rounded-xl p-2.5 transition-all ${
                 type === "insurance"
@@ -1046,35 +1078,48 @@ export function TechnicalReportModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border text-foreground">
-                    {monthsData.map((m, idx) => {
-                      const devVal = Math.round(((m.current - m.historical) / m.historical) * 100);
-                      const isNegative = devVal < 0;
-                      return (
-                        <tr key={idx} className="hover:bg-secondary/50">
-                          <td className="px-2 py-1 font-semibold">{m.period}</td>
-                          <td className="px-2 py-1 text-center font-mono font-medium">
-                            {m.current.toFixed(2)}
-                          </td>
-                          <td className="px-2 py-1 text-center font-mono text-muted-foreground">
-                            {m.historical.toFixed(2)}
-                          </td>
-                          <td
-                            className={`px-2 py-1 text-center font-mono font-bold ${isNegative ? "text-destructive" : "text-primary"}`}
-                          >
-                            {devVal > 0 ? `+${devVal}` : devVal}%
-                          </td>
-                          <td className={`px-2 py-1 text-right font-bold text-sm ${m.color}`}>
-                            {m.status}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {monthsData.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-3 py-4 text-center text-muted-foreground font-semibold"
+                        >
+                          {rt.sec4_table_unavailable}
+                        </td>
+                      </tr>
+                    ) : (
+                      monthsData.map((m, idx) => {
+                        const devVal = Math.round(
+                          ((m.current - m.historical) / m.historical) * 100,
+                        );
+                        const isNegative = devVal < 0;
+                        return (
+                          <tr key={idx} className="hover:bg-secondary/50">
+                            <td className="px-2 py-1 font-semibold">{m.period}</td>
+                            <td className="px-2 py-1 text-center font-mono font-medium">
+                              {m.current.toFixed(2)}
+                            </td>
+                            <td className="px-2 py-1 text-center font-mono text-muted-foreground">
+                              {m.historical.toFixed(2)}
+                            </td>
+                            <td
+                              className={`px-2 py-1 text-center font-mono font-bold ${isNegative ? "text-destructive" : "text-primary"}`}
+                            >
+                              {devVal > 0 ? `+${devVal}` : devVal}%
+                            </td>
+                            <td className={`px-2 py-1 text-right font-bold text-sm ${m.color}`}>
+                              {m.status}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
             </section>
 
-            {/* Seção 5 — Evento climático detectado */}
+            {/* Seção 5: Evento climático detectado */}
             <section
               className={`flex flex-col gap-2 rounded-xl p-2.5 transition-all ${
                 type === "public"
@@ -1132,9 +1177,7 @@ export function TechnicalReportModal({
                 </div>
                 <div className="flex justify-between border-b border-border pb-1">
                   <span>{rt.sec5_confidence}:</span>
-                  <span className="font-bold text-foreground">
-                    {confidenceLevel}
-                  </span>
+                  <span className="font-bold text-foreground">{confidenceLevel}</span>
                 </div>
               </div>
 
@@ -1154,7 +1197,7 @@ export function TechnicalReportModal({
               )}
             </section>
 
-            {/* Seção 6 — Verificación de consistencia */}
+            {/* Seção 6: Verificación de consistencia */}
             <section className="flex flex-col gap-1.5">
               <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary border-b border-border pb-0.5">
                 {rt.sec6_title}
@@ -1195,7 +1238,7 @@ export function TechnicalReportModal({
               </p>
             </section>
 
-            {/* Seção 7 — Finalidad y reservas */}
+            {/* Seção 7: Finalidad y reservas */}
             <section className="flex flex-col gap-2">
               <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary border-b border-border pb-0.5">
                 {rt.sec7_title}

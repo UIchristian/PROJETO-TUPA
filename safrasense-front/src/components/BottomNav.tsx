@@ -7,7 +7,8 @@ export function BottomNav() {
   const { t, language } = useTranslation();
 
   const settingsLabel = language === "pt" ? "Ajustes" : language === "en" ? "Settings" : "Ajustes";
-  const protectionLabel = language === "pt" ? "Seguros" : language === "en" ? "Insurance" : "Seguros";
+  const protectionLabel =
+    language === "pt" ? "Seguros" : language === "en" ? "Insurance" : "Seguros";
 
   const tabs = [
     { to: "/lavoura", label: t("nav.property"), Icon: Sprout },

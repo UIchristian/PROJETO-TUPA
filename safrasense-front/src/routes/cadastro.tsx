@@ -28,8 +28,7 @@ type CarItem = {
 
 type PolygonPoint = { lat: number; lng: number };
 
-const BUSCAR_CARS_ENDPOINT = "http://localhost:8000/buscar-cars";
-const NDVI_ENDPOINT = "http://localhost:8000/ndvi";
+import { BUSCAR_CARS_ENDPOINT, NDVI_ENDPOINT } from "@/lib/api-config";
 
 function normalizePolygonPoint(point: any): PolygonPoint | null {
   if (!point) return null;
@@ -165,6 +164,13 @@ function CadastroScreen() {
   const { t, language } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [savingProgress, setSavingProgress] = useState(0);
+  const [savingStepText, setSavingStepText] = useState("");
+  const [ndviErrorData, setNdviErrorData] = useState<{
+    polygon: PolygonPoint[];
+    dataFinal: string;
+    terrenos: any[];
+  } | null>(null);
   const [crops, setCrops] = useState<string[]>(["Milho"]);
   const [system, setSystem] = useState("Safrinha");
 
@@ -450,9 +456,22 @@ function CadastroScreen() {
 
   const regionFicticia = "Região Fictícia - Noroeste MG";
 
-  const handleConfirmCadastro = async () => {
+  const handleConfirmCadastro = () => {
+    confirmCadastro(false);
+  };
+
+  const confirmCadastro = async (shouldSkipNdvi: boolean) => {
     setSaveError("");
+    setNdviErrorData(null);
     setSaving(true);
+    setSavingProgress(10);
+    setSavingStepText(
+      language === "es"
+        ? "Conectando al satélite..."
+        : language === "en"
+          ? "Connecting to satellite..."
+          : "Conectando ao satélite...",
+    );
 
     // Make sure we calculate the hectares for each terrain correctly
     const finalTerrenos = terrenos.map((t) => {
@@ -474,12 +493,48 @@ function CadastroScreen() {
     try {
       const dataFinalNdvi = new Date().toISOString().slice(0, 10);
 
+      // Simulate step progress increments
+      const progressInterval = setInterval(() => {
+        setSavingProgress((prev) => {
+          if (prev < 90) {
+            const next = prev + Math.floor(Math.random() * 8) + 2;
+            if (next >= 30 && next < 55) {
+              setSavingStepText(
+                language === "es"
+                  ? "Buscando imágenes de satélite..."
+                  : language === "en"
+                    ? "Fetching satellite imagery..."
+                    : "Buscando imagens de satélite...",
+              );
+            } else if (next >= 55 && next < 80) {
+              setSavingStepText(
+                language === "es"
+                  ? "Calculando vegetación de los últimos 12 meses..."
+                  : language === "en"
+                    ? "Calculating vegetation for the last 12 months..."
+                    : "Calculando vegetação dos últimos 12 meses...",
+              );
+            } else if (next >= 80) {
+              setSavingStepText(
+                language === "es"
+                  ? "Casi listo, finalizando cuenta..."
+                  : language === "en"
+                    ? "Almost there, finalizing account..."
+                    : "Quase lá, finalizando conta...",
+              );
+            }
+            return next;
+          }
+          return prev;
+        });
+      }, 700);
+
       const terrenosComNdvi = await Promise.all(
         finalTerrenos.map(async (terreno) => {
           const carPolygon = extractCarPolygon(terreno.selectedCar);
           const polygonForNdvi = carPolygon.length >= 3 ? carPolygon : terreno.points;
 
-          if (polygonForNdvi.length < 3) {
+          if (polygonForNdvi.length < 3 || shouldSkipNdvi) {
             return {
               ...terreno,
               ndviHistorico12m: [],
@@ -490,20 +545,36 @@ function CadastroScreen() {
             };
           }
 
+          try {
             const ndviDataset = await fetchNdviHistory(polygonForNdvi, dataFinalNdvi);
             const ndviHistorico12m =
               ndviDataset.monthly.length > 0 ? ndviDataset.monthly : ndviDataset.all.slice(-12);
 
-          return {
-            ...terreno,
-            ndviHistorico12m,
-            ndviRelatorioSemanal: ndviDataset.weekly,
-            ndviRelatorioMensal: ndviDataset.monthly,
-            ndviDataFinal: dataFinalNdvi,
-            ndviFontePoligono: carPolygon.length >= 3 ? "car" : "demarcacao",
-          };
+            return {
+              ...terreno,
+              ndviHistorico12m,
+              ndviRelatorioSemanal: ndviDataset.weekly,
+              ndviRelatorioMensal: ndviDataset.monthly,
+              ndviDataFinal: dataFinalNdvi,
+              ndviFontePoligono: carPolygon.length >= 3 ? "car" : "demarcacao",
+            };
+          } catch (ndviErr) {
+            console.error("NDVI fetch failed inside terrain:", ndviErr);
+            throw {
+              type: "NDVI_FETCH_ERROR",
+              terrenos: finalTerrenos,
+              polygon: polygonForNdvi,
+              dataFinal: dataFinalNdvi,
+            };
+          }
         }),
-      );
+      ).catch((err) => {
+        clearInterval(progressInterval);
+        throw err;
+      });
+
+      clearInterval(progressInterval);
+      setSavingProgress(100);
 
       const firstTerreno = terrenosComNdvi[0];
 
@@ -556,15 +627,23 @@ function CadastroScreen() {
       );
 
       navigate({ to: "/onboarding" });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setSaveError(
-        language === "es"
-          ? "No se pudo guardar tu registro. Intenta nuevamente."
-          : language === "en"
-            ? "Could not save your registration. Please try again."
-            : "Não foi possível salvar seu cadastro. Tente novamente.",
-      );
+      if (error && error.type === "NDVI_FETCH_ERROR") {
+        setNdviErrorData({
+          polygon: error.polygon,
+          dataFinal: error.dataFinal,
+          terrenos: error.terrenos,
+        });
+      } else {
+        setSaveError(
+          language === "es"
+            ? "No se pudo guardar tu registro. Intenta nuevamente."
+            : language === "en"
+              ? "Could not save your registration. Please try again."
+              : "Não foi possível salvar seu cadastro. Tente novamente.",
+        );
+      }
     } finally {
       setSaving(false);
     }
@@ -731,9 +810,7 @@ function CadastroScreen() {
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
-              <span className="text-base font-bold text-foreground/90">
-                {t("cadastro.system")}
-              </span>
+              <span className="text-base font-bold text-foreground/90">{t("cadastro.system")}</span>
               <button
                 type="button"
                 onClick={() => setShowSystemInfo(!showSystemInfo)}
@@ -823,7 +900,7 @@ function CadastroScreen() {
                       {t("cadastro.class_medio")}
                     </div>
                   ) : (
-                    <div className="px-3 py-1 rounded-full text-sm font-bold bg-stone-100 text-stone-700 border border-stone-200 uppercase shrink-0">
+                    <div className="px-3 py-1 rounded-full text-sm font-bold bg-muted text-muted-foreground border border-border uppercase shrink-0">
                       {t("cadastro.class_grande")}
                     </div>
                   )}
@@ -869,8 +946,36 @@ function CadastroScreen() {
               </div>
             )}
             {carError && (
-              <div className="text-sm font-bold text-destructive bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200 mt-1">
-                ⚠️ {carError}
+              <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3.5 flex flex-col gap-2.5 mt-1 text-left animate-in fade-in duration-200">
+                <span className="text-sm font-bold text-destructive flex items-center gap-1.5">
+                  ⚠️ {carError}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleFetchCarByArea}
+                    className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground font-bold text-xs active:scale-95 transition-all shadow-soft cursor-pointer"
+                  >
+                    {t("cadastro.tentar_novamente")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCarError("");
+                      setCarOpen(true);
+                      setTimeout(() => {
+                        const input = document.getElementById("car-number");
+                        if (input) {
+                          input.focus();
+                          input.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }
+                      }, 100);
+                    }}
+                    className="flex-1 h-9 rounded-lg border border-border bg-card font-bold text-xs text-foreground/85 hover:bg-secondary active:scale-95 transition-all cursor-pointer"
+                  >
+                    {t("cadastro.preencher_manualmente")}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -915,49 +1020,75 @@ function CadastroScreen() {
                 </div>
               </div>
             ) : (
-                <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
-                  <input
-                    id="car-number"
-                    value={carNumber}
-                    onChange={(e) => {
-                      setCarNumber(e.target.value);
-                      setCarFound(!!e.target.value);
-                      if (selectedCar) setSelectedCar(null);
-                    }}
-                    placeholder="Ex: BR-MG-3170107-..."
-                    className="h-12 px-4 rounded-xl bg-soft border border-border outline-none text-base"
-                  />
-                  {selectedCar ? (
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm text-primary font-bold">
-                        {language === "es"
-                          ? "CAR seleccionado y listo para guardar."
-                          : language === "en"
-                            ? "CAR selected and ready to save."
-                            : "CAR selecionado e pronto para salvar."}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleResetSelectedCar}
-                        className="text-sm text-primary font-bold hover:underline"
-                      >
-                        {language === "es" ? "Cambiar" : language === "en" ? "Change" : "Trocar"}
-                      </button>
-                    </div>
-                  ) : (
-                    carFound && (
-                      <span className="text-sm text-primary font-bold animate-pulse">
-                        {t("cadastro.car_found")}
-                      </span>
-                    )
-                  )}
-                </div>
-              )
-            }
+              <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
+                <input
+                  id="car-number"
+                  value={carNumber}
+                  onChange={(e) => {
+                    setCarNumber(e.target.value);
+                    setCarFound(!!e.target.value);
+                    if (selectedCar) setSelectedCar(null);
+                  }}
+                  placeholder="Ex: BR-MG-3170107-..."
+                  className="h-12 px-4 rounded-xl bg-soft border border-border outline-none text-base"
+                />
+                {selectedCar ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm text-primary font-bold">
+                      {language === "es"
+                        ? "CAR seleccionado y listo para guardar."
+                        : language === "en"
+                          ? "CAR selected and ready to save."
+                          : "CAR selecionado e pronto para salvar."}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleResetSelectedCar}
+                      className="text-sm text-primary font-bold hover:underline"
+                    >
+                      {language === "es" ? "Cambiar" : language === "en" ? "Change" : "Trocar"}
+                    </button>
+                  </div>
+                ) : (
+                  carFound && (
+                    <span className="text-sm text-primary font-bold animate-pulse">
+                      {t("cadastro.car_found")}
+                    </span>
+                  )
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         <div className="flex-1" />
+
+        {ndviErrorData && (
+          <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 shadow-card flex flex-col gap-3 animate-in fade-in duration-200 mt-2 text-left shrink-0">
+            <h4 className="font-bold text-sm text-destructive flex items-center gap-1.5">
+              ⚠️ {t("cadastro.ndvi_error_title")}
+            </h4>
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              {t("cadastro.ndvi_error_desc")}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => confirmCadastro(false)}
+                className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground font-bold text-sm active:scale-95 transition-all shadow-soft flex items-center justify-center cursor-pointer"
+              >
+                {t("cadastro.tentar_novamente")}
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmCadastro(true)}
+                className="flex-1 h-11 rounded-xl border border-border bg-card font-bold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+              >
+                {t("cadastro.prosseguir_sem_ndvi")}
+              </button>
+            </div>
+          </div>
+        )}
 
         {saveError && (
           <div className="text-sm text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
@@ -984,24 +1115,28 @@ function CadastroScreen() {
         <div className="fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm flex items-center justify-center px-6">
           <div className="w-full max-w-[320px] rounded-3xl bg-card border border-border shadow-2xl p-5 flex flex-col items-center gap-4 text-center">
             <Loader2 size={28} className="animate-spin text-primary" />
-            <div className="space-y-1">
+            <div className="space-y-1 w-full">
               <p className="text-lg font-bold text-foreground">
-                {language === "es"
-                  ? "Creando tu cuenta..."
-                  : language === "en"
-                    ? "Creating your account..."
-                    : "Criando sua conta..."}
+                {savingStepText ||
+                  (language === "es"
+                    ? "Creando tu cuenta..."
+                    : language === "en"
+                      ? "Creating your account..."
+                      : "Criando sua conta...")}
               </p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <div className="w-full h-2.5 rounded-full bg-secondary overflow-hidden mt-3">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${savingProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed mt-2.5 pt-1">
                 {language === "es"
-                  ? "Un momento mientras validamos tu cuenta."
+                  ? "Analizando 12 meses de imágenes de satélite. Esto puede tardar hasta 1 minuto."
                   : language === "en"
-                    ? "We are validating your account."
-                    : "Aguarde um momento enquanto finalizamos seu cadastro."}
+                    ? "Analyzing 12 months of satellite imagery. This can take up to 1 minute."
+                    : "Analisando 12 meses de imagens de satélite. Isso pode levar até 1 minuto."}
               </p>
-            </div>
-            <div className="w-full h-2 rounded-full bg-secondary overflow-hidden">
-              <div className="h-full w-1/2 rounded-full bg-primary animate-pulse" />
             </div>
           </div>
         </div>
@@ -1046,7 +1181,13 @@ function CadastroScreen() {
                   onClick={handleSearchAddress}
                   disabled={searchingAddress || !address.trim()}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-muted-foreground hover:text-primary active:scale-95 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center"
-                  title={language === "es" ? "Buscar en el mapa" : language === "en" ? "Search on map" : "Buscar no mapa"}
+                  title={
+                    language === "es"
+                      ? "Buscar en el mapa"
+                      : language === "en"
+                        ? "Search on map"
+                        : "Buscar no mapa"
+                  }
                 >
                   {searchingAddress ? (
                     <span className="block w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
@@ -1071,45 +1212,23 @@ function CadastroScreen() {
               </label>
 
               <div className="relative flex-1 rounded-2xl overflow-hidden border border-border select-none min-h-[260px] bg-secondary">
-                <div className="absolute top-3 left-3 z-[500] bg-navy/85 backdrop-blur text-navy-foreground text-sm px-3.5 py-2 rounded-lg shadow pointer-events-none">
-                  {t("cadastro.map_helper")}
-                </div>
-
                 <Suspense
                   fallback={
                     <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-muted-foreground bg-soft/40">
-                      {language === "es" ? "Cargando mapa..." : language === "en" ? "Loading map..." : "Carregando mapa..."}
+                      {language === "es"
+                        ? "Cargando mapa..."
+                        : language === "en"
+                          ? "Loading map..."
+                          : "Carregando mapa..."}
                     </div>
                   }
                 >
                   <FarmMap points={points} setPoints={setPoints} center={mapCenter} />
                 </Suspense>
-
-                {points.length === 0 && (
-                  <div className="absolute inset-x-4 bottom-4 z-[500] rounded-xl bg-card/95 backdrop-blur px-3.5 py-2.5 text-sm font-bold text-navy shadow pointer-events-none text-center">
-                    {t("cadastro.map_empty")}
-                  </div>
-                )}
               </div>
             </div>
 
-            <div className="flex gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setPoints([])}
-                disabled={points.length === 0}
-                className="h-12 px-4 rounded-xl border border-border font-bold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
-              >
-                {t("cadastro.clear_btn")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setPoints(points.slice(0, -1))}
-                disabled={points.length === 0}
-                className="h-12 px-4 rounded-xl border border-border font-bold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
-              >
-                {t("cadastro.undo_btn")}
-              </button>
+            <div className="flex shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -1118,7 +1237,7 @@ function CadastroScreen() {
                     handleFetchCarByArea();
                   }
                 }}
-                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
               >
                 {t("cadastro.confirm_land_btn")}
               </button>

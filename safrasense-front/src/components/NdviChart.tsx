@@ -68,15 +68,19 @@ function formatWeeklyLabel(item: NdviHistoryRow, language: "pt" | "es" | "en") {
 
   const formatDay = (d: Date) => d.getDate();
   const formatMonth = (d: Date) => {
-    return d.toLocaleDateString(language === "pt" ? "pt-BR" : language === "en" ? "en-US" : "es-ES", {
-      month: "2-digit",
-    });
+    return d.toLocaleDateString(
+      language === "pt" ? "pt-BR" : language === "en" ? "en-US" : "es-ES",
+      {
+        month: "2-digit",
+      },
+    );
   };
 
   const weekPrefix = language === "es" ? "Sem. " : language === "en" ? "Wk " : "Sem ";
-  const weekMatch = String(item.referencia_semana || item.referencia || "").match(/\b[SW](\d+)\b/i) ||
-                    String(item.referencia_semana || item.referencia || "").match(/^[SW](\d+)/i) ||
-                    String(item.referencia_semana || item.referencia || "").match(/(?:Sem|Week|Semana|S|W)(\d+)/i);
+  const weekMatch =
+    String(item.referencia_semana || item.referencia || "").match(/\b[SW](\d+)\b/i) ||
+    String(item.referencia_semana || item.referencia || "").match(/^[SW](\d+)/i) ||
+    String(item.referencia_semana || item.referencia || "").match(/(?:Sem|Week|Semana|S|W)(\d+)/i);
   const weekNum = weekMatch ? weekMatch[1] : "";
 
   let rangeStr = "";
@@ -136,7 +140,8 @@ export function getStatusDetails(v: number, language: "pt" | "es" | "en" = "pt")
       bgClass: "bg-primary text-primary-foreground",
       text: language === "es" ? "Saludable" : language === "en" ? "Healthy" : "Saudável",
       emoji: "🟢",
-      description: language === "es" ? "Saludable 🌱" : language === "en" ? "Healthy 🌱" : "Saudável 🌱",
+      description:
+        language === "es" ? "Saludable 🌱" : language === "en" ? "Healthy 🌱" : "Saudável 🌱",
     };
   } else if (v >= 0.2) {
     return {
@@ -144,7 +149,8 @@ export function getStatusDetails(v: number, language: "pt" | "es" | "en" = "pt")
       bgClass: "bg-amber-warn text-amber-warn-foreground",
       text: language === "es" ? "Atención" : language === "en" ? "Caution" : "Atenção",
       emoji: "🟡",
-      description: language === "es" ? "Estrés ⚠️" : language === "en" ? "Stress ⚠️" : "Estresse ⚠️",
+      description:
+        language === "es" ? "Estrés ⚠️" : language === "en" ? "Stress ⚠️" : "Estresse ⚠️",
     };
   } else {
     return {
@@ -152,7 +158,12 @@ export function getStatusDetails(v: number, language: "pt" | "es" | "en" = "pt")
       bgClass: "bg-destructive text-destructive-foreground",
       text: language === "es" ? "Seco" : language === "en" ? "Dry" : "Seco",
       emoji: "🔴",
-      description: language === "es" ? "Sequía crítica 🚨" : language === "en" ? "Critical drought 🚨" : "Seca Crítica 🚨",
+      description:
+        language === "es"
+          ? "Sequía crítica 🚨"
+          : language === "en"
+            ? "Critical drought 🚨"
+            : "Seca Crítica 🚨",
     };
   }
 }
@@ -299,13 +310,16 @@ export function NdviChart({ status }: { status: ChartStatus }) {
     relatorios: currentTerreno?.ndviHistorico12m,
   });
   const monthlyRows =
-    ndviDataset.monthly.length > 0 ? ndviDataset.monthly : ndviDataset.all.filter((row) => row.granularidade !== "weekly");
+    ndviDataset.monthly.length > 0
+      ? ndviDataset.monthly
+      : ndviDataset.all.filter((row) => row.granularidade !== "weekly");
   const weeklyRows = ndviDataset.weekly;
-  const dynamicMes = weeklyRows.length >= 4 ? buildNdviChartFromHistory(weeklyRows.slice(-4), activeLang) : null;
+  const dynamicMes =
+    weeklyRows.length > 0 ? buildNdviChartFromHistory(weeklyRows.slice(-4), activeLang) : null;
   const dynamicSemestre =
-    monthlyRows.length >= 3 ? buildNdviChartFromHistory(monthlyRows.slice(-6), activeLang) : null;
+    monthlyRows.length > 0 ? buildNdviChartFromHistory(monthlyRows.slice(-6), activeLang) : null;
   const dynamicAno =
-    monthlyRows.length >= 6 ? buildNdviChartFromHistory(monthlyRows.slice(-12), activeLang) : null;
+    monthlyRows.length > 0 ? buildNdviChartFromHistory(monthlyRows.slice(-12), activeLang) : null;
   const latestAverage = getLatestNdviAverage(ndviDataset);
 
   const pData = periodData[period];
@@ -363,6 +377,30 @@ export function NdviChart({ status }: { status: ChartStatus }) {
     };
   });
 
+  if (!ndviDataset || ndviDataset.all.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl mb-4 shadow-soft">
+          📡
+        </div>
+        <h4 className="font-bold text-navy text-base">
+          {language === "es"
+            ? "Análisis satelital en procesamiento"
+            : language === "en"
+              ? "Satellite analysis in progress"
+              : "Análise de satélite em processamento"}
+        </h4>
+        <p className="text-xs text-muted-foreground mt-1.5 max-w-[240px] leading-relaxed">
+          {language === "es"
+            ? "Sin datos para este terreno aún. Estamos recolectando y procesando imágenes satelitales."
+            : language === "en"
+              ? "No data for this terrain yet. We are gathering and processing satellite imagery."
+              : "Sem dados para este terreno ainda. Estamos coletando e processando imagens de satélite."}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex flex-col">
       {/* Google Calendar-like Period Selector Segmented Control */}
@@ -407,7 +445,11 @@ export function NdviChart({ status }: { status: ChartStatus }) {
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="rounded-xl border border-border/40 bg-soft/40 px-3 py-2.5">
           <span className="text-sm uppercase tracking-wider text-muted-foreground font-bold block">
-            {language === "es" ? "NDVI medio actual" : language === "en" ? "Current average NDVI" : "NDVI medio atual"}
+            {language === "es"
+              ? "NDVI medio actual"
+              : language === "en"
+                ? "Current average NDVI"
+                : "NDVI medio atual"}
           </span>
           <span className="text-xl font-black text-foreground tabular-nums">
             {latestAverage ? latestAverage.ndviMedio.toFixed(3) : "--"}
@@ -491,13 +533,40 @@ export function NdviChart({ status }: { status: ChartStatus }) {
                 domain={[-1, 1]}
                 ticks={[-1, -0.5, 0, 0.2, 0.5, 0.75, 1]}
                 tickFormatter={(v) => {
-                  if (v === 1) return language === "es" ? "Excelente" : language === "en" ? "Excellent" : "Excelente";
-                  if (v === 0.75) return language === "es" ? "Saludable" : language === "en" ? "Healthy" : "Saudável";
-                  if (v === 0.5) return language === "es" ? "Atención" : language === "en" ? "Caution" : "Atenção";
-                  if (v === 0.2) return language === "es" ? "Sequía" : language === "en" ? "Drought" : "Seca crítica";
-                  if (v === 0) return language === "es" ? "Neutro" : language === "en" ? "Neutral" : "Neutro";
-                  if (v === -0.5) return language === "es" ? "Muy bajo" : language === "en" ? "Very low" : "Muito baixo";
-                  if (v === -1) return language === "es" ? "Mínimo" : language === "en" ? "Minimum" : "Mínimo";
+                  if (v === 1)
+                    return language === "es"
+                      ? "Excelente"
+                      : language === "en"
+                        ? "Excellent"
+                        : "Excelente";
+                  if (v === 0.75)
+                    return language === "es"
+                      ? "Saludable"
+                      : language === "en"
+                        ? "Healthy"
+                        : "Saudável";
+                  if (v === 0.5)
+                    return language === "es"
+                      ? "Atención"
+                      : language === "en"
+                        ? "Caution"
+                        : "Atenção";
+                  if (v === 0.2)
+                    return language === "es"
+                      ? "Sequía"
+                      : language === "en"
+                        ? "Drought"
+                        : "Seca crítica";
+                  if (v === 0)
+                    return language === "es" ? "Neutro" : language === "en" ? "Neutral" : "Neutro";
+                  if (v === -0.5)
+                    return language === "es"
+                      ? "Muy bajo"
+                      : language === "en"
+                        ? "Very low"
+                        : "Muito baixo";
+                  if (v === -1)
+                    return language === "es" ? "Mínimo" : language === "en" ? "Minimum" : "Mínimo";
                   return "";
                 }}
                 tick={{ fontSize: 12, fill: "#7a7a7a", fontWeight: "medium" }}
@@ -512,7 +581,12 @@ export function NdviChart({ status }: { status: ChartStatus }) {
                   boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
                 }}
                 formatter={(v: number, name: string) => {
-                  const historicalLabel = language === "es" ? "Promedio histórico" : language === "en" ? "Historical average" : "Média histórica";
+                  const historicalLabel =
+                    language === "es"
+                      ? "Promedio histórico"
+                      : language === "en"
+                        ? "Historical average"
+                        : "Média histórica";
                   if (name === historicalLabel || name === "") {
                     return [v.toFixed(2), name];
                   }
@@ -529,7 +603,13 @@ export function NdviChart({ status }: { status: ChartStatus }) {
                 strokeWidth={1.5}
                 strokeDasharray="4 4"
                 dot={false}
-                name={language === "es" ? "Promedio histórico" : language === "en" ? "Historical average" : "Média histórica"}
+                name={
+                  language === "es"
+                    ? "Promedio histórico"
+                    : language === "en"
+                      ? "Historical average"
+                      : "Média histórica"
+                }
               />
 
               {/* Current health index represented as color-coded bars (drawn as Corn cobs) */}
@@ -547,15 +627,26 @@ export function NdviChart({ status }: { status: ChartStatus }) {
       <div className="mt-4 rounded-xl border border-border/40 overflow-hidden bg-card">
         <div className="grid grid-cols-[1.4fr_0.8fr_0.8fr] gap-2 px-3 py-2 bg-secondary/60 text-sm font-bold text-foreground/80">
           <span>{language === "es" ? "Periodo" : language === "en" ? "Period" : "Período"}</span>
-          <span className="text-center">{language === "es" ? "NDVI medio" : language === "en" ? "Avg NDVI" : "NDVI medio"}</span>
-          <span className="text-center">{language === "es" ? "Promedio" : language === "en" ? "Baseline" : "Média"}</span>
+          <span className="text-center">
+            {language === "es" ? "NDVI medio" : language === "en" ? "Avg NDVI" : "NDVI medio"}
+          </span>
+          <span className="text-center">
+            {language === "es" ? "Promedio" : language === "en" ? "Baseline" : "Média"}
+          </span>
         </div>
         <div className="divide-y divide-border/30">
           {data.slice(-6).map((item, idx) => (
-            <div key={`${item.month}-${idx}`} className="grid grid-cols-[1.4fr_0.8fr_0.8fr] gap-2 px-3 py-2.5 text-sm text-foreground/85">
+            <div
+              key={`${item.month}-${idx}`}
+              className="grid grid-cols-[1.4fr_0.8fr_0.8fr] gap-2 px-3 py-2.5 text-sm text-foreground/85"
+            >
               <span className="font-medium">{item.month}</span>
-              <span className="text-center tabular-nums font-bold">{item.ndviMedio.toFixed(3)}</span>
-              <span className="text-center tabular-nums text-muted-foreground">{item.historical.toFixed(3)}</span>
+              <span className="text-center tabular-nums font-bold">
+                {item.ndviMedio.toFixed(3)}
+              </span>
+              <span className="text-center tabular-nums text-muted-foreground">
+                {item.historical.toFixed(3)}
+              </span>
             </div>
           ))}
         </div>

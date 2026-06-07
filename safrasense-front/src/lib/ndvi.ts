@@ -156,7 +156,9 @@ export function parseNdviDataset(payload: any): NdviDataset {
         ndviMedio: Number(ndvi.toFixed(4)),
         dataInicial: dataInicial ?? undefined,
         dataFinal: dataFinal ?? undefined,
-        referencia: String(row?.referencia_semana ?? row?.referencia_mes ?? row?.referencia ?? data),
+        referencia: String(
+          row?.referencia_semana ?? row?.referencia_mes ?? row?.referencia ?? data,
+        ),
         granularidade: inferGranularity(row, dataInicial ?? undefined, dataFinal ?? undefined),
       } satisfies NdviHistoryRow;
     })
@@ -180,6 +182,47 @@ export function buildHistoricalAverage(values: NdviHistoryRow[]): number[] {
   const avg = values.reduce((sum, item) => sum + item.ndviMedio, 0) / values.length;
   const rounded = Number(avg.toFixed(4));
   return values.map(() => rounded);
+}
+
+export function aggregateWeeklyToMonthly(weeklyRows: NdviHistoryRow[]): NdviHistoryRow[] {
+  if (!weeklyRows || weeklyRows.length === 0) return [];
+
+  // Group by "YYYY-MM"
+  const groups = new Map<string, NdviHistoryRow[]>();
+  for (const row of weeklyRows) {
+    let monthKey = "";
+    if (row.data && /^\d{4}-\d{2}/.test(row.data)) {
+      monthKey = row.data.slice(0, 7); // "YYYY-MM"
+    } else {
+      const d = new Date(row.data);
+      if (!Number.isNaN(d.getTime())) {
+        monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      }
+    }
+    if (!monthKey) continue;
+    if (!groups.has(monthKey)) {
+      groups.set(monthKey, []);
+    }
+    groups.get(monthKey)!.push(row);
+  }
+
+  const result: NdviHistoryRow[] = [];
+  for (const [monthKey, rows] of groups.entries()) {
+    const sum = rows.reduce((acc, r) => acc + r.ndviMedio, 0);
+    const avg = sum / rows.length;
+    // Use the first day of that month for the date representation
+    const dateStr = `${monthKey}-01`;
+    result.push({
+      data: dateStr,
+      ndvi: Number(avg.toFixed(4)),
+      ndviMedio: Number(avg.toFixed(4)),
+      referencia: monthKey,
+      granularidade: "monthly",
+    });
+  }
+
+  // Sort by date ascending
+  return result.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
 }
 
 export function getLatestNdviAverage(dataset?: Partial<NdviDataset> | null): NdviHistoryRow | null {

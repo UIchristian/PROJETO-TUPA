@@ -88,6 +88,66 @@ function LavouraScreen() {
     syncFarmerFromDb();
   }, [farmer.firebaseUid]);
 
+  const hasTerrenos = farmer.terrenos && farmer.terrenos.length > 0;
+
+  if (!hasTerrenos) {
+    return (
+      <MobileFrame withNav>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-background min-h-[70vh]">
+          <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary text-4xl mb-6 shadow-soft animate-pop">
+            🗺️
+          </div>
+          <h2 className="text-xl font-bold text-navy mb-2.5">{t("dashboard.empty_title")}</h2>
+          <p className="text-sm text-navy/85 leading-relaxed max-w-[280px] mb-6">
+            {t("dashboard.empty_subtitle")}
+          </p>
+          <button
+            onClick={() => navigate({ to: "/cadastro" })}
+            className="w-full max-w-[280px] h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-base active:scale-[0.99] transition-transform shadow-soft flex items-center justify-center gap-2 cursor-pointer"
+          >
+            🌱 {t("dashboard.empty_btn")}
+          </button>
+        </div>
+      </MobileFrame>
+    );
+  }
+
+  const currentTerreno =
+    farmer.terrenos?.find((t) => t.id === activeTerrenoId) || farmer.terrenos?.[0];
+
+  const getRelativeTimeStr = (val: any, lang: string): string => {
+    try {
+      if (!val) return "";
+      let d: Date | null = null;
+      if (typeof val?.toDate === "function") d = val.toDate();
+      else if (val instanceof Date) d = val;
+      else d = new Date(val);
+
+      if (!d || Number.isNaN(d.getTime())) return "";
+
+      const ms = Date.now() - d.getTime();
+      const days = Math.floor(ms / 86_400_000);
+      const hours = Math.floor(ms / 3_600_000);
+      const mins = Math.floor(ms / 60_000);
+
+      if (days >= 1) return `${days}d`;
+      if (hours >= 1) return `${hours}h`;
+      if (mins >= 1) return `${mins}min`;
+
+      if (lang === "es") return "ahora";
+      if (lang === "en") return "now";
+      return "agora";
+    } catch {
+      return "";
+    }
+  };
+
+  const updateTimestamp = currentTerreno?.atualizadoEm || currentTerreno?.ndviDataFinal;
+  const relativeTime = updateTimestamp ? getRelativeTimeStr(updateTimestamp, language) : "";
+  const updateText = relativeTime
+    ? `${t("dashboard.update_prefix")}${relativeTime}`
+    : t("dashboard.update_pending");
+
   const cfg = {
     healthy: {
       bg: "bg-primary",
@@ -95,7 +155,7 @@ function LavouraScreen() {
       pill: t("dashboard.pill_healthy"),
       title: t("dashboard.title_healthy"),
       sub: t("dashboard.sub_healthy"),
-      update: t("dashboard.update_prefix") + t("dashboard.update_healthy"),
+      update: updateText,
     },
     alert: {
       bg: "bg-amber-warn",
@@ -103,7 +163,7 @@ function LavouraScreen() {
       pill: t("dashboard.pill_alert"),
       title: t("dashboard.title_alert"),
       sub: t("dashboard.sub_alert"),
-      update: t("dashboard.update_alert"),
+      update: updateText,
     },
     emergency: {
       bg: "bg-alert",
@@ -111,12 +171,9 @@ function LavouraScreen() {
       pill: t("dashboard.pill_emergency"),
       title: t("dashboard.title_emergency"),
       sub: t("dashboard.sub_emergency"),
-      update: t("dashboard.update_emergency"),
+      update: updateText,
     },
   }[status];
-
-  const currentTerreno =
-    farmer.terrenos?.find((t) => t.id === activeTerrenoId) || farmer.terrenos?.[0];
 
   const ndviDataset = parseNdviDataset({
     relatorios_semanais: currentTerreno?.ndviRelatorioSemanal,
@@ -263,9 +320,7 @@ function LavouraScreen() {
               />
             </div>
           </div>
-          <span className="mt-3 text-sm tracking-[0.15em] font-bold text-white">
-            {cfg.pill}
-          </span>
+          <span className="mt-3 text-sm tracking-[0.15em] font-bold text-white">{cfg.pill}</span>
           <h1 className="text-xl font-bold mt-1 text-center">{cfg.title}</h1>
           <p className="text-sm text-white/95 mt-1.5 text-center max-w-[280px]">{cfg.sub}</p>
 
@@ -274,9 +329,7 @@ function LavouraScreen() {
             onClick={() => setHomologationModalOpen(true)}
             className={`mt-4 mx-auto max-w-[290px] w-full rounded-2xl p-3.5 border backdrop-blur-md flex items-center gap-3.5 text-left ${confidenceCfg.bg} shadow-md hover:scale-[1.01] transition-transform cursor-pointer block`}
           >
-            <div
-              className={`text-2xl font-black ${confidenceCfg.accent} shrink-0 tabular-nums`}
-            >
+            <div className={`text-2xl font-black ${confidenceCfg.accent} shrink-0 tabular-nums`}>
               {confidenceCfg.percent}
             </div>
             <div className="flex-1 min-w-0">
@@ -287,9 +340,7 @@ function LavouraScreen() {
                     ? "MODEL CONFIDENCE"
                     : "CONFIANÇA DO MODELO"}
               </span>
-              <span className="text-sm font-bold block leading-snug">
-                {confidenceCfg.label}
-              </span>
+              <span className="text-sm font-bold block leading-snug">{confidenceCfg.label}</span>
               <p className="text-sm opacity-90 mt-0.5 leading-normal truncate max-w-full">
                 {confidenceCfg.desc}
               </p>
@@ -450,8 +501,16 @@ function LavouraScreen() {
                   className={`font-bold ${fieldPhotoUploaded ? "text-emerald-600" : "text-amber-600"}`}
                 >
                   {fieldPhotoUploaded
-                    ? language === "es" ? "96% (Alta)" : language === "en" ? "96% (High)" : "96% (Alta)"
-                    : language === "es" ? "48% (Baja - Pendiente)" : language === "en" ? "48% (Low - Pending)" : "48% (Baixa - Pendente)"}
+                    ? language === "es"
+                      ? "96% (Alta)"
+                      : language === "en"
+                        ? "96% (High)"
+                        : "96% (Alta)"
+                    : language === "es"
+                      ? "48% (Baja - Pendiente)"
+                      : language === "en"
+                        ? "48% (Low - Pending)"
+                        : "48% (Baixa - Pendente)"}
                 </span>
               </div>
 
@@ -558,7 +617,6 @@ function LavouraScreen() {
           </div>
         </div>
       )}
-
     </MobileFrame>
   );
 }

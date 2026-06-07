@@ -253,7 +253,9 @@ function LoginScreen() {
 
           {/* Shared field: CPF / CNPJ */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="cpf-input" className="text-sm font-semibold text-foreground/90">{t("login.cpf")}</label>
+            <label htmlFor="cpf-input" className="text-sm font-semibold text-foreground/90">
+              {t("login.cpf")}
+            </label>
             <input
               id="cpf-input"
               value={cpf}
@@ -335,6 +337,18 @@ function LoginScreen() {
             className="mt-2 h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-base active:scale-[0.99] transition-transform shadow-soft"
           >
             {isLogin ? t("login.btnEntrar") : t("login.btnRegister")}
+          </button>
+
+          {/* Access Demo Mode Button */}
+          <button
+            type="button"
+            onClick={() => {
+              appStore.loadDemoData();
+              navigate({ to: "/lavoura" });
+            }}
+            className="h-12 rounded-2xl border border-primary/40 text-primary font-semibold text-sm hover:bg-primary/5 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 shadow-soft cursor-pointer"
+          >
+            🚀 {t("login.useDemoMode")}
           </button>
 
           {/* Switch flow link text */}
@@ -424,7 +438,11 @@ function LoginScreen() {
               {/* Section 1 */}
               <section className="flex flex-col gap-1.5">
                 <h3 className="font-bold text-foreground">
-                  {language === "es" ? "1. Quiénes somos" : language === "en" ? "1. Who We Are" : "1. Quem somos"}
+                  {language === "es"
+                    ? "1. Quiénes somos"
+                    : language === "en"
+                      ? "1. Who We Are"
+                      : "1. Quem somos"}
                 </h3>
                 <p>
                   {language === "es"
@@ -438,7 +456,11 @@ function LoginScreen() {
               {/* Section 2 */}
               <section className="flex flex-col gap-1.5">
                 <h3 className="font-bold text-foreground">
-                  {language === "es" ? "2. Datos que recopilamos" : language === "en" ? "2. Data We Collect" : "2. Dados que coletamos"}
+                  {language === "es"
+                    ? "2. Datos que recopilamos"
+                    : language === "en"
+                      ? "2. Data We Collect"
+                      : "2. Dados que coletamos"}
                 </h3>
                 <p>
                   {language === "es"
@@ -479,7 +501,11 @@ function LoginScreen() {
               {/* Section 3 */}
               <section className="flex flex-col gap-1.5">
                 <h3 className="font-bold text-foreground">
-                  {language === "es" ? "3. Finalidad del tratamiento" : language === "en" ? "3. Purpose of Processing" : "3. Finalidade do tratamento"}
+                  {language === "es"
+                    ? "3. Finalidad del tratamiento"
+                    : language === "en"
+                      ? "3. Purpose of Processing"
+                      : "3. Finalidade do tratamento"}
                 </h3>
                 <p>
                   {language === "es"
@@ -493,7 +519,11 @@ function LoginScreen() {
               {/* Section 4 */}
               <section className="flex flex-col gap-1.5">
                 <h3 className="font-bold text-foreground">
-                  {language === "es" ? "4. Compartición de datos" : language === "en" ? "4. Data Sharing" : "4. Compartilhamento de dados"}
+                  {language === "es"
+                    ? "4. Compartición de datos"
+                    : language === "en"
+                      ? "4. Data Sharing"
+                      : "4. Compartilhamento de dados"}
                 </h3>
                 <p>
                   {language === "es"
@@ -507,7 +537,11 @@ function LoginScreen() {
               {/* Section 5 */}
               <section className="flex flex-col gap-1.5">
                 <h3 className="font-bold text-foreground">
-                  {language === "es" ? "5. Almacenamiento y seguridad" : language === "en" ? "5. Storage & Security" : "5. Armazenamento e segurança"}
+                  {language === "es"
+                    ? "5. Almacenamiento y seguridad"
+                    : language === "en"
+                      ? "5. Storage & Security"
+                      : "5. Armazenamento e segurança"}
                 </h3>
                 <p>
                   {language === "es"
@@ -539,7 +573,11 @@ function LoginScreen() {
               {/* Section 7 */}
               <section className="flex flex-col gap-1.5">
                 <h3 className="font-bold text-foreground">
-                  {language === "es" ? "7. Contacto" : language === "en" ? "7. Contact" : "7. Contato"}
+                  {language === "es"
+                    ? "7. Contacto"
+                    : language === "en"
+                      ? "7. Contact"
+                      : "7. Contato"}
                 </h3>
                 <p>
                   {language === "es"

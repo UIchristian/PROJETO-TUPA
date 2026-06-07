@@ -8,7 +8,7 @@ export const Route = createFileRoute("/lavoura/acao")({
   head: () => {
     const lang = appStore.get().language || "es";
     return {
-      meta: [{ title: `${t("action.title", lang)} — SafraSense` }],
+      meta: [{ title: `${t("action.title", lang)}: SafraSense` }],
     };
   },
   component: AcaoScreen,
@@ -80,7 +80,7 @@ function AcaoScreen() {
           </div>
         </div>
 
-        {/* Card 3 — Seguro Paramétrico Climático */}
+        {/* Card 3: Seguro Paramétrico Climático */}
         <article className="rounded-2xl bg-card p-4 shadow-card border border-border/60">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-soft flex items-center justify-center shrink-0">

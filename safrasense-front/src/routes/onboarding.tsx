@@ -60,9 +60,7 @@ function OnboardingScreen() {
           />
         </div>
 
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {t("onboarding.footer")}
-        </p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{t("onboarding.footer")}</p>
 
         <div className="flex-1" />
 

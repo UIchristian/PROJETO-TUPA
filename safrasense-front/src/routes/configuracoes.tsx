@@ -11,7 +11,7 @@ import { LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/configuracoes")({
   head: () => ({
-    meta: [{ title: `Configurações — SafraSense` }],
+    meta: [{ title: `Configurações: SafraSense` }],
   }),
   component: ConfiguracoesScreen,
 });
@@ -59,13 +59,9 @@ function ConfiguracoesScreen() {
     } catch (err: any) {
       console.error("deleteUser error", err);
       if (err?.code === "auth/requires-recent-login") {
-        setDeleteError(
-          t("settings.reauthError") as string,
-        );
+        setDeleteError(t("settings.reauthError") as string);
       } else {
-        setDeleteError(
-          t("settings.deleteError") as string,
-        );
+        setDeleteError(t("settings.deleteError") as string);
       }
     } finally {
       setDeleting(false);
@@ -85,8 +81,12 @@ function ConfiguracoesScreen() {
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
           <div className="flex flex-col gap-3">
             <div>
-              <h2 className="text-base font-semibold text-foreground">{t("settings.accessibilityTitle")}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{t("settings.accessibilityDescription")}</p>
+              <h2 className="text-base font-semibold text-foreground">
+                {t("settings.accessibilityTitle")}
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {t("settings.accessibilityDescription")}
+              </p>
             </div>
             <div className="mt-1">
               <AccessibilityControls />
@@ -96,12 +96,11 @@ function ConfiguracoesScreen() {
 
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
           <div>
-            <label htmlFor="language-select" className="block text-base font-semibold text-foreground">
-              {language === "es"
-                ? "Idioma"
-                : language === "en"
-                  ? "Language"
-                  : "Idioma"}
+            <label
+              htmlFor="language-select"
+              className="block text-base font-semibold text-foreground"
+            >
+              {language === "es" ? "Idioma" : language === "en" ? "Language" : "Idioma"}
             </label>
             <p className="mt-2 text-sm text-muted-foreground">
               {language === "es"
@@ -135,7 +134,9 @@ function ConfiguracoesScreen() {
 
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
           <div>
-            <h2 className="text-base font-semibold text-foreground">{t("settings.accountTitle")}</h2>
+            <h2 className="text-base font-semibold text-foreground">
+              {t("settings.accountTitle")}
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground">{t("settings.accountDescription")}</p>
           </div>
 
@@ -190,9 +191,7 @@ function ConfiguracoesScreen() {
                   : "Tem certeza que deseja excluir sua conta? Seus dados de perfil serao removidos e voce nao podera mais entrar com este CPF/CNPJ. Esta acao nao pode ser desfeita."}
             </p>
 
-            {deleteError && (
-              <p className="text-sm text-destructive font-medium">{deleteError}</p>
-            )}
+            {deleteError && <p className="text-sm text-destructive font-medium">{deleteError}</p>}
 
             <div className="flex gap-2 mt-2">
               <button

@@ -288,16 +288,97 @@ html.accessibility-xlarge {
 }
 
 html.accessibility-high-contrast {
-  --color-background: #ffffff;
-  --color-foreground: #000000;
-  --color-card: #ffffff;
-  --color-card-foreground: #000000;
-  --color-popover: #ffffff;
-  --color-popover-foreground: #000000;
-  --color-muted-foreground: #1a1a1a;
-  --color-secondary: #f0f0f0;
-  --color-primary: #0b6623;
-  --color-border: #000000;
+  /* Base CSS Variables for High Contrast */
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  
+  --primary: #0b6623;
+  --primary-foreground: #ffffff;
+  
+  --secondary: #e6e6e6;
+  --secondary-foreground: #000000;
+  
+  --muted: #e6e6e6;
+  --muted-foreground: #1a1a1a;
+  
+  --accent: #e6e6e6;
+  --accent-foreground: #000000;
+  
+  --destructive: #990000;
+  --destructive-foreground: #ffffff;
+  
+  --border: #000000;
+  --input: #000000;
+  --ring: #0b6623;
+  
+  --navy: #000000;
+  --navy-foreground: #ffffff;
+  
+  --amber-warn: #804000;
+  --amber-warn-foreground: #ffffff;
+  
+  --alert: #990000;
+  --alert-foreground: #ffffff;
+  
+  --soft: #f0f0f0;
+  
+  --feature: #000000;
+  --feature-foreground: #ffffff;
+
+  /* Tailwind 4 theme variables overrides */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+  --color-amber-warn: var(--amber-warn);
+  --color-amber-warn-foreground: var(--amber-warn-foreground);
+  --color-alert: var(--alert);
+  --color-alert-foreground: var(--alert-foreground);
+  --color-soft: var(--soft);
+  --color-feature: var(--feature);
+  --color-feature-foreground: var(--feature-foreground);
+}
+
+/* Status LEDs under high contrast */
+html.accessibility-high-contrast .status-led-healthy {
+  background-color: #0b6623 !important;
+}
+html.accessibility-high-contrast .status-led-healthy::after {
+  background-color: #0b6623 !important;
+}
+html.accessibility-high-contrast .status-led-alert {
+  background-color: #804000 !important;
+}
+html.accessibility-high-contrast .status-led-alert::after {
+  background-color: #804000 !important;
+}
+html.accessibility-high-contrast .status-led-emergency {
+  background-color: #990000 !important;
+}
+html.accessibility-high-contrast .status-led-emergency::after {
+  background-color: #990000 !important;
 }
 
 /* Scale typography and interactive elements */
