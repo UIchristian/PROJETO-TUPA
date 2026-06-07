@@ -34,6 +34,8 @@ function ProgramasScreen() {
   const [whatsappSent, setWhatsappSent] = useState(false);
   const [pushNotification, setPushNotification] = useState(false);
   const [documentoValidado, setDocumentoValidado] = useState<boolean | string>(false);
+  const [documentoArquivoNome, setDocumentoArquivoNome] = useState("");
+  const [documentoMotivoRejeicao, setDocumentoMotivoRejeicao] = useState("");
 
   const [reportOpen, setReportOpen] = useState(false);
   const [reportType, setReportType] = useState<"public" | "insurance">("public");
@@ -45,6 +47,7 @@ function ProgramasScreen() {
     documentoValidado === "valido" ||
     documentoValidado === "validado";
   const documentoPendente = documentoValidado === "pendente";
+  const documentoRejeitado = documentoValidado === false && !!documentoArquivoNome;
 
   // Eligibility map for current POC rules.
   // Non-eligible programs must remain blocked even with validated documents.
@@ -65,6 +68,8 @@ function ProgramasScreen() {
 
         const data = snap.data() as any;
         setDocumentoValidado(data.documentoValidado ?? false);
+        setDocumentoArquivoNome(data.documentoArquivoNome || "");
+        setDocumentoMotivoRejeicao(data.documentoMotivoRejeicao || "");
 
         const crops = Array.isArray(data.produtosCultivados) ? data.produtosCultivados : [];
         const cropLabel = data.sistema
@@ -194,26 +199,18 @@ function ProgramasScreen() {
                   ? "text-primary bg-primary/10"
                   : documentoPendente
                     ? "text-amber-warn bg-amber-warn/10"
-                    : "text-muted-foreground bg-muted"
+                    : documentoRejeitado
+                      ? "text-destructive bg-destructive/10"
+                      : "text-muted-foreground bg-muted"
               }`}
             >
               {documentoEstaValido
-                ? language === "es"
-                  ? "Concluido"
-                  : language === "en"
-                    ? "Completed"
-                    : "Concluido"
+                ? language === "es" ? "Concluido" : language === "en" ? "Completed" : "Concluido"
                 : documentoPendente
-                  ? language === "es"
-                    ? "Pendiente"
-                    : language === "en"
-                      ? "Pending"
-                      : "Pendente"
-                  : language === "es"
-                    ? "No enviado"
-                    : language === "en"
-                      ? "Not sent"
-                      : "Nao enviado"}
+                  ? language === "es" ? "Pendiente" : language === "en" ? "Pending" : "Aguardando aprovação"
+                  : documentoRejeitado
+                    ? language === "es" ? "Rechazado" : language === "en" ? "Rejected" : "Não aprovado"
+                    : language === "es" ? "No enviado" : language === "en" ? "Not sent" : "Nao enviado"}
             </span>
           </h3>
           <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
@@ -222,35 +219,65 @@ function ProgramasScreen() {
                 ? "Su documento fue analizado con éxito, vea abajo los programas disponibles."
                 : language === "en"
                   ? "Your document was successfully reviewed. See the available programs below."
-                  : "Seu documento foi analisado com sucesso, veja abaixo programas disponiveis."
-              : language === "es"
-                ? "Adjunte un documento para revisión. Mientras el estado sea no enviado o pendiente, la etapa no se considera concluida."
-                : language === "en"
-                  ? "Attach a document for review. While status is not sent or pending, this step is not completed."
-                  : "Anexe um documento para revisao. Enquanto o status estiver nao enviado ou pendente, essa etapa nao fica concluida."}
+                  : "Seu documento foi analisado com sucesso, veja abaixo os programas disponíveis."
+              : documentoPendente
+                ? language === "es"
+                  ? "Documento recibido y en análisis. Te notificaremos en breve."
+                  : language === "en"
+                    ? "Document received and under review. You will be notified soon."
+                    : "Seu arquivo foi recebido e está em análise pela equipe SafraSense. Você será notificado em breve."
+                : documentoRejeitado
+                  ? language === "es"
+                    ? "Su documento no fue aprobado. Envíe un nuevo documento para continuar."
+                    : language === "en"
+                      ? "Your document was not approved. Please send a new document to continue."
+                      : "Seu documento não foi aprovado. Envie um novo arquivo para continuar."
+                  : language === "es"
+                    ? "Adjunte un documento para revisión. Mientras el estado sea no enviado o pendiente, la etapa no se considera concluida."
+                    : language === "en"
+                      ? "Attach a document for review. While status is not sent or pending, this step is not completed."
+                      : "Anexe um documento para revisao. Enquanto o status estiver nao enviado ou pendente, essa etapa nao fica concluida."}
           </p>
 
-          {!documentoEstaValido && (
+          {documentoPendente && (
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-warn/10 border border-amber-warn/20 px-3 py-2.5">
+              <span className="text-lg">⏳</span>
+              <div>
+                <p className="text-xs font-bold text-amber-warn">
+                  {language === "es" ? "En análisis" : language === "en" ? "Under review" : "Em análise"}
+                </p>
+                {documentoArquivoNome && (
+                  <p className="text-xs text-muted-foreground truncate max-w-[220px]">{documentoArquivoNome}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {documentoRejeitado && (
+            <div className="mt-3 rounded-xl bg-destructive/10 border border-destructive/20 px-3 py-2.5">
+              <p className="text-xs font-bold text-destructive">
+                {language === "es" ? "Motivo" : language === "en" ? "Reason" : "Motivo da rejeição"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {documentoMotivoRejeicao ||
+                  (language === "es"
+                    ? "Sin motivo informado."
+                    : language === "en"
+                      ? "No reason provided."
+                      : "Nenhum motivo informado.")}
+              </p>
+            </div>
+          )}
+
+          {(documentoRejeitado || (!documentoEstaValido && !documentoPendente)) && (
             <a
               href="/comprovar?redirect=%2Fprogramas"
               className="mt-3 h-10 w-full rounded-xl bg-navy text-navy-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-soft"
             >
-              {language === "es"
-                ? "Enviar documento en Comprobar"
-                : language === "en"
-                  ? "Send document in Verify"
-                  : "Enviar documento em Comprovar"}
+              {documentoRejeitado
+                ? language === "es" ? "Enviar nuevo documento" : language === "en" ? "Send new document" : "Enviar novo documento"
+                : language === "es" ? "Enviar documento en Comprobar" : language === "en" ? "Send document in Verify" : "Enviar documento em Comprovar"}
             </a>
-          )}
-
-          {documentoPendente && (
-            <p className="mt-2 text-sm font-semibold text-muted-foreground">
-              {language === "es"
-                ? "Documento enviado y pendiente de validación manual."
-                : language === "en"
-                  ? "Document sent and pending manual validation."
-                  : "Documento enviado e pendente de validacao manual."}
-            </p>
           )}
         </div>
 
