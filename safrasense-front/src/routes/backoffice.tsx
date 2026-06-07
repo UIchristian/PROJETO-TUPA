@@ -8,16 +8,26 @@ import {
   Clock,
   Eye,
   FileText,
+  Filter,
   RefreshCcw,
   Search,
   XCircle,
 } from "lucide-react";
-import { collection, doc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
+import { Timestamp, arrayUnion, collection, doc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { db, storage } from "../../firebase";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const PAGE_SIZE = 10;
+
+type RejeicaoHistorico = {
+  arquivoNome: string;
+  arquivoURL: string;
+  storagePath: string;
+  motivoRejeicao: string;
+  enviadoEm: any;
+  rejeitadoEm: any;
+};
 
 type BackofficeUser = {
   uid: string;
@@ -30,6 +40,21 @@ type BackofficeUser = {
   documentoStoragePath?: string;
   documentoEnviadoEm?: any;
   documentoMotivoRejeicao?: string;
+  documentosRejeitados?: RejeicaoHistorico[];
+};
+
+type ArquivoDisplayRow = {
+  id: string;
+  uid: string;
+  nome: string;
+  cpf: string;
+  arquivoNome: string;
+  arquivoURL: string;
+  storagePath: string;
+  enviadoEm: any;
+  status: boolean | string;
+  motivoRejeicao: string;
+  isHistorico: boolean;
 };
 
 type StatusFilter = "todos" | "pendente" | "validado" | "invalido";
@@ -317,30 +342,75 @@ function BackofficeScreen() {
   const pendingRows = useMemo(() => rows.filter((u) => u.documentoValidado === "pendente"), [rows]);
   const allFileRows = useMemo(() => rows.filter((u) => !!u.documentoArquivoNome), [rows]);
 
+  // Unified rows: current files + historical rejections (deduplicated by storagePath)
+  const allArquivoRows = useMemo<ArquivoDisplayRow[]>(() => {
+    const result: ArquivoDisplayRow[] = [];
+    for (const user of rows) {
+      if (user.documentoArquivoNome) {
+        result.push({
+          id: user.uid,
+          uid: user.uid,
+          nome: user.nome,
+          cpf: user.cpf,
+          arquivoNome: user.documentoArquivoNome,
+          arquivoURL: user.documentoDownloadURL || "",
+          storagePath: user.documentoStoragePath || "",
+          enviadoEm: user.documentoEnviadoEm,
+          status: user.documentoValidado,
+          motivoRejeicao: user.documentoMotivoRejeicao || "",
+          isHistorico: false,
+        });
+      }
+      const rejections = user.documentosRejeitados ?? [];
+      rejections.forEach((h, i) => {
+        // Skip if this is the same file as the current one (avoid duplicate)
+        if (h.storagePath && h.storagePath === user.documentoStoragePath) return;
+        result.push({
+          id: `${user.uid}_h${i}`,
+          uid: user.uid,
+          nome: user.nome,
+          cpf: user.cpf,
+          arquivoNome: h.arquivoNome,
+          arquivoURL: h.arquivoURL,
+          storagePath: h.storagePath,
+          enviadoEm: h.enviadoEm,
+          status: false,
+          motivoRejeicao: h.motivoRejeicao || "",
+          isHistorico: true,
+        });
+      });
+    }
+    return result;
+  }, [rows]);
+
+  const totalDocs = useMemo(() => allArquivoRows.length, [allArquivoRows]);
+  const approvedDocs = useMemo(() => allArquivoRows.filter((r) => r.status === true).length, [allArquivoRows]);
+  const rejectedDocs = useMemo(() => allArquivoRows.filter((r) => r.status === false).length, [allArquivoRows]);
+
   const normalizeSearch = (s: string) => s.toLowerCase().trim();
-  const matchesSearch = (u: BackofficeUser, q: string) => {
+  const matchesSearch = (nome: string, cpf: string, q: string) => {
     if (!q) return true;
     return (
-      u.nome.toLowerCase().includes(q) ||
-      u.cpf.replace(/\D/g, "").includes(q.replace(/\D/g, ""))
+      nome.toLowerCase().includes(q) ||
+      cpf.replace(/\D/g, "").includes(q.replace(/\D/g, ""))
     );
   };
 
   const filteredPendentes = useMemo(() => {
     const q = normalizeSearch(search);
-    return pendingRows.filter((u) => matchesSearch(u, q));
+    return pendingRows.filter((u) => matchesSearch(u.nome, u.cpf, q));
   }, [pendingRows, search]);
 
-  const filteredArquivos = useMemo(() => {
+  const filteredArquivos = useMemo<ArquivoDisplayRow[]>(() => {
     const q = normalizeSearch(search);
-    return allFileRows.filter((u) => {
-      if (!matchesSearch(u, q)) return false;
-      if (statusFilter === "pendente") return u.documentoValidado === "pendente";
-      if (statusFilter === "validado") return u.documentoValidado === true;
-      if (statusFilter === "invalido") return u.documentoValidado === false;
+    return allArquivoRows.filter((row) => {
+      if (!matchesSearch(row.nome, row.cpf, q)) return false;
+      if (statusFilter === "pendente") return row.status === "pendente";
+      if (statusFilter === "validado") return row.status === true;
+      if (statusFilter === "invalido") return row.status === false;
       return true;
     });
-  }, [allFileRows, search, statusFilter]);
+  }, [allArquivoRows, search, statusFilter]);
 
   const paginatedPendentes = useMemo(() => {
     const start = (pendentePage - 1) * PAGE_SIZE;
@@ -370,6 +440,7 @@ function BackofficeScreen() {
           documentoStoragePath: data.documentoStoragePath || "",
           documentoEnviadoEm: data.documentoEnviadoEm,
           documentoMotivoRejeicao: data.documentoMotivoRejeicao || "",
+          documentosRejeitados: data.documentosRejeitados || [],
         } satisfies BackofficeUser;
       });
       setRows(all);
@@ -385,26 +456,59 @@ function BackofficeScreen() {
     loadUsers();
   }, []);
 
-  const updateStatus = async (uid: string, value: boolean | string, motivo?: string) => {
+  const updateStatus = async (
+    uid: string,
+    value: boolean | string,
+    motivo?: string,
+    userForHistory?: BackofficeUser,
+  ) => {
     setSavingUid(uid);
     setError("");
     try {
-      await setDoc(
-        doc(db, "usuarios", uid),
-        {
-          documentoValidado: value,
-          atualizadoEm: serverTimestamp(),
-          // When validating, clear any previous rejection reason; when rejecting, save the new one
-          documentoMotivoRejeicao: motivo !== undefined ? motivo : "",
-        },
-        { merge: true },
-      );
+      const updateData: Record<string, any> = {
+        documentoValidado: value,
+        atualizadoEm: serverTimestamp(),
+        documentoMotivoRejeicao: motivo !== undefined ? motivo : "",
+      };
+
+      // When rejecting, save a permanent record of this file to history
+      if (value === false && userForHistory?.documentoArquivoNome) {
+        const entry: RejeicaoHistorico = {
+          arquivoNome: userForHistory.documentoArquivoNome,
+          arquivoURL: userForHistory.documentoDownloadURL || "",
+          storagePath: userForHistory.documentoStoragePath || "",
+          motivoRejeicao: motivo || "",
+          enviadoEm: userForHistory.documentoEnviadoEm ?? null,
+          rejeitadoEm: Timestamp.now(),
+        };
+        updateData.documentosRejeitados = arrayUnion(entry);
+      }
+
+      await setDoc(doc(db, "usuarios", uid), updateData, { merge: true });
+
       setRows((prev) =>
-        prev.map((u) =>
-          u.uid === uid
-            ? { ...u, documentoValidado: value, ...(motivo !== undefined ? { documentoMotivoRejeicao: motivo } : {}) }
-            : u,
-        ),
+        prev.map((u) => {
+          if (u.uid !== uid) return u;
+          const next: BackofficeUser = {
+            ...u,
+            documentoValidado: value,
+            ...(motivo !== undefined ? { documentoMotivoRejeicao: motivo } : {}),
+          };
+          if (value === false && userForHistory?.documentoArquivoNome) {
+            next.documentosRejeitados = [
+              ...(u.documentosRejeitados ?? []),
+              {
+                arquivoNome: userForHistory.documentoArquivoNome!,
+                arquivoURL: userForHistory.documentoDownloadURL || "",
+                storagePath: userForHistory.documentoStoragePath || "",
+                motivoRejeicao: motivo || "",
+                enviadoEm: userForHistory.documentoEnviadoEm ?? null,
+                rejeitadoEm: Timestamp.now(),
+              },
+            ];
+          }
+          return next;
+        }),
       );
     } catch (err) {
       console.error(err);
@@ -431,6 +535,23 @@ function BackofficeScreen() {
     }
   };
 
+  const handleViewArquivoRow = async (row: ArquivoDisplayRow) => {
+    try {
+      let url = row.arquivoURL;
+      if (!url && row.storagePath) {
+        url = await getDownloadURL(ref(storage, row.storagePath));
+      }
+      if (!url) {
+        setError("Documento sem URL de visualização disponível.");
+        return;
+      }
+      setViewingDocument({ url, nome: row.arquivoNome || "documento.pdf" });
+    } catch (err) {
+      console.error(err);
+      setError("Não foi possível carregar o documento para visualização.");
+    }
+  };
+
   const handleConfirmValidar = async () => {
     if (!confirmTarget) return;
     await updateStatus(confirmTarget.uid, true);
@@ -439,10 +560,22 @@ function BackofficeScreen() {
 
   const handleConfirmRejeitar = async (motivo: string) => {
     if (!rejectTarget) return;
-    await updateStatus(rejectTarget.uid, false, motivo);
+    const user = rows.find((u) => u.uid === rejectTarget.uid);
+    await updateStatus(rejectTarget.uid, false, motivo, user);
     setRejectTarget(null);
   };
 
+  const handleSearchChange = (v: string) => {
+    setSearch(v);
+    setPendentePage(1);
+    setArquivosPage(1);
+  };
+
+  const handleFilterByCpf = (cpf: string) => {
+    handleSearchChange(cpf.replace(/\D/g, ""));
+  };
+
+  // Actions for the Pendentes tab
   const renderActions = (user: BackofficeUser) => {
     const isValidated =
       user.documentoValidado === true ||
@@ -455,13 +588,20 @@ function BackofficeScreen() {
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
+          onClick={() => handleFilterByCpf(user.cpf)}
+          title={`Mostrar só arquivos de ${user.cpf}`}
+          className="h-9 px-3 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+        >
+          <Filter size={13} /> Filtrar
+        </button>
+        <button
+          type="button"
           onClick={() => handleViewDocument(user)}
           className="h-9 px-3 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 inline-flex items-center gap-1.5 cursor-pointer text-xs"
         >
           <Eye size={13} /> Visualizar
         </button>
 
-        {/* Pending: both actions available */}
         {isPending && (
           <>
             <button
@@ -483,7 +623,6 @@ function BackofficeScreen() {
           </>
         )}
 
-        {/* Already approved: allow reverting to rejection */}
         {isValidated && (
           <button
             type="button"
@@ -495,7 +634,6 @@ function BackofficeScreen() {
           </button>
         )}
 
-        {/* Already rejected: allow re-approving */}
         {isRejected && (
           <button
             type="button"
@@ -510,10 +648,81 @@ function BackofficeScreen() {
     );
   };
 
-  const handleSearchChange = (v: string) => {
-    setSearch(v);
-    setPendentePage(1);
-    setArquivosPage(1);
+  // Actions for the Arquivos Enviados tab (handles both current and historical rows)
+  const renderArquivoActions = (row: ArquivoDisplayRow) => {
+    const isValidated = row.status === true || row.status === "valido" || row.status === "validado";
+    const isPending = row.status === "pendente";
+    const isRejected = row.status === false;
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => handleFilterByCpf(row.cpf)}
+          title={`Mostrar só arquivos de ${row.cpf}`}
+          className="h-9 px-3 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+        >
+          <Filter size={13} /> Filtrar
+        </button>
+        <button
+          type="button"
+          onClick={() => handleViewArquivoRow(row)}
+          className="h-9 px-3 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+        >
+          <Eye size={13} /> Visualizar
+        </button>
+
+        {/* Historical rows: no validation actions, just a badge */}
+        {row.isHistorico && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-500">
+            Histórico
+          </span>
+        )}
+
+        {!row.isHistorico && isPending && (
+          <>
+            <button
+              type="button"
+              onClick={() => setConfirmTarget({ uid: row.uid, nome: row.nome })}
+              disabled={savingUid === row.uid}
+              className="h-9 px-3 rounded-md bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-60 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+            >
+              <CheckCircle2 size={13} /> Validar
+            </button>
+            <button
+              type="button"
+              onClick={() => setRejectTarget({ uid: row.uid, nome: row.nome })}
+              disabled={savingUid === row.uid}
+              className="h-9 px-3 rounded-md bg-rose-600 text-white font-semibold hover:bg-rose-700 disabled:opacity-60 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+            >
+              <XCircle size={13} /> Rejeitar
+            </button>
+          </>
+        )}
+
+        {!row.isHistorico && isValidated && (
+          <button
+            type="button"
+            onClick={() => setRejectTarget({ uid: row.uid, nome: row.nome })}
+            disabled={savingUid === row.uid}
+            className="h-9 px-3 rounded-md bg-rose-600 text-white font-semibold hover:bg-rose-700 disabled:opacity-60 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+          >
+            <XCircle size={13} /> Rejeitar
+          </button>
+        )}
+
+        {!row.isHistorico && isRejected && (
+          <button
+            type="button"
+            onClick={() => setConfirmTarget({ uid: row.uid, nome: row.nome })}
+            disabled={savingUid === row.uid}
+            className="h-9 px-3 rounded-md bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-60 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+          >
+            <CheckCircle2 size={13} /> Validar
+          </button>
+        )}
+      </div>
+    );
   };
 
   const statusFilterLabels: Record<StatusFilter, string> = {
@@ -547,7 +756,23 @@ function BackofficeScreen() {
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
         )}
 
-        {/* Stats */}
+        {/* Stats — documentos */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-500">Total de documentos</p>
+            <p className="text-2xl font-bold mt-1">{totalDocs}</p>
+          </div>
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-emerald-700">Documentos aprovados</p>
+            <p className="text-2xl font-bold mt-1 text-emerald-900">{approvedDocs}</p>
+          </div>
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-rose-700">Documentos rejeitados</p>
+            <p className="text-2xl font-bold mt-1 text-rose-900">{rejectedDocs}</p>
+          </div>
+        </section>
+
+        {/* Stats — usuários */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <p className="text-xs uppercase tracking-wide text-slate-500">Usuários cadastrados</p>
@@ -573,6 +798,16 @@ function BackofficeScreen() {
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full h-10 pl-9 pr-3 rounded-lg border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => handleSearchChange("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              title="Limpar filtro"
+            >
+              <XCircle size={15} />
+            </button>
+          )}
         </div>
 
         <Tabs defaultValue="pendentes">
@@ -690,25 +925,30 @@ function BackofficeScreen() {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedArquivos.map((user) => (
-                        <tr key={user.uid} className="border-b last:border-b-0 border-slate-100 align-top">
-                          <td className="px-4 py-3 font-medium">{user.nome}</td>
-                          <td className="px-4 py-3">{user.cpf}</td>
-                          <td className="px-4 py-3 max-w-[160px] truncate" title={user.documentoArquivoNome}>
-                            {user.documentoArquivoNome || "Arquivo sem nome"}
+                      {paginatedArquivos.map((row) => (
+                        <tr
+                          key={row.id}
+                          className={`border-b last:border-b-0 border-slate-100 align-top ${
+                            row.isHistorico ? "bg-slate-50/60" : ""
+                          }`}
+                        >
+                          <td className="px-4 py-3 font-medium">{row.nome}</td>
+                          <td className="px-4 py-3">{row.cpf}</td>
+                          <td className="px-4 py-3 max-w-[160px] truncate" title={row.arquivoNome}>
+                            {row.arquivoNome || "Arquivo sem nome"}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap">{formatDate(user.documentoEnviadoEm)}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">{formatDate(row.enviadoEm)}</td>
                           <td className="px-4 py-3">
-                            <StatusBadge status={user.documentoValidado} />
+                            <StatusBadge status={row.status} />
                           </td>
                           <td className="px-4 py-3 max-w-[200px]">
-                            {user.documentoValidado === false && user.documentoMotivoRejeicao ? (
-                              <span className="text-xs text-slate-600 italic">{user.documentoMotivoRejeicao}</span>
+                            {row.status === false && row.motivoRejeicao ? (
+                              <span className="text-xs text-slate-600 italic">{row.motivoRejeicao}</span>
                             ) : (
                               <span className="text-xs text-slate-300">—</span>
                             )}
                           </td>
-                          <td className="px-4 py-3">{renderActions(user)}</td>
+                          <td className="px-4 py-3">{renderArquivoActions(row)}</td>
                         </tr>
                       ))}
                     </tbody>
