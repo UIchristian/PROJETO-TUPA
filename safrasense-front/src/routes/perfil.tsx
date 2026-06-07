@@ -1328,20 +1328,24 @@ function PerfilScreen() {
                   >
                     {carSearchingId === editingTerrenoId
                       ? `🔍 ${t("cadastro.searching")}`
-                      : "🔍 Buscar na área demarcada"}
+                      : `🔍 ${language === "es" ? "Buscar en el área demarcada" : language === "en" ? "Search in outlined area" : "Buscar na área demarcada"}`}
                   </button>
                 </div>
 
                 {carSearchingId === editingTerrenoId && (
                   <div className="text-sm text-muted-foreground bg-soft border border-border rounded-lg p-2.5 text-center mt-1">
-                    Verificando dados. Pode levar até 2 minutos...
+                    {language === "es" ? "Verificando datos. Puede tardar hasta 2 minutos..." : language === "en" ? "Querying data. This can take up to 2 minutes..." : "Verificando dados. Pode levar até 2 minutos..."}
                   </div>
                 )}
 
                 {carsFound.length > 0 && !tempTerrenoSelectedCar ? (
                   <div className="flex flex-col gap-1.5 p-2 bg-amber-warn/5 border border-amber-warn/20 rounded-lg animate-in fade-in duration-200 mt-1">
                     <span className="text-sm font-bold text-amber-warn">
-                      {carsFound.length} CAR(s) encontrado(s). Escolha seu CAR:
+                      {language === "es"
+                        ? `${carsFound.length} CAR(s) encontrado(s). Elige tu CAR:`
+                        : language === "en"
+                          ? `${carsFound.length} CAR(s) found. Choose your CAR:`
+                          : `${carsFound.length} CAR(s) encontrado(s). Escolha seu CAR:`}
                     </span>
                     <div className="flex flex-col gap-1 max-h-[140px] overflow-y-auto pr-1">
                       {carsFound.map((car, idx) => {
@@ -1391,7 +1395,7 @@ function PerfilScreen() {
                     {tempTerrenoSelectedCar && (
                       <div className="flex items-center justify-between gap-1.5 bg-primary/5 p-1 px-2 rounded-lg border border-primary/20">
                         <span className="text-sm text-primary font-bold">
-                          CAR selecionado e pronto para salvar.
+                          {language === "es" ? "CAR seleccionado y listo para guardar." : language === "en" ? "CAR selected and ready to save." : "CAR selecionado e pronto para salvar."}
                         </span>
                         <button
                           type="button"
@@ -1402,7 +1406,7 @@ function PerfilScreen() {
                           }}
                           className="text-sm text-muted-foreground hover:underline font-bold"
                         >
-                          Trocar
+                          {language === "es" ? "Cambiar" : language === "en" ? "Change" : "Trocar"}
                         </button>
                       </div>
                     )}
@@ -1777,7 +1781,7 @@ function PerfilScreen() {
                   onClick={handleSearchAddress}
                   disabled={searchingAddress || !address.trim()}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-muted-foreground hover:text-primary active:scale-95 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center"
-                  title="Buscar no mapa"
+                  title={language === "es" ? "Buscar en el mapa" : language === "en" ? "Search on map" : "Buscar no mapa"}
                 >
                   {searchingAddress ? (
                     <span className="block w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
@@ -1809,7 +1813,7 @@ function PerfilScreen() {
                 <Suspense
                   fallback={
                     <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-muted-foreground bg-soft/40">
-                      Carregando mapa...
+                      {language === "es" ? "Cargando mapa..." : language === "en" ? "Loading map..." : "Carregando mapa..."}
                     </div>
                   }
                 >

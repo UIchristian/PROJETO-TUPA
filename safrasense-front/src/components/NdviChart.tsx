@@ -27,7 +27,7 @@ const periodData = {
   Mês: {
     labels: {
       pt: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
-      es: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
+      es: ["Sem. 1", "Sem. 2", "Sem. 3", "Sem. 4"],
       en: ["Wk 1", "Wk 2", "Wk 3", "Wk 4"],
     },
     historical: [0.7, 0.71, 0.72, 0.71],
@@ -132,30 +132,30 @@ function buildNdviChartFromHistory(history: NdviHistoryRow[], language: "pt" | "
 }
 
 // Helper to translate NDVI value into simple words, colors and indicators
-export function getStatusDetails(v: number) {
+export function getStatusDetails(v: number, language: "pt" | "es" | "en" = "pt") {
   if (v >= 0.65) {
     return {
-      color: "#2e7d32", // Green for healthy
+      color: "#2e7d32",
       bgClass: "bg-primary text-primary-foreground",
-      text: "Saudável",
+      text: language === "es" ? "Saludable" : language === "en" ? "Healthy" : "Saudável",
       emoji: "🟢",
-      description: "Saudável 🌱",
+      description: language === "es" ? "Saludable 🌱" : language === "en" ? "Healthy 🌱" : "Saudável 🌱",
     };
   } else if (v >= 0.2) {
     return {
-      color: "#f57c00", // Amber for caution
+      color: "#f57c00",
       bgClass: "bg-amber-warn text-amber-warn-foreground",
-      text: "Atenção",
+      text: language === "es" ? "Atención" : language === "en" ? "Caution" : "Atenção",
       emoji: "🟡",
-      description: "Estresse ⚠️",
+      description: language === "es" ? "Estrés ⚠️" : language === "en" ? "Stress ⚠️" : "Estresse ⚠️",
     };
   } else {
     return {
-      color: "#d32f2f", // Red for dry/emergency
+      color: "#d32f2f",
       bgClass: "bg-destructive text-destructive-foreground",
-      text: "Seco",
+      text: language === "es" ? "Seco" : language === "en" ? "Dry" : "Seco",
       emoji: "🔴",
-      description: "Seca Crítica 🚨",
+      description: language === "es" ? "Sequía crítica 🚨" : language === "en" ? "Critical drought 🚨" : "Seca Crítica 🚨",
     };
   }
 }
@@ -423,12 +423,12 @@ export function NdviChart({ status }: { status: ChartStatus }) {
           <span className="text-sm font-bold text-foreground">
             {period === "Mês"
               ? language === "es"
-                ? "Relatorio semanal"
+                ? "Informe semanal"
                 : language === "en"
                   ? "Weekly report"
                   : "Relatório semanal"
               : language === "es"
-                ? "Relatorio mensual"
+                ? "Informe mensual"
                 : language === "en"
                   ? "Monthly report"
                   : "Relatório mensal"}
@@ -439,7 +439,7 @@ export function NdviChart({ status }: { status: ChartStatus }) {
       {/* 6-Month Status Visual Timeline (Semáforo) */}
       <div className="flex gap-3 items-center px-3 py-2.5 mb-4 bg-soft/50 rounded-xl border border-border/40 overflow-x-auto no-scrollbar">
         {data.map((item, idx) => {
-          const details = getStatusDetails(item.current);
+          const details = getStatusDetails(item.current, activeLang);
           return (
             <div key={idx} className="flex flex-col items-center gap-1.5 min-w-[56px] shrink-0">
               <span className="text-muted-foreground font-semibold uppercase tracking-wider text-sm">
@@ -449,7 +449,7 @@ export function NdviChart({ status }: { status: ChartStatus }) {
                 className={`w-6 h-6 rounded-full ${details.bgClass} shadow-sm animate-pulse flex items-center justify-center text-sm font-black`}
                 style={{ animationDuration: `${1.5 + idx * 0.4}s` }}
               >
-                {details.text === "Saudável" ? "✓" : details.text === "Atenção" ? "!" : "✕"}
+                {item.current >= 0.65 ? "✓" : item.current >= 0.2 ? "!" : "✕"}
               </span>
               <span className="text-[11px] font-bold text-foreground/80 text-center leading-tight max-w-full">
                 {details.text}
@@ -494,13 +494,13 @@ export function NdviChart({ status }: { status: ChartStatus }) {
                 domain={[-1, 1]}
                 ticks={[-1, -0.5, 0, 0.2, 0.5, 0.75, 1]}
                 tickFormatter={(v) => {
-                  if (v === 1) return "Excelente";
-                  if (v === 0.75) return "Saudável";
-                  if (v === 0.5) return "Atenção";
-                  if (v === 0.2) return "Seca crítica";
-                  if (v === 0) return "Neutro";
-                  if (v === -0.5) return "Muito baixo";
-                  if (v === -1) return "Mínimo";
+                  if (v === 1) return language === "es" ? "Excelente" : language === "en" ? "Excellent" : "Excelente";
+                  if (v === 0.75) return language === "es" ? "Saludable" : language === "en" ? "Healthy" : "Saudável";
+                  if (v === 0.5) return language === "es" ? "Atención" : language === "en" ? "Caution" : "Atenção";
+                  if (v === 0.2) return language === "es" ? "Sequía" : language === "en" ? "Drought" : "Seca crítica";
+                  if (v === 0) return language === "es" ? "Neutro" : language === "en" ? "Neutral" : "Neutro";
+                  if (v === -0.5) return language === "es" ? "Muy bajo" : language === "en" ? "Very low" : "Muito baixo";
+                  if (v === -1) return language === "es" ? "Mínimo" : language === "en" ? "Minimum" : "Mínimo";
                   return "";
                 }}
                 tick={{ fontSize: 12, fill: "#7a7a7a", fontWeight: "medium" }}
@@ -515,10 +515,11 @@ export function NdviChart({ status }: { status: ChartStatus }) {
                   boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
                 }}
                 formatter={(v: number, name: string) => {
-                  if (name === "Média histórica" || name === "") {
+                  const historicalLabel = language === "es" ? "Promedio histórico" : language === "en" ? "Historical average" : "Média histórica";
+                  if (name === historicalLabel || name === "") {
                     return [v.toFixed(2), name];
                   }
-                  const details = getStatusDetails(v);
+                  const details = getStatusDetails(v, activeLang);
                   return [`${v.toFixed(3)} (${details.description})`, name];
                 }}
               />
@@ -531,7 +532,7 @@ export function NdviChart({ status }: { status: ChartStatus }) {
                 strokeWidth={1.5}
                 strokeDasharray="4 4"
                 dot={false}
-                name="Média histórica"
+                name={language === "es" ? "Promedio histórico" : language === "en" ? "Historical average" : "Média histórica"}
               />
 
               {/* Current health index represented as color-coded bars (drawn as Corn cobs) */}

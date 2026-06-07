@@ -73,6 +73,12 @@ function ComprovarScreen() {
         { merge: true },
       );
 
+      // Update store so programas.tsx shows the card immediately on redirect
+      appStore.set({
+        documentoValidado: "pendente",
+        documentoArquivoNome: file.name,
+      });
+
       setSuccess(true);
 
       setTimeout(() => {
@@ -170,7 +176,7 @@ function ComprovarScreen() {
                       {t("comprovar.select_file")}
                     </span>
                     <span className="text-sm text-muted-foreground">
-                      PDF, PNG ou JPG de até 10MB
+                      {language === "es" ? "PDF, PNG o JPG de hasta 10MB" : language === "en" ? "PDF, PNG or JPG up to 10MB" : "PDF, PNG ou JPG de até 10MB"}
                     </span>
                   </div>
                 )}

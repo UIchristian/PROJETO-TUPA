@@ -312,7 +312,7 @@ function LavouraScreen() {
         <div className="rounded-2xl bg-primary/5 border border-primary/20 p-4 flex flex-col gap-2.5 shadow-soft">
           <h3 className="font-bold text-base text-primary flex items-center gap-1.5">
             {language === "es"
-              ? "🌱 Entenda la saúde de su tierra de forma sencilla:"
+              ? "🌱 Entiende la salud de tu tierra de forma sencilla:"
               : language === "en"
                 ? "🌱 Understand the health of your land in a simple way:"
                 : "🌱 Entenda a saúde da sua terra de forma simples:"}
@@ -348,7 +348,7 @@ function LavouraScreen() {
             <p className="text-sm text-foreground/90 mt-1.5 leading-relaxed">
               {isProtected
                 ? t("dashboard.emergency_card_desc_protected")
-                : `${language === "es" ? "Tu propiedad está con vigor severamente por debajo de lo normal hace 21 dias. " : language === "en" ? "Your property has been severely below normal for 21 days. " : "Sua propriedade está com vigor severamente abaixo do normal há 21 dias. "}${t("dashboard.emergency_card_desc_unprotected")}`}
+                : `${language === "es" ? "Tu propiedad está con vigor severamente por debajo de lo normal hace 21 días." : language === "en" ? "Your property has been severely below normal for 21 days. " : "Sua propriedade está com vigor severamente abaixo do normal há 21 dias. "}${t("dashboard.emergency_card_desc_unprotected")}`}
             </p>
           </div>
         ) : isAlert ? (
@@ -422,14 +422,14 @@ function LavouraScreen() {
                 <span className="text-3xl">🛡️</span>
                 <h4 className="font-bold text-base text-foreground mt-2">
                   {language === "es"
-                    ? "Garantía de Acuracidad para Seguradoras"
+                    ? "Garantía de Precisión para Aseguradoras"
                     : language === "en"
                       ? "Accuracy Guarantee for Insurers"
                       : "Garantia de Acurácia para Seguradoras"}
                 </h4>
                 <p className="text-sm text-foreground/80 mt-1 leading-relaxed">
                   {language === "es"
-                    ? "Para que el laudo de satélite sea aceptado por las seguradoras, es necesario aumentar la acuracidad de los datos por medio de validación complementaria."
+                    ? "Para que el informe satelital sea aceptado por las aseguradoras, es necesario aumentar la precisión de los datos mediante validación complementaria."
                     : language === "en"
                       ? "For the satellite report to be accepted by insurers, it is necessary to increase data accuracy through complementary verification."
                       : "Para que o laudo de satélite seja aceito pelas seguradoras, é necessário elevar a acurácia dos dados por meio de validação complementar."}
@@ -440,7 +440,7 @@ function LavouraScreen() {
               <div className="p-3.5 rounded-xl border border-border bg-soft flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
                   {language === "es"
-                    ? "Acuracidad Actual:"
+                    ? "Precisión Actual:"
                     : language === "en"
                       ? "Current Accuracy:"
                       : "Acurácia Atual:"}
@@ -448,7 +448,9 @@ function LavouraScreen() {
                 <span
                   className={`font-bold ${fieldPhotoUploaded ? "text-emerald-600" : "text-amber-600"}`}
                 >
-                  {fieldPhotoUploaded ? "96% (Alta)" : "48% (Baixa - Pendente)"}
+                  {fieldPhotoUploaded
+                    ? language === "es" ? "96% (Alta)" : language === "en" ? "96% (High)" : "96% (Alta)"
+                    : language === "es" ? "48% (Baja - Pendiente)" : language === "en" ? "48% (Low - Pending)" : "48% (Baixa - Pendente)"}
                 </span>
               </div>
 
