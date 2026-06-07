@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from datetime import date, timedelta
 from typing import List
 
 import uvicorn
@@ -8,6 +9,7 @@ from pydantic import BaseModel, field_validator, model_validator
 
 import carsearch
 from carsearch import buscar_cars
+from copernicus import calcular_estatisticas_ndvi
 
 
 # ---------------------------------------------------------------------------
@@ -46,6 +48,22 @@ class BuscarCarsRequest(BaseModel):
 class BuscarCarsResponse(BaseModel):
     total: int
     cars: List[dict]
+
+
+class NdviRequest(BuscarCarsRequest):
+    data_final: date | None = None
+
+
+class NdviResponse(BaseModel):
+    class RelatorioSemanal(BaseModel):
+        referencia_semana: str
+        data_inicial: date
+        data_final: date
+        ndvi_medio: float | None = None
+        erro: str | None = None
+
+    total_semanas: int
+    relatorios: List[RelatorioSemanal]
 
 
 # ---------------------------------------------------------------------------
@@ -125,6 +143,67 @@ def buscar_cars_endpoint(body: BuscarCarsRequest):
         cars_serializados.append(row)
 
     return BuscarCarsResponse(total=len(cars_serializados), cars=cars_serializados)
+
+
+@app.post("/ndvi", response_model=NdviResponse)
+@app.post("/nvdi", response_model=NdviResponse)
+def calcular_ndvi_endpoint(body: NdviRequest):
+    """
+    Recebe uma lista de pontos (lat/lng) formando um poligono e retorna
+    relatorios semanais de NDVI dos ultimos 12 meses (ate 1 ano atras).
+
+    data_final (opcional) ancora a ultima semana da serie. Se nao enviar,
+    usa a data atual.
+    """
+    data_final = body.data_final or date.today()
+
+    pontos_dict = [{"lat": p.lat, "lng": p.lng} for p in body.poligono]
+
+    relatorios = []
+    data_inicio_serie = data_final - timedelta(days=364)
+    inicio_semana = data_inicio_serie
+    indice_semana = 1
+
+    while inicio_semana <= data_final:
+        fim_semana = min(inicio_semana + timedelta(days=6), data_final)
+        referencia_semana = f"S{indice_semana:02d}-{inicio_semana.isoformat()}_{fim_semana.isoformat()}"
+
+        try:
+            stats = calcular_estatisticas_ndvi(
+                poligono_frontend=pontos_dict,
+                data_inicial=inicio_semana.isoformat(),
+                data_final=fim_semana.isoformat(),
+            )
+            relatorios.append(
+                NdviResponse.RelatorioSemanal(
+                    referencia_semana=referencia_semana,
+                    data_inicial=inicio_semana,
+                    data_final=fim_semana,
+                    ndvi_medio=stats["ndvi_medio"],
+                )
+            )
+        except ValueError as exc:
+            relatorios.append(
+                NdviResponse.RelatorioSemanal(
+                    referencia_semana=referencia_semana,
+                    data_inicial=inicio_semana,
+                    data_final=fim_semana,
+                    erro=str(exc),
+                )
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erro interno ao calcular NDVI semanal ({referencia_semana}): {exc}",
+            ) from exc
+
+        inicio_semana = fim_semana + timedelta(days=1)
+        indice_semana += 1
+
+    return NdviResponse(
+        total_semanas=len(relatorios),
+        relatorios=relatorios,
+    )
 
 
 # ---------------------------------------------------------------------------
