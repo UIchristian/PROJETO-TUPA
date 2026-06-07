@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sun, Moon } from "lucide-react";
+import { Contrast, Moon } from "lucide-react";
 
 export default function AccessibilityControls() {
   const [size, setSize] = useState<"normal" | "large" | "xlarge">(() => {
@@ -90,7 +90,7 @@ export default function AccessibilityControls() {
           title="Alto contraste"
           onClick={() => setContrast((value) => !value)}
         >
-          <Sun size={18} />
+          <Contrast size={18} />
         </button>
       </div>
 

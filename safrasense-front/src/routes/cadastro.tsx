@@ -860,14 +860,14 @@ function CadastroScreen() {
                 step="any"
                 value={sizeVal}
                 onChange={(e) => setSizeVal(e.target.value)}
-                className="h-12 flex-1 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full font-semibold"
+                className="h-12 flex-1 min-w-0 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full font-semibold"
               />
               <select
                 id="land-size-unit"
                 aria-label="Unidade de medida"
                 value={sizeUnit}
                 onChange={(e) => setSizeUnit(e.target.value as any)}
-                className="h-12 w-48 px-3 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base font-semibold cursor-pointer"
+                className="h-12 w-44 shrink-0 px-3 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base font-semibold cursor-pointer"
               >
                 <option value="ha">{t("cadastro.unit_ha")}</option>
                 <option value="alqueire_mg">{t("cadastro.unit_alqueire_mg")}</option>

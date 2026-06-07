@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
@@ -157,6 +156,17 @@
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
   }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: var(--color-foreground);
+    -webkit-box-shadow: 0 0 0px 1000px var(--soft) inset;
+    caret-color: var(--color-foreground);
+    transition: background-color 9999s ease-in-out 0s;
+  }
 }
 
 @layer utilities {
@@ -166,8 +176,8 @@
   }
   /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 
   .money {
@@ -179,6 +189,12 @@
     background:
       radial-gradient(ellipse at top, rgba(21, 128, 61, 0.18), transparent 60%),
       linear-gradient(180deg, #faf6ee 0%, #efead5 50%, #dfdab6 100%);
+  }
+
+  .dark .field-bg {
+    background:
+      radial-gradient(ellipse at top, rgba(34, 197, 94, 0.12), transparent 60%),
+      linear-gradient(180deg, #14181d 0%, #0f1318 50%, #0c0f13 100%);
   }
 
   .shadow-card {
@@ -230,7 +246,7 @@
     height: 8px;
     border-radius: 9999px;
     position: relative;
-    shrink-0: 1;
+    flex-shrink: 0;
   }
   .status-led::after {
     content: "";
@@ -241,22 +257,22 @@
     animation: led-pulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
   }
   .status-led-healthy {
-    background-color: #10b981;
+    background-color: var(--primary);
   }
   .status-led-healthy::after {
-    background-color: #10b981;
+    background-color: var(--primary);
   }
   .status-led-alert {
-    background-color: #f59e0b;
+    background-color: var(--amber-warn);
   }
   .status-led-alert::after {
-    background-color: #f59e0b;
+    background-color: var(--amber-warn);
   }
   .status-led-emergency {
-    background-color: #ef4444;
+    background-color: var(--alert);
   }
   .status-led-emergency::after {
-    background-color: #ef4444;
+    background-color: var(--alert);
   }
   @keyframes led-pulse {
     0% {
@@ -295,37 +311,37 @@ html.accessibility-high-contrast {
   --card-foreground: #000000;
   --popover: #ffffff;
   --popover-foreground: #000000;
-  
+
   --primary: #0b6623;
   --primary-foreground: #ffffff;
-  
+
   --secondary: #e6e6e6;
   --secondary-foreground: #000000;
-  
+
   --muted: #e6e6e6;
   --muted-foreground: #1a1a1a;
-  
+
   --accent: #e6e6e6;
   --accent-foreground: #000000;
-  
+
   --destructive: #990000;
   --destructive-foreground: #ffffff;
-  
+
   --border: #000000;
   --input: #000000;
   --ring: #0b6623;
-  
+
   --navy: #000000;
   --navy-foreground: #ffffff;
-  
+
   --amber-warn: #804000;
   --amber-warn-foreground: #ffffff;
-  
+
   --alert: #990000;
   --alert-foreground: #ffffff;
-  
+
   --soft: #f0f0f0;
-  
+
   --feature: #000000;
   --feature-foreground: #ffffff;
 
@@ -359,26 +375,6 @@ html.accessibility-high-contrast {
   --color-soft: var(--soft);
   --color-feature: var(--feature);
   --color-feature-foreground: var(--feature-foreground);
-}
-
-/* Status LEDs under high contrast */
-html.accessibility-high-contrast .status-led-healthy {
-  background-color: #0b6623 !important;
-}
-html.accessibility-high-contrast .status-led-healthy::after {
-  background-color: #0b6623 !important;
-}
-html.accessibility-high-contrast .status-led-alert {
-  background-color: #804000 !important;
-}
-html.accessibility-high-contrast .status-led-alert::after {
-  background-color: #804000 !important;
-}
-html.accessibility-high-contrast .status-led-emergency {
-  background-color: #990000 !important;
-}
-html.accessibility-high-contrast .status-led-emergency::after {
-  background-color: #990000 !important;
 }
 
 /* Scale typography and interactive elements */
@@ -441,7 +437,9 @@ a.big-button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;

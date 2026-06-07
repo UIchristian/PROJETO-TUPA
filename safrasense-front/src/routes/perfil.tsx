@@ -457,7 +457,20 @@ function PerfilScreen() {
     });
 
     setMapOpen(false);
-    setEditingTerrenoId(null);
+    const savedTerreno = updatedTerrenos.find((t) => t.id === targetId);
+    setTempTerrenoName(savedTerreno?.name || "");
+    setTempTerrenoSizeVal(savedTerreno?.sizeVal || "0");
+    setTempTerrenoSizeUnit(savedTerreno?.sizeUnit || "ha");
+    setTempTerrenoCarVal(savedTerreno?.carNumber || "");
+    setTempTerrenoSelectedCar(savedTerreno?.selectedCar || null);
+    setTempTerrenoCropsVal(savedTerreno?.crops || []);
+    setTempTerrenoSystemVal(savedTerreno?.system || "");
+    setCarsFound([]);
+    setCarError("");
+    setEditTerrenoOpen(true);
+    if (points.length >= 3) {
+      await handleFetchCarForTerreno(targetId, points);
+    }
   };
 
   const handleRemoveTerrenoProfile = async (idToRemove: string) => {
@@ -1316,8 +1329,12 @@ function PerfilScreen() {
                     type="button"
                     onClick={async () => {
                       const terrainToFind = parsedTerrenos.find((t) => t.id === editingTerrenoId);
-                      if (terrainToFind) {
-                        await handleFetchCarForTerreno(terrainToFind.id, terrainToFind.points);
+                      const pointsToUse =
+                        terrainToFind?.points && terrainToFind.points.length >= 3
+                          ? terrainToFind.points
+                          : points;
+                      if (pointsToUse && pointsToUse.length >= 3) {
+                        await handleFetchCarForTerreno(editingTerrenoId || "", pointsToUse);
                       }
                     }}
                     className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground font-bold text-xs active:scale-95 transition-all shadow-soft cursor-pointer"
@@ -1384,13 +1401,13 @@ function PerfilScreen() {
                     value={tempTerrenoSizeVal}
                     onChange={(e) => setTempTerrenoSizeVal(e.target.value)}
                     placeholder="0"
-                    className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base flex-1 font-semibold"
+                    className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base flex-1 min-w-0 font-semibold"
                   />
                   <select
                     aria-label="Unidade de medida"
                     value={tempTerrenoSizeUnit}
                     onChange={(e) => setTempTerrenoSizeUnit(e.target.value as any)}
-                    className="h-12 px-3 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm font-semibold cursor-pointer"
+                    className="h-12 w-44 shrink-0 px-3 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm font-semibold cursor-pointer"
                   >
                     <option value="ha">{t("cadastro.unit_ha")}</option>
                     <option value="alqueire_mg">{t("cadastro.unit_alqueire_mg")}</option>
@@ -1414,15 +1431,24 @@ function PerfilScreen() {
                     type="button"
                     onClick={async () => {
                       const terrainToFind = parsedTerrenos.find((t) => t.id === editingTerrenoId);
-                      if (terrainToFind) {
-                        await handleFetchCarForTerreno(terrainToFind.id, terrainToFind.points);
+                      const pointsToUse =
+                        terrainToFind?.points && terrainToFind.points.length >= 3
+                          ? terrainToFind.points
+                          : points;
+                      if (pointsToUse && pointsToUse.length >= 3) {
+                        await handleFetchCarForTerreno(editingTerrenoId || "", pointsToUse);
                       }
                     }}
                     disabled={
                       carSearchingId === editingTerrenoId ||
-                      !parsedTerrenos.find((t) => t.id === editingTerrenoId)?.points ||
-                      (parsedTerrenos.find((t) => t.id === editingTerrenoId)?.points?.length || 0) <
-                        3
+                      (() => {
+                        const terrainToFind = parsedTerrenos.find((t) => t.id === editingTerrenoId);
+                        const pointsToUse =
+                          terrainToFind?.points && terrainToFind.points.length >= 3
+                            ? terrainToFind.points
+                            : points;
+                        return !pointsToUse || pointsToUse.length < 3;
+                      })()
                     }
                     className="text-sm text-primary hover:underline font-bold flex items-center gap-0.5 active:scale-95 disabled:opacity-50 shrink-0 cursor-pointer"
                   >

@@ -4,10 +4,8 @@
  */
 
 // URL e chave de API do serviço de mensagens (geralmente lidas de variáveis de ambiente)
-const WHATSAPP_API_URL =
-  typeof process !== "undefined" && process.env ? process.env.VITE_WHATSAPP_API_URL || "" : "";
-const WHATSAPP_API_KEY =
-  typeof process !== "undefined" && process.env ? process.env.VITE_WHATSAPP_API_KEY || "" : "";
+const WHATSAPP_API_URL = import.meta.env.VITE_WHATSAPP_API_URL || "";
+const WHATSAPP_API_KEY = import.meta.env.VITE_WHATSAPP_API_KEY || "";
 
 /**
  * Envia uma mensagem via WhatsApp contendo o código de confirmação de 4 dígitos.
