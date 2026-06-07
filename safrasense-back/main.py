@@ -150,7 +150,7 @@ def buscar_cars_endpoint(body: BuscarCarsRequest):
 def calcular_ndvi_endpoint(body: NdviRequest):
     """
     Recebe uma lista de pontos (lat/lng) formando um poligono e retorna
-    relatorios semanais de NDVI dos ultimos 12 meses (ate 1 ano atras).
+    relatorios semanais de NDVI dos ultimos 4 anos.
 
     data_final (opcional) ancora a ultima semana da serie. Se nao enviar,
     usa a data atual.
@@ -160,7 +160,7 @@ def calcular_ndvi_endpoint(body: NdviRequest):
     pontos_dict = [{"lat": p.lat, "lng": p.lng} for p in body.poligono]
 
     relatorios = []
-    data_inicio_serie = data_final - timedelta(days=364)
+    data_inicio_serie = data_final - timedelta(days=1460)
     inicio_semana = data_inicio_serie
     indice_semana = 1
 
