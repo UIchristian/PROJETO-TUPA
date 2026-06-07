@@ -14,6 +14,8 @@ import { useAppState, appStore } from "@/lib/app-store";
 import { buildHistoricalAverage, getLatestNdviAverage, parseNdviDataset } from "@/lib/ndvi";
 import { useTranslation, translateCropString } from "@/lib/i18n";
 import { NdviChart } from "./NdviChart";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface TechnicalReportModalProps {
   open: boolean;
@@ -24,10 +26,10 @@ interface TechnicalReportModalProps {
 
 const reportTranslations = {
   es: {
-    title: "Informe Técnico Satelital — Evidencia de Riesgo Climático",
+    title: "Informe Técnico Satelital - Evidencia de Riesgo Climático",
     issued: "Emisión",
     data_source:
-      "Datos: Copernicus (Sentinel-2 / Copernicus Land Monitoring Service) — datos oficiales del programa de la Unión Europea y la Agencia Espacial Europea (ESA)",
+      "Datos: Copernicus (Sentinel-2 / Copernicus Land Monitoring Service) - datos oficiales del programa de la Unión Europea y la Agencia Espacial Europea (ESA)",
 
     sec1_title: "I. Identificación de la Propiedad",
     sec1_farmer: "Productor Declarado",
@@ -40,7 +42,7 @@ const reportTranslations = {
     sec2_title: "II. Período Analizado",
     sec2_window: "Ventana de monitoreo",
     sec2_window_val: "Últimos 6 meses (dic/2025 a may/2026)",
-    sec2_recent: "Fecha de la imagen más reciente",
+    sec2_recent: "Fecha de la imagem más reciente",
     sec2_recent_val: "22 de mayo de 2026",
 
     sec3_title: "III. Estado Actual de la Tierra",
@@ -77,7 +79,7 @@ const reportTranslations = {
     sec5_conf_high: "Alta (96% de precisión de pixel)",
     sec5_conf_medium: "Media (74% de precisión de pixel)",
     sec5_conf_low: "Baja (48% de precisión de pixel)",
-    sec5_conf_warning: "⚠️ Este resultado requiere revisión humana antes de cualquier acción.",
+    sec5_conf_warning: "⚠️ Este resultado requiere revisión humana antes de qualquer acción.",
     sec5_compatible: "Compatible con los criterios de pérdida del programa {program}.",
 
     sec6_title: "VI. Verificación de Consistencia",
@@ -91,15 +93,15 @@ const reportTranslations = {
 
     sec7_title: "VII. Finalidad y Reservas",
     sec7_purpose:
-      "Este informe sirve como evidencia técnica complementaria para solicitar acceso a programas públicos de protección rural o para cotización de seguro paramétrico.",
+      "Este informe sirve como evidencia técnica complementaria para solicitar acesso a programas públicos de protección rural o para cotización de seguro paramétrico.",
     sec7_warning:
-      "Este informe no sustituye el peritaje oficial del programa o de la aseguradora. Es una evidencia técnica de apoyo basada en datos satelitales públicos.",
+      "Este informe no sustituye el peritaje oficial del programa o de la aseguradora. Es una evidencia técnica de apoio basada en datos satelitales públicos.",
 
     next_steps_title: "Próximos Pasos",
     next_steps_public_1: "1. Lleva este informe a {institution}.",
     next_steps_public_2: "2. Adjunta tu CAF y documentos personales.",
     next_steps_public_3:
-      "3. El informe acelera el análisis, pero la decisión final es del órgano responsable del programa.",
+      "3. El informe acelera el análisis, pero la decisión final es del órgão responsable del programa.",
     next_steps_insurance_1:
       "1. Comparte este informe con la aseguradora aliada al solicitar cotización.",
     next_steps_insurance_2:
@@ -117,10 +119,10 @@ const reportTranslations = {
     toast_share_success: "¡Evidencias compartidas!",
   },
   pt: {
-    title: "Relatório Técnico Satelital — Evidência de Risco Climático",
+    title: "Relatório Técnico Satelital - Evidência de Risco Climático",
     issued: "Emissão",
     data_source:
-      "Dados: Copernicus (Sentinel-2 / Copernicus Land Monitoring Service) — dados oficiais do programa da União Europeia e da Agência Espacial Europeia (ESA)",
+      "Dados: Copernicus (Sentinel-2 / Copernicus Land Monitoring Service) - dados oficiais do programa da União Europeia e da Agência Espacial Europeia (ESA)",
 
     sec1_title: "I. Identificação da Propriedade",
     sec1_farmer: "Produtor Declarado",
@@ -148,7 +150,7 @@ const reportTranslations = {
     sec3_comp_emergency: "Déficit crítico severo (-24%)",
 
     sec4_title: "IV. Série Histórica",
-    sec4_param_ref: "Índice paramétrico de referência: 0.72. Limiar de ativação: 0.50.",
+    sec4_param_ref: "Relatório paramétrico de referência: 0.72. Limiar de ativação: 0.50.",
     sec4_table_period: "Período (Mês)",
     sec4_table_current: "NDVI Atual",
     sec4_table_historical: "Média esperada",
@@ -207,13 +209,13 @@ const reportTranslations = {
     btn_back: "Voltar",
     toast_pdf_exporting: "Gerando PDF...",
     toast_pdf_success: "PDF exportado com sucesso!",
-    toast_share_success: "Evidências compartilhadas!",
+    toast_share_success: "Evidências compartidas!",
   },
   en: {
-    title: "Satellite Technical Report — Climate Risk Evidence",
+    title: "Satellite Technical Report - Climate Risk Evidence",
     issued: "Issued",
     data_source:
-      "Data: Copernicus (Sentinel-2 / Copernicus Land Monitoring Service) — official data from the European Union and European Space Agency (ESA) program",
+      "Data: Copernicus (Sentinel-2 / Copernicus Land Monitoring Service) - data from the European Union and European Space Agency (ESA) program",
 
     sec1_title: "I. Property Identification",
     sec1_farmer: "Declared Producer",
@@ -400,12 +402,356 @@ export function TechnicalReportModal({
     };
   });
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     setExporting(true);
-    setTimeout(() => {
-      setExporting(false);
+    try {
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const margin = 20;
+      const docWidth = 210;
+      const contentWidth = docWidth - 2 * margin; // 170mm
+      let y = 20;
+
+      const checkPageBreak = (neededHeight: number) => {
+        if (y + neededHeight > 275) {
+          doc.addPage();
+          y = 20;
+        }
+      };
+
+      // Header Area
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text("SafraSense", margin, y);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(120, 120, 120);
+      doc.text("Copernicus Telemetry Node", margin, y + 4.5);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(0, 0, 0);
+      doc.text("REF: SS-2026-0001", docWidth - margin, y, { align: "right" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`${rt.issued}: ${new Date().toLocaleDateString(lang === "pt" ? "pt-BR" : "es-ES")}`, docWidth - margin, y + 4.5, { align: "right" });
+      
+      y += 14;
+
+      // Title
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(0, 0, 0);
+      const titleLines = doc.splitTextToSize(rt.title, contentWidth);
+      doc.text(titleLines, margin, y);
+      y += titleLines.length * 6 + 2;
+
+      // Data source
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(8.5);
+      doc.setTextColor(120, 120, 120);
+      const sourceLines = doc.splitTextToSize(rt.data_source, contentWidth);
+      doc.text(sourceLines, margin, y);
+      y += sourceLines.length * 4.5 + 6;
+
+      const col1 = margin;
+      const col2 = margin + 85;
+
+      // Section I: Property Identification
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(21, 128, 61);
+      doc.text(rt.sec1_title, margin, y);
+      doc.setDrawColor(21, 128, 61);
+      doc.setLineWidth(0.3);
+      doc.line(margin, y + 1.5, docWidth - margin, y + 1.5);
+      y += 6;
+
+      doc.setTextColor(120, 120, 120);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.text(rt.sec1_farmer.toUpperCase(), col1, y);
+      doc.text(rt.sec1_car.toUpperCase(), col2, y);
+      y += 4.5;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(farmer.name || "Geraldo Dias", col1, y);
+      doc.text(farmer.car || "MG-3170107-123456-78", col2, y);
+      y += 6.5;
+
+      doc.setTextColor(120, 120, 120);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.text(rt.sec1_location.toUpperCase(), col1, y);
+      doc.text(rt.sec1_coords.toUpperCase(), col2, y);
+      y += 4.5;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const locationText = farmer.location.includes("Minas Gerais")
+        ? farmer.location
+        : `${farmer.location}, Minas Gerais, Brasil`;
+      doc.text(locationText, col1, y);
+      doc.text("Lat: -16.3572, Lon: -46.9061", col2, y);
+      y += 6.5;
+
+      doc.setTextColor(120, 120, 120);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.text(rt.sec1_area.toUpperCase(), col1, y);
+      doc.text(rt.sec1_crop.toUpperCase(), col2, y);
+      y += 4.5;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`${farmer.area} ha`, col1, y);
+      doc.text(translateCropString(farmer.crop, globalT), col2, y);
+      y += 9;
+
+      // Section II: Monitored Period
+      checkPageBreak(25);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(21, 128, 61);
+      doc.text(rt.sec2_title, margin, y);
+      doc.line(margin, y + 1.5, docWidth - margin, y + 1.5);
+      y += 6;
+
+      doc.setTextColor(120, 120, 120);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.text(rt.sec2_window.toUpperCase(), col1, y);
+      doc.text(rt.sec2_recent.toUpperCase(), col2, y);
+      y += 4.5;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(rt.sec2_window_val, col1, y);
+      doc.text(rt.sec2_recent_val, col2, y);
+      y += 9;
+
+      // Section III: Current Status
+      checkPageBreak(30);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(21, 128, 61);
+      doc.text(rt.sec3_title, margin, y);
+      doc.line(margin, y + 1.5, docWidth - margin, y + 1.5);
+      y += 6;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(rt.sec3_ndvi + ":", margin, y);
+      doc.setFont("helvetica", "bold");
+      doc.text(currentNdvi.toFixed(3), docWidth - margin, y, { align: "right" });
+      y += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.text(rt.sec3_class + ":", margin, y);
+      doc.setFont("helvetica", "bold");
+      
+      let statusColor = [34, 197, 94];
+      if (status === "alert") statusColor = [245, 158, 11];
+      else if (status === "emergency") statusColor = [239, 68, 68];
+
+      doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
+      doc.rect(docWidth - margin - 35, y - 3, 3, 3, "F");
+      doc.text(visualClass, docWidth - margin, y, { align: "right" });
+      y += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.text(rt.sec3_comp + ":", margin, y);
+      doc.setFont("helvetica", "bold");
+      doc.text(devText, docWidth - margin, y, { align: "right" });
+      y += 9;
+
+      // Section IV: Historical Series
+      checkPageBreak(50);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(21, 128, 61);
+      doc.text(rt.sec4_title, margin, y);
+      doc.line(margin, y + 1.5, docWidth - margin, y + 1.5);
+      y += 4;
+
+      const tableHeaders = [[rt.sec4_table_period, rt.sec4_table_current, rt.sec4_table_historical, rt.sec4_table_status]];
+      const tableRows = monthsData.map((m) => [
+        m.period,
+        m.current.toFixed(3),
+        m.historical.toFixed(3),
+        m.status,
+      ]);
+
+      autoTable(doc, {
+        startY: y,
+        head: tableHeaders,
+        body: tableRows,
+        theme: "striped",
+        headStyles: { fillColor: [21, 128, 61], textColor: [255, 255, 255] },
+        margin: { left: margin, right: margin },
+        styles: { fontSize: 8.5, font: "helvetica" },
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 8;
+
+      // Section V: Climate Event & Confidence
+      checkPageBreak(35);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(21, 128, 61);
+      doc.text(rt.sec5_title, margin, y);
+      doc.line(margin, y + 1.5, docWidth - margin, y + 1.5);
+      y += 6;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const eventDesc = status === "healthy"
+        ? (lang === "es"
+            ? "No se detectaron eventos climáticos adversos en el período analizado."
+            : lang === "pt"
+              ? "Não foram detectados eventos climáticos adversos no período analisado."
+              : "No adverse climate events were detected in the analyzed period.")
+        : rt.sec5_desc
+            .replace("{pct}", status === "alert" ? rt.sec5_pct_alert : rt.sec5_pct_emergency)
+            .replace("{start}", rt.sec5_start)
+            .replace("{end}", rt.sec5_end);
+
+      const eventLines = doc.splitTextToSize(eventDesc, contentWidth);
+      doc.text(eventLines, margin, y);
+      y += eventLines.length * 5 + 3;
+
+      doc.setTextColor(120, 120, 120);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.text(rt.sec5_severity.toUpperCase() + ":", margin, y);
+      doc.text(rt.sec5_confidence.toUpperCase() + ":", margin + 85, y);
+      y += 4.5;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const sevLabel = status === "healthy"
+        ? rt.sec5_sev_healthy
+        : status === "alert"
+          ? rt.sec5_sev_alert
+          : rt.sec5_sev_emergency;
+      doc.text(sevLabel, margin, y);
+      doc.text(confidenceLevel, margin + 85, y);
+      y += 6.5;
+
+      if (isLowConfidence) {
+        checkPageBreak(12);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(220, 38, 38);
+        const warnNoEmoji = rt.sec5_conf_warning.replace(/⚠️\s*/g, "");
+        const warnLines = doc.splitTextToSize(warnNoEmoji, contentWidth);
+        doc.text(warnLines, margin, y);
+        y += warnLines.length * 4.5 + 4.5;
+      }
+
+      // Next steps / Próximos passos
+      checkPageBreak(25);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(21, 128, 61);
+      doc.text(rt.next_steps_title.replace(/👉\s*/g, ""), margin, y);
+      doc.line(margin, y + 1.5, docWidth - margin, y + 1.5);
+      y += 6;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+
+      const stepList: string[] = [];
+      if (type === "public") {
+        stepList.push(rt.next_steps_public_1.replace("{institution}", institution));
+        stepList.push(rt.next_steps_public_2);
+        stepList.push(rt.next_steps_public_3);
+      } else {
+        stepList.push(rt.next_steps_insurance_1);
+        stepList.push(rt.next_steps_insurance_2);
+        stepList.push(rt.next_steps_insurance_3);
+      }
+
+      stepList.forEach((step, idx) => {
+        const stepLines = doc.splitTextToSize(step, contentWidth - 6);
+        doc.text(`${idx + 1}.`, margin, y);
+        doc.text(stepLines, margin + 6, y);
+        y += stepLines.length * 5 + 1.5;
+      });
+      y += 3.5;
+
+      // Section VII / Purpose / Reservas
+      checkPageBreak(30);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(21, 128, 61);
+      doc.text(rt.sec7_title, margin, y);
+      doc.line(margin, y + 1.5, docWidth - margin, y + 1.5);
+      y += 6;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const purposeLines = doc.splitTextToSize(rt.sec7_purpose, contentWidth);
+      doc.text(purposeLines, margin, y);
+      y += purposeLines.length * 5 + 3.5;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(180, 83, 9);
+      const warningNotice = rt.sec7_warning.replace(/⚠️\s*/g, "");
+      const warningNoticeLines = doc.splitTextToSize(warningNotice, contentWidth);
+      doc.text(warningNoticeLines, margin, y);
+      y += warningNoticeLines.length * 4.5 + 6;
+
+      // Footnote
+      checkPageBreak(12);
+      doc.setTextColor(120, 120, 120);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(rt.footer_tag, margin, y);
+      doc.text("SS-2026-0001", docWidth - margin, y, { align: "right" });
+
+      const sanitizeCar = (carStr: string) => {
+        return carStr.replace(/[^a-zA-Z0-9]/g, "-").replace(/-+/g, "-");
+      };
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const progNamePart = programName ? `-${programName.toLowerCase()}` : "";
+      const carPart = sanitizeCar(farmer.car || "MG-3170107-123456-78");
+      const fileName = `evidencia${progNamePart}-${carPart}-${dateStr}.pdf`;
+
+      doc.save(fileName);
       setSuccessToast(rt.toast_pdf_success);
-    }, 2000);
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      setSuccessToast(
+        lang === "es"
+          ? "Error al exportar PDF."
+          : lang === "pt"
+            ? "Erro ao exportar PDF."
+            : "Error exporting PDF."
+      );
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleShare = () => {
@@ -458,7 +804,11 @@ export function TechnicalReportModal({
       {/* Toast Notification */}
       {successToast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-feature text-feature-foreground rounded-xl px-4 py-2.5 shadow-xl text-sm font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-4 duration-300">
-          <CheckCircle2 size={14} className="text-primary" />
+          {successToast.toLowerCase().includes("err") ? (
+            <XCircle size={14} className="text-destructive" />
+          ) : (
+            <CheckCircle2 size={14} className="text-primary" />
+          )}
           {successToast}
         </div>
       )}

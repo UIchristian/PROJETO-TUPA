@@ -841,9 +841,9 @@ function CadastroScreen() {
 
           <div className="flex flex-col gap-2.5 p-3.5 bg-soft/50 rounded-xl border border-border/40">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-bold text-foreground/90">
+              <label htmlFor="car-number" className="text-sm font-bold text-foreground/90">
                 {t("cadastro.car_number")}
-              </span>
+              </label>
               <button
                 type="button"
                 onClick={handleFetchCarByArea}
@@ -916,9 +916,6 @@ function CadastroScreen() {
               </div>
             ) : (
                 <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
-                  <label htmlFor="car-number" className="text-sm font-bold text-foreground/90">
-                    {language === "es" ? "Número de CAR" : language === "en" ? "CAR Number" : "Número do CAR"}
-                  </label>
                   <input
                     id="car-number"
                     value={carNumber}
@@ -1117,6 +1114,9 @@ function CadastroScreen() {
                 type="button"
                 onClick={() => {
                   setMapOpen(false);
+                  if (points.length >= 3) {
+                    handleFetchCarByArea();
+                  }
                 }}
                 className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center gap-1.5 active:scale-95 transition-all"
               >

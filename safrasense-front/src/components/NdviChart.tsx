@@ -366,8 +366,6 @@ export function NdviChart({ status }: { status: ChartStatus }) {
     };
   });
 
-  const compactTimeline = data.length > 8;
-
   return (
     <div className="w-full flex flex-col">
       {/* Google Calendar-like Period Selector Segmented Control */}
@@ -439,16 +437,12 @@ export function NdviChart({ status }: { status: ChartStatus }) {
       </div>
 
       {/* 6-Month Status Visual Timeline (Semáforo) */}
-      <div className="flex justify-between items-center px-3 py-2.5 mb-4 bg-soft/50 rounded-xl border border-border/40 overflow-hidden">
+      <div className="flex gap-3 items-center px-3 py-2.5 mb-4 bg-soft/50 rounded-xl border border-border/40 overflow-x-auto no-scrollbar">
         {data.map((item, idx) => {
           const details = getStatusDetails(item.current);
           return (
-            <div key={idx} className="flex flex-col items-center gap-1.5 flex-1">
-              <span
-                className={`text-muted-foreground font-semibold uppercase tracking-wider ${
-                  compactTimeline ? "text-sm" : "text-sm"
-                }`}
-              >
+            <div key={idx} className="flex flex-col items-center gap-1.5 min-w-[56px] shrink-0">
+              <span className="text-muted-foreground font-semibold uppercase tracking-wider text-sm">
                 {item.month}
               </span>
               <span
@@ -457,92 +451,99 @@ export function NdviChart({ status }: { status: ChartStatus }) {
               >
                 {details.text === "Saudável" ? "✓" : details.text === "Atenção" ? "!" : "✕"}
               </span>
-              {!compactTimeline && (
-                <span className="text-sm font-bold text-foreground/80">{details.text}</span>
-              )}
+              <span className="text-[11px] font-bold text-foreground/80 text-center leading-tight max-w-full">
+                {details.text}
+              </span>
             </div>
           );
         })}
       </div>
 
       {/* Bar Chart representing health index of each period interval */}
-      <div className="w-full h-[180px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -5 }}>
-            <defs>
-              <linearGradient id="healthyGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#4ADE80" />
-                <stop offset="100%" stopColor="#15803D" />
-              </linearGradient>
-              <linearGradient id="warnGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#FBBF24" />
-                <stop offset="100%" stopColor="#D97706" />
-              </linearGradient>
-              <linearGradient id="dangerGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#F87171" />
-                <stop offset="100%" stopColor="#DC2626" />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#EFEAE0" vertical={false} />
-            <XAxis
-              dataKey="month"
-              tick={{ fontSize: 12, fill: "#7a7a7a" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              domain={[-1, 1]}
-              ticks={[-1, -0.5, 0, 0.2, 0.5, 0.75, 1]}
-              tickFormatter={(v) => {
-                if (v === 1) return "Excelente";
-                if (v === 0.75) return "Saudável";
-                if (v === 0.5) return "Atenção";
-                if (v === 0.2) return "Seca crítica";
-                if (v === 0) return "Neutro";
-                if (v === -0.5) return "Muito baixo";
-                if (v === -1) return "Mínimo";
-                return "";
-              }}
-              tick={{ fontSize: 12, fill: "#7a7a7a", fontWeight: "medium" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <Tooltip
-              contentStyle={{
-                border: "none",
-                borderRadius: 12,
-                fontSize: 12,
-                boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-              }}
-              formatter={(v: number, name: string) => {
-                if (name === "Média histórica" || name === "") {
-                  return [v.toFixed(2), name];
-                }
-                const details = getStatusDetails(v);
-                return [`${v.toFixed(3)} (${details.description})`, name];
-              }}
-            />
+      <div className="w-full overflow-x-auto no-scrollbar">
+        <div
+          className="h-[180px]"
+          style={{
+            minWidth: data.length > 6 ? `${data.length * 60}px` : "100%",
+          }}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -5 }}>
+              <defs>
+                <linearGradient id="healthyGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#4ADE80" />
+                  <stop offset="100%" stopColor="#15803D" />
+                </linearGradient>
+                <linearGradient id="warnGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#FBBF24" />
+                  <stop offset="100%" stopColor="#D97706" />
+                </linearGradient>
+                <linearGradient id="dangerGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#F87171" />
+                  <stop offset="100%" stopColor="#DC2626" />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#EFEAE0" vertical={false} />
+              <XAxis
+                dataKey="month"
+                tick={{ fontSize: 12, fill: "#7a7a7a" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                domain={[-1, 1]}
+                ticks={[-1, -0.5, 0, 0.2, 0.5, 0.75, 1]}
+                tickFormatter={(v) => {
+                  if (v === 1) return "Excelente";
+                  if (v === 0.75) return "Saudável";
+                  if (v === 0.5) return "Atenção";
+                  if (v === 0.2) return "Seca crítica";
+                  if (v === 0) return "Neutro";
+                  if (v === -0.5) return "Muito baixo";
+                  if (v === -1) return "Mínimo";
+                  return "";
+                }}
+                tick={{ fontSize: 12, fill: "#7a7a7a", fontWeight: "medium" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  border: "none",
+                  borderRadius: 12,
+                  fontSize: 12,
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                }}
+                formatter={(v: number, name: string) => {
+                  if (name === "Média histórica" || name === "") {
+                    return [v.toFixed(2), name];
+                  }
+                  const details = getStatusDetails(v);
+                  return [`${v.toFixed(3)} (${details.description})`, name];
+                }}
+              />
 
-            {/* Historical Average comparison line */}
-            <Line
-              type="monotone"
-              dataKey="historical"
-              stroke="#9E9E9E"
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              dot={false}
-              name="Média histórica"
-            />
+              {/* Historical Average comparison line */}
+              <Line
+                type="monotone"
+                dataKey="historical"
+                stroke="#9E9E9E"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                dot={false}
+                name="Média histórica"
+              />
 
-            {/* Current health index represented as color-coded bars (drawn as Corn cobs) */}
-            <Bar
-              dataKey="current"
-              shape={<CustomCornBar cropEmoji={cropEmoji} />}
-              name={`${systemLabel} · NDVI medio`}
-              barSize={24}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+              {/* Current health index represented as color-coded bars (drawn as Corn cobs) */}
+              <Bar
+                dataKey="current"
+                shape={<CustomCornBar cropEmoji={cropEmoji} />}
+                name={`${systemLabel} · NDVI medio`}
+                barSize={24}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <div className="mt-4 rounded-xl border border-border/40 overflow-hidden bg-card">
