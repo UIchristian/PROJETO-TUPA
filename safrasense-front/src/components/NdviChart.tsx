@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   Line,
   Bar,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -12,25 +11,20 @@ import {
 } from "recharts";
 import { useAppState } from "@/lib/app-store";
 import { useTranslation } from "@/lib/i18n";
+import {
+  buildHistoricalAverage,
+  getLatestNdviAverage,
+  parseNdviDataset,
+  type NdviHistoryRow,
+} from "@/lib/ndvi";
 
 export type ChartStatus = "healthy" | "alert" | "emergency";
 
-const periods = ["Dia", "Semana", "Mês", "Semestre", "Ano"] as const;
+const periods = ["Mês", "Semestre", "Ano"] as const;
 type PeriodType = (typeof periods)[number];
 
 const periodData = {
-  Dia: {
-    labels: {
-      pt: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
-      es: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
-      en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    },
-    historical: [0.72, 0.72, 0.72, 0.72, 0.72, 0.72, 0.72],
-    healthy: [0.73, 0.71, 0.74, 0.72, 0.75, 0.73, 0.74],
-    alert: [0.7, 0.68, 0.65, 0.61, 0.58, 0.55, 0.52],
-    emergency: [0.65, 0.58, 0.49, 0.44, 0.38, 0.35, 0.32],
-  },
-  Semana: {
+  Mês: {
     labels: {
       pt: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
       es: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
@@ -41,40 +35,52 @@ const periodData = {
     alert: [0.69, 0.67, 0.63, 0.59],
     emergency: [0.62, 0.55, 0.47, 0.42],
   },
-  Mês: {
-    labels: {
-      pt: ["Mar", "Abr", "Mai", "Jun"],
-      es: ["Mar", "Abr", "May", "Jun"],
-      en: ["Mar", "Apr", "May", "Jun"],
-    },
-    historical: [0.71, 0.72, 0.73, 0.72],
-    healthy: [0.72, 0.73, 0.71, 0.74],
-    alert: [0.7, 0.66, 0.61, 0.57],
-    emergency: [0.64, 0.56, 0.45, 0.39],
-  },
   Semestre: {
     labels: {
-      pt: ["1ºS/24", "2ºS/24", "1ºS/25", "2ºS/25"],
-      es: ["1ºS/24", "2ºS/24", "1ºS/25", "2ºS/25"],
-      en: ["1S/24", "2S/24", "1S/25", "2S/25"],
+      pt: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
+      es: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"],
+      en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
     },
-    historical: [0.68, 0.72, 0.73, 0.72],
-    healthy: [0.66, 0.71, 0.74, 0.72],
-    alert: [0.67, 0.71, 0.6, 0.54],
-    emergency: [0.67, 0.68, 0.46, 0.34],
+    historical: [0.68, 0.7, 0.72, 0.73, 0.72, 0.71],
+    healthy: [0.66, 0.71, 0.74, 0.72, 0.73, 0.72],
+    alert: [0.67, 0.71, 0.6, 0.54, 0.57, 0.55],
+    emergency: [0.67, 0.68, 0.46, 0.34, 0.31, 0.29],
   },
   Ano: {
     labels: {
-      pt: ["2023", "2024", "2025", "2026"],
-      es: ["2023", "2024", "2025", "2026"],
-      en: ["2023", "2024", "2025", "2026"],
+      pt: ["Jul", "Ago", "Set", "Out", "Nov", "Dez", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
+      es: ["Jul", "Ago", "Sep", "Oct", "Nov", "Dic", "Ene", "Feb", "Mar", "Abr", "May", "Jun"],
+      en: ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"],
     },
-    historical: [0.7, 0.69, 0.71, 0.73],
-    healthy: [0.71, 0.68, 0.72, 0.75],
-    alert: [0.68, 0.65, 0.67, 0.5],
-    emergency: [0.62, 0.58, 0.52, 0.3],
+    historical: [0.7, 0.69, 0.71, 0.73, 0.72, 0.71, 0.7, 0.71, 0.72, 0.73, 0.71, 0.7],
+    healthy: [0.71, 0.68, 0.72, 0.75, 0.74, 0.72, 0.73, 0.72, 0.74, 0.75, 0.73, 0.72],
+    alert: [0.68, 0.65, 0.67, 0.5, 0.53, 0.55, 0.57, 0.58, 0.61, 0.59, 0.57, 0.55],
+    emergency: [0.62, 0.58, 0.52, 0.3, 0.28, 0.31, 0.34, 0.36, 0.4, 0.39, 0.35, 0.33],
   },
 };
+function buildNdviChartFromHistory(history: NdviHistoryRow[], language: "pt" | "es" | "en") {
+  if (history.length === 0) {
+    return null;
+  }
+
+  const locale = language === "pt" ? "pt-BR" : language === "en" ? "en-US" : "es-ES";
+  const historical = buildHistoricalAverage(history);
+
+  return {
+    labels: history.map((item) => {
+      const d = new Date(item.data);
+      if (Number.isNaN(d.getTime())) return item.data;
+      const denseSeries = history.length > 8;
+      return d.toLocaleDateString(locale, {
+        month: "short",
+        ...(history.length > 6 && !denseSeries ? { year: "2-digit" as const } : {}),
+      });
+    }),
+    current: history.map((item) => item.ndviMedio),
+    historical,
+    rows: history,
+  };
+}
 
 // Helper to translate NDVI value into simple words, colors and indicators
 export function getStatusDetails(v: number) {
@@ -86,7 +92,7 @@ export function getStatusDetails(v: number) {
       emoji: "🟢",
       description: "Saudável 🌱",
     };
-  } else if (v >= 0.5) {
+  } else if (v >= 0.2) {
     return {
       color: "#f57c00", // Amber for caution
       bgClass: "bg-amber-500",
@@ -140,7 +146,7 @@ function CustomCornBar({
 
   const v = payload?.current ?? 0;
   let state: "healthy" | "warn" | "danger" = "healthy";
-  if (v < 0.5) state = "danger";
+  if (v < 0.2) state = "danger";
   else if (v < 0.65) state = "warn";
 
   // Gradient fill ID based on state
@@ -241,17 +247,65 @@ export function NdviChart({ status }: { status: ChartStatus }) {
   }
 
   const activeLang = language === "en" ? "en" : language === "pt" ? "pt" : "es";
+  const ndviDataset = parseNdviDataset({
+    relatorios_semanais: currentTerreno?.ndviRelatorioSemanal,
+    relatorios_mensais: currentTerreno?.ndviRelatorioMensal,
+    relatorios: currentTerreno?.ndviHistorico12m,
+  });
+  const monthlyRows =
+    ndviDataset.monthly.length > 0 ? ndviDataset.monthly : ndviDataset.all.filter((row) => row.granularidade !== "weekly");
+  const weeklyRows = ndviDataset.weekly;
+  const dynamicMes = weeklyRows.length >= 4 ? buildNdviChartFromHistory(weeklyRows.slice(-4), activeLang) : null;
+  const dynamicSemestre =
+    monthlyRows.length >= 3 ? buildNdviChartFromHistory(monthlyRows.slice(-6), activeLang) : null;
+  const dynamicAno =
+    monthlyRows.length >= 6 ? buildNdviChartFromHistory(monthlyRows.slice(-12), activeLang) : null;
+  const latestAverage = getLatestNdviAverage(ndviDataset);
+
   const pData = periodData[period];
-  const activeLabels = pData.labels[activeLang];
-  const activeHistorical = pData.historical;
+  const activeLabels =
+    period === "Mês" && dynamicMes
+      ? dynamicMes.labels
+      : period === "Ano" && dynamicAno
+        ? dynamicAno.labels
+        : period === "Semestre" && dynamicSemestre
+          ? dynamicSemestre.labels
+          : pData.labels[activeLang];
+  const activeHistorical =
+    period === "Ano" && dynamicAno
+      ? dynamicAno.historical
+      : period === "Semestre" && dynamicSemestre
+        ? dynamicSemestre.historical
+        : period === "Mês" && dynamicMes
+          ? dynamicMes.historical
+          : pData.historical;
   const activeCurrent =
-    status === "emergency" ? pData.emergency : status === "alert" ? pData.alert : pData.healthy;
+    period === "Ano" && dynamicAno
+      ? dynamicAno.current
+      : period === "Semestre" && dynamicSemestre
+        ? dynamicSemestre.current
+        : period === "Mês" && dynamicMes
+          ? dynamicMes.current
+          : status === "emergency"
+            ? pData.emergency
+            : status === "alert"
+              ? pData.alert
+              : pData.healthy;
+  const activeRows =
+    period === "Ano" && dynamicAno
+      ? dynamicAno.rows
+      : period === "Semestre" && dynamicSemestre
+        ? dynamicSemestre.rows
+        : period === "Mês" && dynamicMes
+          ? dynamicMes.rows
+          : [];
 
   const data = activeLabels.map((lbl, i) => {
     const hist = activeHistorical[i];
     const curr = activeCurrent[i];
     const lower = +(hist - 0.08).toFixed(2);
     const upper = +(hist + 0.08).toFixed(2);
+    const rowAverage = activeRows[i]?.ndviMedio ?? curr;
     return {
       month: lbl,
       historical: hist,
@@ -259,8 +313,11 @@ export function NdviChart({ status }: { status: ChartStatus }) {
       upper,
       range: upper - lower,
       current: curr,
+      ndviMedio: rowAverage,
     };
   });
+
+  const compactTimeline = data.length > 8;
 
   return (
     <div className="w-full flex flex-col">
@@ -269,35 +326,23 @@ export function NdviChart({ status }: { status: ChartStatus }) {
         {periods.map((p) => {
           const isActive = period === p;
           const label =
-            p === "Dia"
+            p === "Mês"
               ? language === "es"
-                ? "Día"
+                ? "Mes"
                 : language === "en"
-                  ? "Day"
-                  : "Dia"
-              : p === "Semana"
+                  ? "Month"
+                  : "Mês"
+              : p === "Semestre"
                 ? language === "es"
-                  ? "Semana"
+                  ? "Semestre"
                   : language === "en"
-                    ? "Week"
-                    : "Semana"
-                : p === "Mês"
-                  ? language === "es"
-                    ? "Mes"
-                    : language === "en"
-                      ? "Month"
-                      : "Mês"
-                  : p === "Semestre"
-                    ? language === "es"
-                      ? "Semestre"
-                      : language === "en"
-                        ? "Semester"
-                        : "Semestre"
-                    : language === "es"
-                      ? "Año"
-                      : language === "en"
-                        ? "Year"
-                        : "Ano";
+                    ? "Semester"
+                    : "Semestre"
+                : language === "es"
+                  ? "Año"
+                  : language === "en"
+                    ? "Year"
+                    : "Ano";
           return (
             <button
               key={p}
@@ -315,20 +360,55 @@ export function NdviChart({ status }: { status: ChartStatus }) {
         })}
       </div>
 
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="rounded-xl border border-border/40 bg-soft/40 px-3 py-2.5">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold block">
+            {language === "es" ? "NDVI medio actual" : language === "en" ? "Current average NDVI" : "NDVI medio atual"}
+          </span>
+          <span className="text-[20px] font-black text-foreground tabular-nums">
+            {latestAverage ? latestAverage.ndviMedio.toFixed(3) : "--"}
+          </span>
+        </div>
+        <div className="rounded-xl border border-border/40 bg-soft/40 px-3 py-2.5">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold block">
+            {language === "es" ? "Fuente" : language === "en" ? "Source" : "Fonte"}
+          </span>
+          <span className="text-[13px] font-bold text-foreground">
+            {period === "Mês"
+              ? language === "es"
+                ? "Relatorio semanal"
+                : language === "en"
+                  ? "Weekly report"
+                  : "Relatório semanal"
+              : language === "es"
+                ? "Relatorio mensual"
+                : language === "en"
+                  ? "Monthly report"
+                  : "Relatório mensal"}
+          </span>
+        </div>
+      </div>
+
       {/* 6-Month Status Visual Timeline (Semáforo) */}
-      <div className="flex justify-between items-center px-3 py-2.5 mb-4 bg-soft/50 rounded-xl border border-border/40">
+      <div className="flex justify-between items-center px-3 py-2.5 mb-4 bg-soft/50 rounded-xl border border-border/40 overflow-hidden">
         {data.map((item, idx) => {
           const details = getStatusDetails(item.current);
           return (
             <div key={idx} className="flex flex-col items-center gap-1.5 flex-1">
-              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+              <span
+                className={`text-muted-foreground font-semibold uppercase tracking-wider ${
+                  compactTimeline ? "text-[9px]" : "text-[10px]"
+                }`}
+              >
                 {item.month}
               </span>
               <span
                 className={`w-3.5 h-3.5 rounded-full ${details.bgClass} shadow-sm animate-pulse`}
                 style={{ animationDuration: `${1.5 + idx * 0.4}s` }}
               />
-              <span className="text-[9px] font-bold text-foreground/80">{details.text}</span>
+              {!compactTimeline && (
+                <span className="text-[9px] font-bold text-foreground/80">{details.text}</span>
+              )}
             </div>
           );
         })}
@@ -360,13 +440,16 @@ export function NdviChart({ status }: { status: ChartStatus }) {
               tickLine={false}
             />
             <YAxis
-              domain={[0.2, 1]}
-              ticks={[0.25, 0.5, 0.75, 1]}
+              domain={[-1, 1]}
+              ticks={[-1, -0.5, 0, 0.2, 0.5, 0.75, 1]}
               tickFormatter={(v) => {
                 if (v === 1) return "Excelente";
                 if (v === 0.75) return "Saudável";
                 if (v === 0.5) return "Atenção";
-                if (v === 0.25) return "Seco";
+                if (v === 0.2) return "Seca crítica";
+                if (v === 0) return "Neutro";
+                if (v === -0.5) return "Muito baixo";
+                if (v === -1) return "Mínimo";
                 return "";
               }}
               tick={{ fontSize: 9, fill: "#7a7a7a", fontWeight: "medium" }}
@@ -385,7 +468,7 @@ export function NdviChart({ status }: { status: ChartStatus }) {
                   return [v.toFixed(2), name];
                 }
                 const details = getStatusDetails(v);
-                return [`${v.toFixed(2)} (${details.description})`, name];
+                return [`${v.toFixed(3)} (${details.description})`, name];
               }}
             />
 
@@ -404,11 +487,28 @@ export function NdviChart({ status }: { status: ChartStatus }) {
             <Bar
               dataKey="current"
               shape={<CustomCornBar cropEmoji={cropEmoji} />}
-              name={systemLabel}
+              name={`${systemLabel} · NDVI medio`}
               barSize={24}
             />
           </ComposedChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-border/40 overflow-hidden bg-card">
+        <div className="grid grid-cols-[1.4fr_0.8fr_0.8fr] gap-2 px-3 py-2 bg-secondary/60 text-[11px] font-bold text-foreground/80">
+          <span>{language === "es" ? "Periodo" : language === "en" ? "Period" : "Período"}</span>
+          <span className="text-center">{language === "es" ? "NDVI medio" : language === "en" ? "Avg NDVI" : "NDVI medio"}</span>
+          <span className="text-center">{language === "es" ? "Promedio" : language === "en" ? "Baseline" : "Média"}</span>
+        </div>
+        <div className="divide-y divide-border/30">
+          {data.slice(-6).map((item, idx) => (
+            <div key={`${item.month}-${idx}`} className="grid grid-cols-[1.4fr_0.8fr_0.8fr] gap-2 px-3 py-2.5 text-[12px] text-foreground/85">
+              <span className="font-medium">{item.month}</span>
+              <span className="text-center tabular-nums font-bold">{item.ndviMedio.toFixed(3)}</span>
+              <span className="text-center tabular-nums text-muted-foreground">{item.historical.toFixed(3)}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

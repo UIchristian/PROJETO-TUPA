@@ -1,5 +1,6 @@
 // Tiny global store for app state without extra deps.
 import { useSyncExternalStore } from "react";
+import type { NdviHistoryRow } from "@/lib/ndvi";
 
 export type CropStatus = "healthy" | "alert" | "emergency";
 export type PayoutStatus = "pending" | "sent" | "received";
@@ -19,6 +20,11 @@ export interface Terreno {
   selectedCar?: any;
   crops?: string[];
   system?: string;
+  ndviHistorico12m?: NdviHistoryRow[];
+  ndviRelatorioSemanal?: NdviHistoryRow[];
+  ndviRelatorioMensal?: NdviHistoryRow[];
+  ndviDataFinal?: string;
+  ndviFontePoligono?: "car" | "demarcacao";
 }
 
 export interface AppState {

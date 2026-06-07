@@ -11,11 +11,11 @@ import {
   Loader2,
   CheckCircle2,
   ChevronDown,
-  RefreshCcw,
 } from "lucide-react";
 import { MobileFrame } from "@/components/MobileFrame";
 import { NdviChart } from "@/components/NdviChart";
 import { appStore, useAppState } from "@/lib/app-store";
+import { getLatestNdviAverage, parseNdviDataset } from "@/lib/ndvi";
 import { t, useTranslation } from "@/lib/i18n";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
@@ -114,8 +114,31 @@ function LavouraScreen() {
     },
   }[status];
 
+  const currentTerreno =
+    farmer.terrenos?.find((t) => t.id === activeTerrenoId) || farmer.terrenos?.[0];
+
+  const ndviDataset = parseNdviDataset({
+    relatorios_semanais: currentTerreno?.ndviRelatorioSemanal,
+    relatorios_mensais: currentTerreno?.ndviRelatorioMensal,
+    relatorios: currentTerreno?.ndviHistorico12m,
+  });
+  const latestAverageNdvi = getLatestNdviAverage(ndviDataset)?.ndviMedio ?? null;
+
+  const confidenceLevel =
+    latestAverageNdvi === null
+      ? status === "healthy"
+        ? "high"
+        : status === "alert"
+          ? "medium"
+          : "low"
+      : latestAverageNdvi >= 0.65
+        ? "high"
+        : latestAverageNdvi >= 0.2
+          ? "medium"
+          : "low";
+
   const confidenceCfg = {
-    healthy: {
+    high: {
       percent: "96%",
       label: t("dashboard.confidence_high"),
       desc: t("dashboard.confidence_high_desc"),
@@ -123,7 +146,7 @@ function LavouraScreen() {
       textColor: "text-emerald-100",
       accent: "text-emerald-300",
     },
-    alert: {
+    medium: {
       percent: "74%",
       label: t("dashboard.confidence_medium"),
       desc: t("dashboard.confidence_medium_desc"),
@@ -131,7 +154,7 @@ function LavouraScreen() {
       textColor: "text-amber-100",
       accent: "text-amber-300",
     },
-    emergency: {
+    low: {
       percent: "48%",
       label: t("dashboard.confidence_low"),
       desc: t("dashboard.confidence_low_desc"),
@@ -139,13 +162,10 @@ function LavouraScreen() {
       textColor: "text-rose-100",
       accent: "text-rose-300",
     },
-  }[status];
+  }[confidenceLevel];
 
   const isEmergency = status === "emergency";
   const isAlert = status === "alert";
-
-  const currentTerreno =
-    farmer.terrenos?.find((t) => t.id === activeTerrenoId) || farmer.terrenos?.[0];
 
   const firstCrop = currentTerreno?.crops?.[0] || "Milho";
   const cropText = t("crops." + firstCrop);
@@ -216,16 +236,7 @@ function LavouraScreen() {
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => appStore.cycleStatus()}
-              className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 rounded-xl text-[13px] font-bold cursor-pointer"
-              aria-label={t("dashboard.demo_btn")}
-            >
-              <RefreshCcw size={13} />
-              {t("dashboard.demo_btn")}
-            </button>
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
 
         <div className="flex flex-col items-center mt-5">
@@ -260,20 +271,12 @@ function LavouraScreen() {
           {/* Model Confidence Glassmorphic Badge */}
           <button
             onClick={() => setHomologationModalOpen(true)}
-            className={`mt-4 mx-auto max-w-[290px] w-full rounded-2xl p-3.5 border backdrop-blur-md flex items-center gap-3.5 text-left ${
-              status === "emergency" && fieldPhotoUploaded
-                ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-100"
-                : confidenceCfg.bg
-            } shadow-md hover:scale-[1.01] transition-transform cursor-pointer block`}
+            className={`mt-4 mx-auto max-w-[290px] w-full rounded-2xl p-3.5 border backdrop-blur-md flex items-center gap-3.5 text-left ${confidenceCfg.bg} shadow-md hover:scale-[1.01] transition-transform cursor-pointer block`}
           >
             <div
-              className={`text-2xl font-black ${
-                status === "emergency" && fieldPhotoUploaded
-                  ? "text-emerald-300"
-                  : confidenceCfg.accent
-              } shrink-0 tabular-nums`}
+              className={`text-2xl font-black ${confidenceCfg.accent} shrink-0 tabular-nums`}
             >
-              {status === "emergency" && fieldPhotoUploaded ? "96%" : confidenceCfg.percent}
+              {confidenceCfg.percent}
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-[12px] tracking-wider uppercase font-bold block opacity-90">
@@ -284,22 +287,10 @@ function LavouraScreen() {
                     : "CONFIANÇA DO MODELO"}
               </span>
               <span className="text-[13.5px] font-bold block leading-snug">
-                {status === "emergency" && fieldPhotoUploaded
-                  ? language === "es"
-                    ? "Validado por foto de campo y agrónomo"
-                    : language === "en"
-                      ? "Verified by field photo & agronomist"
-                      : "Validado por foto de campo e agrônomo"
-                  : confidenceCfg.label}
+                {confidenceCfg.label}
               </span>
               <p className="text-[12px] opacity-90 mt-0.5 leading-normal truncate max-w-full">
-                {status === "emergency" && fieldPhotoUploaded
-                  ? language === "es"
-                    ? "Validado por foto de campo y agrónomo"
-                    : language === "en"
-                      ? "Verified by field photo & agronomist"
-                      : "Validado por foto de campo e agrônomo"
-                  : confidenceCfg.desc}
+                {confidenceCfg.desc}
               </p>
             </div>
           </button>

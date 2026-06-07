@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useState, useEffect } from "react";
 import type { LatLngLiteral } from "leaflet";
-import { MapPin, ChevronLeft, ChevronDown, Info, Search } from "lucide-react";
+import { MapPin, ChevronLeft, ChevronDown, Info, Search, Loader2 } from "lucide-react";
 import { MobileFrame } from "@/components/MobileFrame";
 import { useAppState, appStore, CropStatus } from "@/lib/app-store";
+import { parseNdviDataset, type NdviHistoryRow } from "@/lib/ndvi";
 import { t, useTranslation } from "@/lib/i18n";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../firebase";
@@ -25,7 +26,95 @@ type CarItem = {
   [key: string]: any;
 };
 
+type PolygonPoint = { lat: number; lng: number };
+
 const BUSCAR_CARS_ENDPOINT = "http://localhost:8000/buscar-cars";
+const NDVI_ENDPOINT = "http://localhost:8000/ndvi";
+
+function normalizePolygonPoint(point: any): PolygonPoint | null {
+  if (!point) return null;
+
+  if (Array.isArray(point) && point.length >= 2) {
+    const lng = Number(point[0]);
+    const lat = Number(point[1]);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      return { lat, lng };
+    }
+  }
+
+  const lat = Number(point.lat ?? point.latitude);
+  const lng = Number(point.lng ?? point.lon ?? point.longitude);
+  if (Number.isFinite(lat) && Number.isFinite(lng)) {
+    return { lat, lng };
+  }
+
+  return null;
+}
+
+function normalizePolygon(value: any): PolygonPoint[] {
+  if (!Array.isArray(value)) return [];
+
+  const direct = value
+    .map((item) => normalizePolygonPoint(item))
+    .filter((item): item is PolygonPoint => !!item);
+
+  if (direct.length >= 3) return direct;
+
+  for (const item of value) {
+    const nested = normalizePolygon(item);
+    if (nested.length >= 3) return nested;
+  }
+
+  return [];
+}
+
+function extractCarPolygon(car: CarItem | null | undefined): PolygonPoint[] {
+  if (!car) return [];
+
+  const candidates = [
+    car.poligono,
+    car.polygon,
+    car.poligono_car,
+    car.poligonoCAR,
+    car.areaPolygon,
+    car.area_polygon,
+    car.geometry?.coordinates,
+    car.geometria?.coordinates,
+    car.geometria,
+  ];
+
+  for (const candidate of candidates) {
+    const normalized = normalizePolygon(candidate);
+    if (normalized.length >= 3) {
+      return normalized;
+    }
+  }
+
+  return [];
+}
+
+async function fetchNdviHistory(polygon: PolygonPoint[], dataFinal: string) {
+  const response = await fetch(NDVI_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      poligono: polygon,
+      data_final: dataFinal,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Falha NDVI: HTTP ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const parsed = parseNdviDataset(payload);
+  if (parsed.monthly.length === 0 && parsed.weekly.length === 0 && parsed.all.length === 0) {
+    throw new Error("Resposta NDVI sem dados validos.");
+  }
+
+  return parsed;
+}
 
 function getCarCode(car: CarItem, fallback: string) {
   return String(car.codigo_imovel ?? car.codigo ?? car.numero ?? car.cod_imovel ?? fallback);
@@ -95,6 +184,11 @@ function CadastroScreen() {
       status: CropStatus;
       crops?: string[];
       system?: string;
+      ndviHistorico12m?: NdviHistoryRow[];
+      ndviRelatorioSemanal?: NdviHistoryRow[];
+      ndviRelatorioMensal?: NdviHistoryRow[];
+      ndviDataFinal?: string;
+      ndviFontePoligono?: "car" | "demarcacao";
     }>
   >([
     {
@@ -377,25 +471,58 @@ function CadastroScreen() {
       finalTerrenos.reduce((sum, t) => sum + (t.hectares || 0), 0).toFixed(2),
     );
 
-    const firstTerreno = finalTerrenos[0];
-
-    const nextFarmer = {
-      ...state.farmer,
-      crop: `${crops.join(" + ")} (${system})`,
-      location: firstTerreno?.address || address.trim(),
-      area: totalHectares || formattedHectares || state.farmer.area,
-      areaPolygon: firstTerreno?.points || points,
-      car: firstTerreno?.carNumber || carNumber || undefined,
-      terrenos: finalTerrenos,
-    };
-
-    appStore.set({
-      farmer: nextFarmer,
-      activeTerrenoId: firstTerreno?.id || "1",
-      status: firstTerreno?.status || "alert",
-    });
-
     try {
+      const dataFinalNdvi = new Date().toISOString().slice(0, 10);
+
+      const terrenosComNdvi = await Promise.all(
+        finalTerrenos.map(async (terreno) => {
+          const carPolygon = extractCarPolygon(terreno.selectedCar);
+          const polygonForNdvi = carPolygon.length >= 3 ? carPolygon : terreno.points;
+
+          if (polygonForNdvi.length < 3) {
+            return {
+              ...terreno,
+              ndviHistorico12m: [],
+              ndviRelatorioSemanal: [],
+              ndviRelatorioMensal: [],
+              ndviDataFinal: dataFinalNdvi,
+              ndviFontePoligono: carPolygon.length >= 3 ? "car" : "demarcacao",
+            };
+          }
+
+            const ndviDataset = await fetchNdviHistory(polygonForNdvi, dataFinalNdvi);
+            const ndviHistorico12m =
+              ndviDataset.monthly.length > 0 ? ndviDataset.monthly : ndviDataset.all.slice(-12);
+
+          return {
+            ...terreno,
+            ndviHistorico12m,
+            ndviRelatorioSemanal: ndviDataset.weekly,
+            ndviRelatorioMensal: ndviDataset.monthly,
+            ndviDataFinal: dataFinalNdvi,
+            ndviFontePoligono: carPolygon.length >= 3 ? "car" : "demarcacao",
+          };
+        }),
+      );
+
+      const firstTerreno = terrenosComNdvi[0];
+
+      const nextFarmer = {
+        ...state.farmer,
+        crop: `${crops.join(" + ")} (${system})`,
+        location: firstTerreno?.address || address.trim(),
+        area: totalHectares || formattedHectares || state.farmer.area,
+        areaPolygon: firstTerreno?.points || points,
+        car: firstTerreno?.carNumber || carNumber || undefined,
+        terrenos: terrenosComNdvi,
+      };
+
+      appStore.set({
+        farmer: nextFarmer,
+        activeTerrenoId: firstTerreno?.id || "1",
+        status: firstTerreno?.status || "alert",
+      });
+
       const uid = state.farmer.firebaseUid || auth.currentUser?.uid;
 
       if (!uid) {
@@ -418,7 +545,11 @@ function CadastroScreen() {
           hectares: totalHectares,
           numeroCAR: nextFarmer.car || "",
           carSelecionado: firstTerreno?.selectedCar ?? null,
-          terrenos: finalTerrenos,
+          ndviHistorico12m: firstTerreno?.ndviHistorico12m ?? [],
+          ndviRelatorioSemanal: firstTerreno?.ndviRelatorioSemanal ?? [],
+          ndviRelatorioMensal: firstTerreno?.ndviRelatorioMensal ?? [],
+          ndviDataFinal: firstTerreno?.ndviDataFinal ?? dataFinalNdvi,
+          terrenos: terrenosComNdvi,
           atualizadoEm: serverTimestamp(),
         },
         { merge: true },
@@ -836,9 +967,42 @@ function CadastroScreen() {
           disabled={saving}
           className="h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-[16px] active:scale-[0.99] shadow-soft shrink-0 disabled:opacity-60"
         >
-          {t("cadastro.confirm_btn")}
+          {saving
+            ? language === "es"
+              ? "Creando tu cuenta..."
+              : language === "en"
+                ? "Creating your account..."
+                : "Criando sua conta..."
+            : t("cadastro.confirm_btn")}
         </button>
       </div>
+
+      {saving && (
+        <div className="fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm flex items-center justify-center px-6">
+          <div className="w-full max-w-[320px] rounded-3xl bg-card border border-border shadow-2xl p-5 flex flex-col items-center gap-4 text-center">
+            <Loader2 size={28} className="animate-spin text-primary" />
+            <div className="space-y-1">
+              <p className="text-[17px] font-bold text-foreground">
+                {language === "es"
+                  ? "Creando tu cuenta..."
+                  : language === "en"
+                    ? "Creating your account..."
+                    : "Criando sua conta..."}
+              </p>
+              <p className="text-[13px] text-muted-foreground leading-relaxed">
+                {language === "es"
+                  ? "Un momento mientras validamos tu cuenta."
+                  : language === "en"
+                    ? "We are validating your account."
+                    : "Aguarde um momento enquanto finalizamos seu cadastro."}
+              </p>
+            </div>
+            <div className="w-full h-2 rounded-full bg-secondary overflow-hidden">
+              <div className="h-full w-1/2 rounded-full bg-primary animate-pulse" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Expanded Map Drawer Overlay */}
       {mapOpen && (

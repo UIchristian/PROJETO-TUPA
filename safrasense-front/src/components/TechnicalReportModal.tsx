@@ -11,6 +11,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useAppState, appStore } from "@/lib/app-store";
+import { buildHistoricalAverage, getLatestNdviAverage, parseNdviDataset } from "@/lib/ndvi";
 import { useTranslation, translateCropString } from "@/lib/i18n";
 import { NdviChart } from "./NdviChart";
 
@@ -309,7 +310,7 @@ export function TechnicalReportModal({
   type,
   programName,
 }: TechnicalReportModalProps) {
-  const { farmer, status, fieldPhotoUploaded } = useAppState();
+  const { farmer, status, fieldPhotoUploaded, activeTerrenoId } = useAppState();
   const { language, t: globalT } = useTranslation();
 
   const [exporting, setExporting] = useState(false);
@@ -328,8 +329,19 @@ export function TechnicalReportModal({
 
   if (!open) return null;
 
+  const currentTerreno =
+    farmer.terrenos?.find((t) => t.id === activeTerrenoId) || farmer.terrenos?.[0];
+  const ndviDataset = parseNdviDataset({
+    relatorios_semanais: currentTerreno?.ndviRelatorioSemanal,
+    relatorios_mensais: currentTerreno?.ndviRelatorioMensal,
+    relatorios: currentTerreno?.ndviHistorico12m,
+  });
+  const monthlyRows =
+    ndviDataset.monthly.length > 0 ? ndviDataset.monthly : ndviDataset.all.filter((row) => row.granularidade !== "weekly");
+  const latestAverage = getLatestNdviAverage(ndviDataset);
+
   // Determine actual values based on state status
-  let currentNdvi = 0.32;
+  let currentNdvi = latestAverage?.ndviMedio ?? 0.32;
   let devText = rt.sec3_comp_emergency;
   let visualClass = rt.sec3_status_emergency;
   let textClassColor = "text-red-600 bg-red-50 dark:bg-red-950/20";
@@ -363,69 +375,30 @@ export function TechnicalReportModal({
     isLowConfidence = false;
   }
 
-  // Historical data values mapped for table
-  const monthsData = [
-    {
-      period:
-        lang === "es" ? "Diciembre / 2025" : lang === "pt" ? "Dezembro / 2025" : "December / 2025",
-      current: 0.67,
-      historical: 0.68,
-      status: rt.sec3_status_healthy,
-      color: "text-emerald-600",
-    },
-    {
-      period: lang === "es" ? "Enero / 2026" : lang === "pt" ? "Janeiro / 2026" : "January / 2026",
-      current: 0.7,
-      historical: 0.7,
-      status: rt.sec3_status_healthy,
-      color: "text-emerald-600",
-    },
-    {
-      period:
-        lang === "es" ? "Febrero / 2026" : lang === "pt" ? "Fevereiro / 2026" : "February / 2026",
-      current: 0.68,
-      historical: 0.72,
-      status: rt.sec3_status_healthy,
-      color: "text-emerald-600",
-    },
-    {
-      period: lang === "es" ? "Marzo / 2026" : lang === "pt" ? "Março / 2026" : "March / 2026",
-      current: status === "healthy" ? 0.73 : status === "alert" ? 0.66 : 0.58,
-      historical: 0.74,
-      status:
-        status === "healthy" || status === "alert" ? rt.sec3_status_healthy : rt.sec3_status_alert,
-      color: status === "healthy" || status === "alert" ? "text-emerald-600" : "text-amber-600",
-    },
-    {
-      period: lang === "es" ? "Abril / 2026" : lang === "pt" ? "Abril / 2026" : "April / 2026",
-      current: status === "healthy" ? 0.74 : status === "alert" ? 0.6 : 0.46,
-      historical: 0.73,
-      status:
-        status === "healthy"
-          ? rt.sec3_status_healthy
-          : status === "alert"
-            ? rt.sec3_status_alert
-            : rt.sec3_status_emergency,
-      color:
-        status === "healthy"
-          ? "text-emerald-600"
-          : status === "alert"
-            ? "text-amber-600"
-            : "text-red-600 font-bold",
-    },
-    {
-      period: lang === "es" ? "Mayo / 2026" : lang === "pt" ? "Maio / 2026" : "May / 2026",
-      current: currentNdvi,
-      historical: 0.72,
-      status: visualClass,
-      color:
-        status === "healthy"
-          ? "text-emerald-600"
-          : status === "alert"
-            ? "text-amber-600"
-            : "text-red-600 font-bold",
-    },
-  ];
+  const monthlyAverage = buildHistoricalAverage(monthlyRows);
+  const monthsData = (monthlyRows.length > 0 ? monthlyRows.slice(-6) : []).map((row, index) => {
+    const date = new Date(row.data);
+    const period = Number.isNaN(date.getTime())
+      ? row.referencia || row.data
+      : date.toLocaleDateString(lang === "pt" ? "pt-BR" : lang === "en" ? "en-US" : "es-ES", {
+          month: "long",
+          year: "numeric",
+        });
+    const historical = monthlyAverage[monthlyAverage.length - (monthlyRows.slice(-6).length - index)] ?? row.ndviMedio;
+    const details = row.ndviMedio >= 0.65
+      ? { status: rt.sec3_status_healthy, color: "text-emerald-600" }
+      : row.ndviMedio >= 0.5
+        ? { status: rt.sec3_status_alert, color: "text-amber-600" }
+        : { status: rt.sec3_status_emergency, color: "text-red-600 font-bold" };
+
+    return {
+      period,
+      current: row.ndviMedio,
+      historical,
+      status: details.status,
+      color: details.color,
+    };
+  });
 
   const handleExportPDF = () => {
     setExporting(true);
