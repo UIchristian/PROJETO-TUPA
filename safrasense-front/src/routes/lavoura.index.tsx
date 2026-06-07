@@ -11,6 +11,7 @@ import {
   Loader2,
   CheckCircle2,
   ChevronDown,
+  X,
 } from "lucide-react";
 import { MobileFrame } from "@/components/MobileFrame";
 import { NdviChart } from "@/components/NdviChart";
