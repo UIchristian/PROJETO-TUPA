@@ -66,7 +66,7 @@ function formatWeeklyLabel(item: NdviHistoryRow, language: "pt" | "es" | "en") {
   const dStart = new Date(dStartStr);
   if (Number.isNaN(dStart.getTime())) return item.referencia || "";
 
-  const formatDay = (d: Date) => d.getDate();
+  const formatDay = (d: Date) => String(d.getDate()).padStart(2, "0");
   const formatMonth = (d: Date) => {
     return d.toLocaleDateString(
       language === "pt" ? "pt-BR" : language === "en" ? "en-US" : "es-ES",
@@ -481,7 +481,9 @@ export function NdviChart({ status }: { status: ChartStatus }) {
           const details = getStatusDetails(item.current, activeLang);
           return (
             <div key={idx} className="flex flex-col items-center gap-1.5 min-w-[56px] shrink-0">
-              <span className="text-muted-foreground font-semibold uppercase tracking-wider text-sm">
+              <span
+                className={`text-muted-foreground font-semibold uppercase tracking-wider ${period === "Mês" ? "text-[10px]" : "text-sm"}`}
+              >
                 {item.month}
               </span>
               <span
@@ -525,9 +527,10 @@ export function NdviChart({ status }: { status: ChartStatus }) {
               <CartesianGrid stroke="#EFEAE0" vertical={false} />
               <XAxis
                 dataKey="month"
-                tick={{ fontSize: 12, fill: "#7a7a7a" }}
+                tick={{ fontSize: period === "Mês" ? 9 : 12, fill: "#7a7a7a" }}
                 axisLine={false}
                 tickLine={false}
+                interval={0}
               />
               <YAxis
                 domain={[-1, 1]}
