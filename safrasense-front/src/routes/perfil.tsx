@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { User, LogOut, MapPin, CheckCircle2, ChevronLeft, Search } from "lucide-react";
+import { User, MapPin, CheckCircle2, ChevronLeft, Search, Bell, X } from "lucide-react";
 import { useEffect, useState, lazy, Suspense } from "react";
 import type { LatLngLiteral } from "leaflet";
 import { MobileFrame } from "@/components/MobileFrame";
@@ -190,11 +190,6 @@ function PerfilScreen() {
   // Avatar picker state
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
-  // Delete account confirmation
-  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-
   // Password drawer states
   const [passwordDrawerOpen, setPasswordDrawerOpen] = useState(false);
   const [newPasswordInput, setNewPasswordInput] = useState("");
@@ -207,6 +202,7 @@ function PerfilScreen() {
 
   // Push notification banner state
   const [pushNotification, setPushNotification] = useState(false);
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const firebaseUid = farmer.firebaseUid || auth.currentUser?.uid || "";
 
   const syncAppStoreFromProfile = (next: {
@@ -514,62 +510,6 @@ function PerfilScreen() {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-    } catch (err) {
-      console.error("signOut error", err);
-    }
-    appStore.reset();
-    navigate({ to: "/" });
-  };
-
-  const handleDeleteAccount = async () => {
-    setDeleteError("");
-    setDeleting(true);
-    try {
-      const currentUser = auth.currentUser;
-      const uid = currentUser?.uid || farmer.firebaseUid;
-
-      if (uid) {
-        try {
-          await deleteDoc(doc(db, "usuarios", uid));
-        } catch (err) {
-          console.error("deleteDoc error", err);
-        }
-      }
-
-      if (currentUser) {
-        await deleteUser(currentUser);
-      }
-
-      appStore.reset();
-
-      setDeleteDrawerOpen(false);
-      navigate({ to: "/" });
-    } catch (err: any) {
-      console.error("deleteUser error", err);
-      if (err?.code === "auth/requires-recent-login") {
-        setDeleteError(
-          language === "es"
-            ? "Por seguridad, vuelva a iniciar sesión y reintente eliminar la cuenta."
-            : language === "en"
-              ? "For security, please sign in again and retry deleting the account."
-              : "Por seguranca, faca login novamente e tente excluir a conta de novo.",
-        );
-      } else {
-        setDeleteError(
-          language === "es"
-            ? "No fue posible eliminar la cuenta. Intente nuevamente."
-            : language === "en"
-              ? "Could not delete the account. Please try again."
-              : "Nao foi possivel excluir a conta. Tente novamente.",
-        );
-      }
-    } finally {
-      setDeleting(false);
-    }
-  };
 
   const profileName = profileData?.nome || "";
   const profileCpf = profileData?.cpf || "";
@@ -660,23 +600,205 @@ function PerfilScreen() {
 
       <header className="px-5 pt-6 pb-4 flex justify-between items-center">
         <h1 className="text-[22px] font-bold">{t("profile.title")}</h1>
-        <div className="relative">
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as any)}
-            className="appearance-none bg-secondary/80 border border-border/80 text-foreground text-[14px] font-semibold rounded-full py-1.5 pl-3 pr-8 shadow-sm outline-none focus:border-primary transition-all cursor-pointer"
-          >
-            <option value="es">🇪🇸 Español</option>
-            <option value="pt">🇧🇷 Português</option>
-            <option value="en">🇺🇸 English</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-muted-foreground">
-            <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
-              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-            </svg>
+        <button
+          type="button"
+          onClick={() => setNotificationModalOpen(true)}
+          className="relative h-10 w-10 rounded-2xl bg-secondary/80 text-foreground flex items-center justify-center hover:bg-secondary transition-all"
+          aria-label={
+            language === "es"
+              ? "Ver notificaciones"
+              : language === "en"
+                ? "View notifications"
+                : "Ver notificações"
+          }
+        >
+          <Bell size={18} />
+          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary shadow-sm" />
+        </button>
+      </header>
+
+      {notificationModalOpen && (
+        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-[340px] shadow-2xl border border-border/80 flex flex-col max-h-[90%] overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-slate-900 text-white shrink-0">
+              <span className="text-[14px] font-bold tracking-wide uppercase flex items-center gap-1.5">
+                <Bell size={15} />{" "}
+                {language === "es"
+                  ? "Notificaciones"
+                  : language === "en"
+                    ? "Notifications"
+                    : "Notificações"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setNotificationModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-300 cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-4">
+              <div className="p-4 rounded-2xl border border-border bg-slate-50 flex flex-col gap-2.5">
+                <div className="flex items-start gap-2.5">
+                  <div className="mt-0.5 shrink-0">
+                    {farmer.documentoValidado === "pendente" ? (
+                      <span className="text-amber-500 text-xl font-semibold">⏳</span>
+                    ) : farmer.documentoValidado === true ||
+                      farmer.documentoValidado === "valido" ||
+                      farmer.documentoValidado === "validado" ? (
+                      <span className="text-emerald-500 text-xl font-semibold">✅</span>
+                    ) : farmer.documentoArquivoNome ? (
+                      <span className="text-rose-500 text-xl font-semibold">❌</span>
+                    ) : (
+                      <span className="text-blue-500 text-xl font-semibold">ℹ️</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-[14px] text-foreground">
+                      {farmer.documentoValidado === "pendente"
+                        ? language === "es"
+                          ? "Documento en análisis"
+                          : language === "en"
+                            ? "Document under analysis"
+                            : "Documento em análise"
+                        : farmer.documentoValidado === true ||
+                            farmer.documentoValidado === "valido" ||
+                            farmer.documentoValidado === "validado"
+                          ? language === "es"
+                            ? "Documento CAR Validado"
+                            : language === "en"
+                              ? "CAR Document Validated"
+                              : "Documento do CAR Validado"
+                          : farmer.documentoArquivoNome
+                            ? language === "es"
+                              ? "Documento no válido"
+                              : language === "en"
+                                ? "Document not valid"
+                                : "Documento Não Válido"
+                            : language === "es"
+                              ? "Comprobar titularidad"
+                              : language === "en"
+                                ? "Verify ownership"
+                                : "Comprovar titularidade"}
+                    </h4>
+                    <p className="text-[12.5px] text-foreground/80 mt-1 leading-relaxed">
+                      {farmer.documentoValidado === "pendente"
+                        ? language === "es"
+                          ? "El recibo del CAR enviado está en revisión. Te avisaremos cuando sea validado."
+                          : language === "en"
+                            ? "The uploaded CAR receipt is under review. We'll notify you once validated."
+                            : "O recibo do CAR enviado está em análise. Notificaremos você assim que for validado."
+                        : farmer.documentoValidado === true ||
+                            farmer.documentoValidado === "valido" ||
+                            farmer.documentoValidado === "validado"
+                          ? language === "es"
+                            ? "¡Tu documento fue aprobado con éxito! Tu seguro y acceso a programas están activos."
+                            : language === "en"
+                              ? "Your document was successfully approved! Your insurance and program access are active."
+                              : "Seu documento do CAR foi aprovado com sucesso! Seus programas de governo e proteção estão ativos."
+                          : farmer.documentoArquivoNome
+                            ? language === "es"
+                              ? "El comprobante del CAR no fue aceptado. Por favor, reenvía un documento válido."
+                              : language === "en"
+                                ? "The CAR receipt was rejected. Please re-upload a valid document."
+                                : "O comprovante enviado foi marcado como não válido. Por favor, envie um documento de recibo do CAR correto."
+                            : language === "es"
+                              ? "Envía el recibo de inscripción del CAR para activar la protección paramétrica de tu lote."
+                              : language === "en"
+                                ? "Submit your CAR registration receipt to activate your parametric protection."
+                                : "Envie o recibo de inscrição do CAR para habilitar a proteção paramétrica e acessar os programas de governo."}
+                    </p>
+                  </div>
+                </div>
+                {((farmer.documentoValidado !== "pendente" &&
+                  farmer.documentoValidado !== true &&
+                  farmer.documentoValidado !== "valido" &&
+                  farmer.documentoValidado !== "validado") ||
+                  !farmer.documentoArquivoNome) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNotificationModalOpen(false);
+                      navigate({ to: "/comprovar" });
+                    }}
+                    className="h-10 w-full mt-1.5 bg-primary text-primary-foreground font-bold text-[13px] rounded-xl flex items-center justify-center hover:bg-primary/90 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    {farmer.documentoArquivoNome
+                      ? language === "es"
+                        ? "Reenviar comprobante"
+                        : language === "en"
+                          ? "Re-upload proof"
+                          : "Reenviar Comprovante"
+                      : language === "es"
+                        ? "Subir comprobante CAR"
+                        : language === "en"
+                          ? "Upload CAR proof"
+                          : "Enviar Comprovante do CAR"}
+                  </button>
+                )}
+              </div>
+
+              <div className="p-4 rounded-2xl border border-border bg-slate-50 flex flex-col gap-2.5">
+                <div className="flex items-start gap-2.5">
+                  <div className="mt-0.5 shrink-0 text-xl font-semibold">
+                    {status === "healthy" ? "🟢" : status === "alert" ? "🟡" : "🔴"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-[14px] text-foreground">
+                      {status === "healthy"
+                        ? language === "es"
+                          ? "Lote saludable"
+                          : language === "en"
+                            ? "Healthy plot"
+                            : "Lote saudável"
+                        : status === "alert"
+                          ? language === "es"
+                            ? "Lote en alerta"
+                            : language === "en"
+                              ? "Plot in alert"
+                              : "Lote em alerta"
+                          : language === "es"
+                            ? "Lote en estado crítico"
+                            : language === "en"
+                              ? "Plot in critical state"
+                              : "Lote em estado crítico"}
+                    </h4>
+                    <p className="text-[12.5px] text-foreground/80 mt-1 leading-relaxed">
+                      {status === "healthy"
+                        ? language === "es"
+                          ? "El satélite indica que tu plantación tiene un excelente desarrollo vegetativo."
+                          : language === "en"
+                            ? "Satellite data shows your crop has excellent vegetative development."
+                            : "O satélite indica que sua plantação apresenta excelente desenvolvimento vegetativo."
+                        : status === "alert"
+                          ? language === "es"
+                            ? "Se detectó estrés hídrico moderado en tu lote en los últimos 8 dias."
+                            : language === "en"
+                              ? "Moderate water stress detected in your plot over the past 8 days."
+                              : "Foi detectado estresse hídrico moderado em seu lote nos últimos 8 dias."
+                          : language === "es"
+                            ? "¡Seca severa confirmada! El vigor está muy por debajo de la media durante 3 semanas."
+                            : language === "en"
+                              ? "Severe drought confirmed! Vigor is severely below average for 3 weeks."
+                              : "Seca severa confirmada! O vigor está muito abaixo do normal há 3 semanas seguidas."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 border-t border-border bg-slate-50 shrink-0">
+              <button
+                type="button"
+                onClick={() => setNotificationModalOpen(false)}
+                className="h-12 w-full bg-slate-900 text-white rounded-xl font-bold text-[14px] hover:opacity-90 transition-all cursor-pointer animate-in fade-in"
+              >
+                {language === "es" ? "Cerrar" : language === "en" ? "Close" : "Fechar"}
+              </button>
+            </div>
           </div>
         </div>
-      </header>
+      )}
+
       <div className="px-5 pb-6 flex-1 flex flex-col gap-4">
         {profileError && (
           <div className="text-[12.5px] text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
@@ -958,88 +1080,7 @@ function PerfilScreen() {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="mt-2 h-12 rounded-xl flex items-center justify-center gap-2 text-destructive font-medium text-[14px] border border-border bg-card w-full cursor-pointer shrink-0"
-        >
-          <LogOut size={16} /> {t("profile.signOut")}
-        </button>
-
-        <button
-          onClick={() => {
-            setDeleteError("");
-            setDeleteDrawerOpen(true);
-          }}
-          className="mt-2 h-12 rounded-xl flex items-center justify-center gap-2 text-destructive font-medium text-[14px] border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-colors w-full cursor-pointer animate-in fade-in duration-200 shrink-0"
-        >
-          🗑️ {t("profile.deleteDataBtn")}
-        </button>
       </div>
-
-      {deleteDrawerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center">
-          <div className="bg-background w-full max-w-[390px] rounded-t-3xl p-5 flex flex-col gap-4 animate-in slide-in-from-bottom duration-300 max-h-[85vh]">
-            <header className="flex justify-between items-center border-b border-border pb-3 shrink-0">
-              <h3 className="font-bold text-[16px] text-destructive">
-                {language === "es"
-                  ? "Eliminar cuenta"
-                  : language === "en"
-                    ? "Delete account"
-                    : "Excluir conta"}
-              </h3>
-              <button
-                onClick={() => setDeleteDrawerOpen(false)}
-                disabled={deleting}
-                className="text-[13px] text-muted-foreground hover:underline disabled:opacity-50"
-              >
-                {language === "es" ? "Cerrar" : language === "en" ? "Close" : "Fechar"}
-              </button>
-            </header>
-
-            <p className="text-[13px] text-foreground leading-relaxed">
-              {language === "es"
-                ? "¿Está seguro de que desea eliminar su cuenta? Se borrarán sus datos del perfil y no podrá iniciar sesión nuevamente con este CPF/CNPJ. Esta acción no se puede deshacer."
-                : language === "en"
-                  ? "Are you sure you want to delete your account? Your profile data will be removed and you will not be able to sign in again with this CPF/CNPJ. This action cannot be undone."
-                  : "Tem certeza que deseja excluir sua conta? Seus dados de perfil serao removidos e voce nao podera mais entrar com este CPF/CNPJ. Esta acao nao pode ser desfeita."}
-            </p>
-
-            {deleteError && (
-              <p className="text-[12px] text-destructive font-medium">{deleteError}</p>
-            )}
-
-            <div className="flex gap-2 mt-2">
-              <button
-                type="button"
-                onClick={() => setDeleteDrawerOpen(false)}
-                disabled={deleting}
-                className="flex-1 h-12 rounded-xl border border-border font-semibold text-[14px] text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-50"
-              >
-                {language === "es" ? "Cancelar" : language === "en" ? "Cancel" : "Cancelar"}
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteAccount}
-                disabled={deleting}
-                className="flex-1 h-12 rounded-xl bg-destructive text-white font-semibold text-[14px] active:scale-95 transition-all shadow-soft disabled:opacity-60"
-              >
-                {deleting
-                  ? language === "es"
-                    ? "Eliminando..."
-                    : language === "en"
-                      ? "Deleting..."
-                      : "Excluindo..."
-                  : language === "es"
-                    ? "Sí, eliminar"
-                    : language === "en"
-                      ? "Yes, delete"
-                      : "Sim, excluir"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {editPersonalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center">

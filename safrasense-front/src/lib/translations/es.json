@@ -29,6 +29,23 @@
     "loginTitle": "Accede a tu cuenta",
     "registerTitle": "Crea tu cuenta"
   },
+  "nav": {
+    "property": "Propiedad",
+    "programs": "Programas",
+    "protection": "Seguros",
+    "profile": "Perfil",
+    "settings": "Configuraciones"
+  },
+  "settings": {
+    "title": "Configuraciones",
+    "subtitle": "Ajusta las opciones de accesibilidad y preferencias de la aplicación.",
+    "accessibilityTitle": "Accesibilidad",
+    "accessibilityDescription": "Usa estos controles para ampliar la interfaz, activar alto contraste o alternar entre modo claro y oscuro.",
+    "accountTitle": "Cuenta",
+    "accountDescription": "Cierra sesión o elimina tu cuenta de forma segura.",
+    "reauthError": "Por seguridad, vuelve a iniciar sesión e intenta eliminar la cuenta de nuevo.",
+    "deleteError": "No se pudo eliminar la cuenta. Intenta nuevamente."
+  },
   "onboarding": {
     "headTitle": "Bienvenido — SafraSense",
     "title": "Listo, {name}. Tu propiedad está en el mapa.",
@@ -64,7 +81,7 @@
     "update_healthy": "jueves, 22/05",
     "update_alert": "Actualizado hace 2 horas",
     "update_emergency": "Actualizado hace 20 minutos",
-    "demo_btn": "Demo: cambiar estado",
+    "demo_btn": "Cambio de Estado",
     "chart_title": "Salud de tu tierra — 6 meses",
     "chart_sub": "Monitoreo satelital de tu propiedad",
     "legend_current": "Zafra Actual (Espigas de Maíz: 🟢/🟡/🔴)",

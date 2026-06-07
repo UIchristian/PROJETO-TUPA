@@ -5,13 +5,11 @@ import {
   ClipboardList,
   AlertTriangle,
   ArrowRight,
-  Bell,
   Siren,
   FileText,
   Download,
   Loader2,
   CheckCircle2,
-  X,
   ChevronDown,
   RefreshCcw,
 } from "lucide-react";
@@ -47,7 +45,6 @@ function LavouraScreen() {
   const navigate = useNavigate();
 
   const [homologationModalOpen, setHomologationModalOpen] = useState(false);
-  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
   useEffect(() => {
     const syncFarmerFromDb = async () => {
@@ -220,32 +217,6 @@ function LavouraScreen() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {/* Notification Bell Button */}
-            <button
-              type="button"
-              onClick={() => setNotificationModalOpen(true)}
-              className="relative p-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur text-white cursor-pointer transition-all flex items-center justify-center"
-              aria-label="Notificações"
-            >
-              <Bell size={18} />
-              {/* Badge dot logic */}
-              {documentoValidado !== undefined && (
-                <span
-                  className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full border border-white animate-pulse ${
-                    documentoValidado === "pendente"
-                      ? "bg-amber-400"
-                      : documentoValidado === true ||
-                          documentoValidado === "valido" ||
-                          documentoValidado === "validado"
-                        ? "bg-emerald-400"
-                        : documentoArquivoNome
-                          ? "bg-rose-500" // Red for rejected
-                          : "bg-blue-400" // Blue for never uploaded
-                  }`}
-                />
-              )}
-            </button>
-
             <button
               onClick={() => appStore.cycleStatus()}
               className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 rounded-xl text-[13px] font-bold cursor-pointer"
@@ -594,197 +565,6 @@ function LavouraScreen() {
         </div>
       )}
 
-      {/* Notification Modal */}
-      {notificationModalOpen && (
-        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-[340px] shadow-2xl border border-border/80 flex flex-col max-h-[90%] overflow-hidden animate-in zoom-in-95 duration-200 text-left">
-            {/* Header */}
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-slate-900 text-white shrink-0">
-              <span className="text-[14px] font-bold tracking-wide uppercase flex items-center gap-1.5">
-                <Bell size={15} />{" "}
-                {language === "es"
-                  ? "Notificaciones"
-                  : language === "en"
-                    ? "Notifications"
-                    : "Notificações"}
-              </span>
-              <button
-                type="button"
-                onClick={() => setNotificationModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-300 cursor-pointer"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-4">
-              {/* Notification 1: CAR verification status */}
-              <div className="p-4 rounded-2xl border border-border bg-slate-50 flex flex-col gap-2.5">
-                <div className="flex items-start gap-2.5">
-                  <div className="mt-0.5 shrink-0">
-                    {documentoValidado === "pendente" ? (
-                      <span className="text-amber-500 text-xl font-semibold">⏳</span>
-                    ) : documentoValidado === true ||
-                      documentoValidado === "valido" ||
-                      documentoValidado === "validado" ? (
-                      <span className="text-emerald-500 text-xl font-semibold">✅</span>
-                    ) : documentoArquivoNome ? (
-                      <span className="text-rose-500 text-xl font-semibold">❌</span>
-                    ) : (
-                      <span className="text-blue-500 text-xl font-semibold">ℹ️</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-[14px] text-foreground">
-                      {documentoValidado === "pendente"
-                        ? language === "es"
-                          ? "Documento en análisis"
-                          : language === "en"
-                            ? "Document under analysis"
-                            : "Documento em análise"
-                        : documentoValidado === true ||
-                            documentoValidado === "valido" ||
-                            documentoValidado === "validado"
-                          ? language === "es"
-                            ? "Documento CAR Validado"
-                            : language === "en"
-                              ? "CAR Document Validated"
-                              : "Documento do CAR Validado"
-                          : documentoArquivoNome
-                            ? language === "es"
-                              ? "Documento no válido"
-                              : language === "en"
-                                ? "Document not valid"
-                                : "Documento Não Válido"
-                            : language === "es"
-                              ? "Comprobar titularidad"
-                              : language === "en"
-                                ? "Verify ownership"
-                                : "Comprovar titularidade"}
-                    </h4>
-                    <p className="text-[12.5px] text-foreground/80 mt-1 leading-relaxed">
-                      {documentoValidado === "pendente"
-                        ? language === "es"
-                          ? "El recibo del CAR enviado está en revisión. Te avisaremos cuando sea validado."
-                          : language === "en"
-                            ? "The uploaded CAR receipt is under review. We'll notify you once validated."
-                            : "O recibo do CAR enviado está em análise. Notificaremos você assim que for validado."
-                        : documentoValidado === true ||
-                            documentoValidado === "valido" ||
-                            documentoValidado === "validado"
-                          ? language === "es"
-                            ? "¡Tu documento fue aprobado con éxito! Tu seguro y acceso a programas están activos."
-                            : language === "en"
-                              ? "Your document was successfully approved! Your insurance and program access are active."
-                              : "Seu documento do CAR foi aprovado com sucesso! Seus programas de governo e proteção estão ativos."
-                          : documentoArquivoNome
-                            ? language === "es"
-                              ? "El comprobante del CAR no fue aceptado. Por favor, reenvía un documento válido."
-                              : language === "en"
-                                ? "The CAR receipt was rejected. Please re-upload a valid document."
-                                : "O comprovante enviado foi marcado como não válido. Por favor, envie um documento de recibo do CAR correto."
-                            : language === "es"
-                              ? "Envía el recibo de inscripción del CAR para activar la protección paramétrica de tu lote."
-                              : language === "en"
-                                ? "Submit your CAR registration receipt to activate your parametric protection."
-                                : "Envie o recibo de inscrição do CAR para habilitar a proteção paramétrica e acessar os programas de governo."}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Action button if not validated or pending */}
-                {((documentoValidado !== "pendente" &&
-                  documentoValidado !== true &&
-                  documentoValidado !== "valido" &&
-                  documentoValidado !== "validado") ||
-                  !documentoArquivoNome) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNotificationModalOpen(false);
-                      navigate({ to: "/comprovar" });
-                    }}
-                    className="h-10 w-full mt-1.5 bg-primary text-primary-foreground font-bold text-[13px] rounded-xl flex items-center justify-center hover:bg-primary/90 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
-                  >
-                    {documentoArquivoNome
-                      ? language === "es"
-                        ? "Reenviar comprobante"
-                        : language === "en"
-                          ? "Re-upload proof"
-                          : "Reenviar Comprovante"
-                      : language === "es"
-                        ? "Subir comprobante CAR"
-                        : language === "en"
-                          ? "Upload CAR proof"
-                          : "Enviar Comprovante do CAR"}
-                  </button>
-                )}
-              </div>
-
-              {/* Notification 2: Crop/Terrain Health Status */}
-              <div className="p-4 rounded-2xl border border-border bg-slate-50 flex flex-col gap-2.5">
-                <div className="flex items-start gap-2.5">
-                  <div className="mt-0.5 shrink-0 text-xl font-semibold">
-                    {status === "healthy" ? "🟢" : status === "alert" ? "🟡" : "🔴"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-[14px] text-foreground">
-                      {status === "healthy"
-                        ? language === "es"
-                          ? "Lote saludable"
-                          : language === "en"
-                            ? "Healthy plot"
-                            : "Lote saudável"
-                        : status === "alert"
-                          ? language === "es"
-                            ? "Lote en alerta"
-                            : language === "en"
-                              ? "Plot in alert"
-                              : "Lote em alerta"
-                          : language === "es"
-                            ? "Lote en estado crítico"
-                            : language === "en"
-                              ? "Plot in critical state"
-                              : "Lote em estado crítico"}
-                    </h4>
-                    <p className="text-[12.5px] text-foreground/80 mt-1 leading-relaxed">
-                      {status === "healthy"
-                        ? language === "es"
-                          ? "El satélite indica que tu plantación tiene un excelente desarrollo vegetativo."
-                          : language === "en"
-                            ? "Satellite data shows your crop has excellent vegetative development."
-                            : "O satélite indica que sua plantação apresenta excelente desenvolvimento vegetativo."
-                        : status === "alert"
-                          ? language === "es"
-                            ? "Se detectó estrés hídrico moderado en tu lote en los últimos 8 dias."
-                            : language === "en"
-                              ? "Moderate water stress detected in your plot over the past 8 days."
-                              : "Foi detectado estresse hídrico moderado em seu lote nos últimos 8 dias."
-                          : language === "es"
-                            ? "¡Seca severa confirmada! El vigor está muy por debajo de la media durante 3 semanas."
-                            : language === "en"
-                              ? "Severe drought confirmed! Vigor is severely below average for 3 weeks."
-                              : "Seca severa confirmada! O vigor está muito abaixo do normal há 3 semanas seguidas."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="p-4 border-t border-border bg-slate-50 shrink-0">
-              <button
-                type="button"
-                onClick={() => setNotificationModalOpen(false)}
-                className="h-12 w-full bg-slate-900 text-white rounded-xl font-bold text-[14px] hover:opacity-90 transition-all cursor-pointer animate-in fade-in"
-              >
-                {language === "es" ? "Cerrar" : language === "en" ? "Close" : "Fechar"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </MobileFrame>
   );
 }

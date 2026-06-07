@@ -29,6 +29,23 @@
     "loginTitle": "Acesse sua conta",
     "registerTitle": "Crie sua conta"
   },
+  "nav": {
+    "property": "Propriedade",
+    "programs": "Programas",
+    "protection": "Seguros",
+    "profile": "Perfil",
+    "settings": "Configurações"
+  },
+  "settings": {
+    "title": "Configurações",
+    "subtitle": "Ajuste as opções de acessibilidade e preferências do app.",
+    "accessibilityTitle": "Acessibilidade",
+    "accessibilityDescription": "Use esses controles para ampliar a interface, ativar alto contraste ou alternar entre modo claro e escuro.",
+    "accountTitle": "Conta",
+    "accountDescription": "Saia ou exclua sua conta de forma segura.",
+    "reauthError": "Por segurança, faça login novamente e tente excluir a conta.",
+    "deleteError": "Não foi possível excluir sua conta. Tente novamente."
+  },
   "onboarding": {
     "headTitle": "Bem-vindo — SafraSense",
     "title": "Pronto, {name}. Sua propriedade está no mapa.",
@@ -64,7 +81,7 @@
     "update_healthy": "quinta-feira, 22/05",
     "update_alert": "Atualizado há 2 horas",
     "update_emergency": "Atualizado há 20 minutos",
-    "demo_btn": "Demo: trocar status",
+    "demo_btn": "Troca de Status",
     "chart_title": "Saúde da sua Terra — 6 meses",
     "chart_sub": "Acompanhamento pelo satélite da sua propriedade",
     "legend_current": "Safra Atual (Espigas de Milho: 🟢/🟡/🔴)",

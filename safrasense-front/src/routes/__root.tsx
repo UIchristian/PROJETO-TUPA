@@ -14,7 +14,6 @@ import { useEffect, useState } from "react";
 import { useAppState } from "@/lib/app-store";
 import { auth } from "../../firebase";
 import appCss from "../styles.css?url";
-import AccessibilityBar from "../components/AccessibilityBar";
 
 // Rotas publicas (acessiveis sem login). Tudo o que nao estiver aqui exige autenticacao.
 const PUBLIC_PATHS = new Set<string>(["/", "/backoffice"]);
@@ -136,9 +135,30 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang={langCode}>
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            try {
+              const theme = localStorage.getItem('accessibility-theme');
+              const size = localStorage.getItem('accessibility-size');
+              const contrast = localStorage.getItem('accessibility-contrast');
+              
+              if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+              }
+              if (size === 'large') {
+                document.documentElement.classList.add('accessibility-large');
+              }
+              if (size === 'xlarge') {
+                document.documentElement.classList.add('accessibility-xlarge');
+              }
+              if (contrast === '1') {
+                document.documentElement.classList.add('accessibility-high-contrast');
+              }
+            } catch (e) {}
+          `
+        }} />
       </head>
       <body>
-        <AccessibilityBar />
         {children}
         <Scripts />
       </body>

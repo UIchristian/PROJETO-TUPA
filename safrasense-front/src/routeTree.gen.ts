@@ -13,6 +13,7 @@ import { Route as ProgramasRouteImport } from './routes/programas'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as GatilhoRouteImport } from './routes/gatilho'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as ComprovarRouteImport } from './routes/comprovar'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as BackofficeRouteImport } from './routes/backoffice'
@@ -40,6 +41,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const GatilhoRoute = GatilhoRouteImport.update({
   id: '/gatilho',
   path: '/gatilho',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComprovarRoute = ComprovarRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/backoffice': typeof BackofficeRoute
   '/cadastro': typeof CadastroRoute
   '/comprovar': typeof ComprovarRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/gatilho': typeof GatilhoRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/backoffice': typeof BackofficeRoute
   '/cadastro': typeof CadastroRoute
   '/comprovar': typeof ComprovarRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/gatilho': typeof GatilhoRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/backoffice': typeof BackofficeRoute
   '/cadastro': typeof CadastroRoute
   '/comprovar': typeof ComprovarRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/gatilho': typeof GatilhoRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/backoffice'
     | '/cadastro'
     | '/comprovar'
+    | '/configuracoes'
     | '/gatilho'
     | '/onboarding'
     | '/perfil'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/backoffice'
     | '/cadastro'
     | '/comprovar'
+    | '/configuracoes'
     | '/gatilho'
     | '/onboarding'
     | '/perfil'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/backoffice'
     | '/cadastro'
     | '/comprovar'
+    | '/configuracoes'
     | '/gatilho'
     | '/onboarding'
     | '/perfil'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   BackofficeRoute: typeof BackofficeRoute
   CadastroRoute: typeof CadastroRoute
   ComprovarRoute: typeof ComprovarRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
   GatilhoRoute: typeof GatilhoRoute
   OnboardingRoute: typeof OnboardingRoute
   PerfilRoute: typeof PerfilRoute
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/gatilho'
       fullPath: '/gatilho'
       preLoaderRoute: typeof GatilhoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/comprovar': {
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   BackofficeRoute: BackofficeRoute,
   CadastroRoute: CadastroRoute,
   ComprovarRoute: ComprovarRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
   GatilhoRoute: GatilhoRoute,
   OnboardingRoute: OnboardingRoute,
   PerfilRoute: PerfilRoute,

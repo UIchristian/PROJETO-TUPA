@@ -29,6 +29,23 @@
     "loginTitle": "Access your account",
     "registerTitle": "Create your account"
   },
+  "nav": {
+    "property": "Property",
+    "programs": "Programs",
+    "protection": "Insurance",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Adjust accessibility options and app preferences.",
+    "accessibilityTitle": "Accessibility",
+    "accessibilityDescription": "Use these controls to enlarge the interface, enable high contrast, or switch between light and dark mode.",
+    "accountTitle": "Account",
+    "accountDescription": "Sign out or delete your account safely.",
+    "reauthError": "For security, please sign in again and retry deleting the account.",
+    "deleteError": "Could not delete the account. Please try again."
+  },
   "onboarding": {
     "headTitle": "Welcome — SafraSense",
     "title": "Ready, {name}. Your property is on the map.",
@@ -64,7 +81,7 @@
     "update_healthy": "Thursday, 05/22",
     "update_alert": "Updated 2 hours ago",
     "update_emergency": "Updated 20 minutes ago",
-    "demo_btn": "Demo: cycle status",
+    "demo_btn": "Status Change",
     "chart_title": "Your Land's Health — 6 months",
     "chart_sub": "Satellite tracking of your property",
     "legend_current": "Current Harvest (Corn Cobs: 🟢/🟡/🔴)",

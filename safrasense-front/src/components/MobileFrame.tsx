@@ -14,7 +14,7 @@ export function MobileFrame({
   bg?: string;
 }) {
   return (
-    <div className="min-h-screen w-full flex justify-center bg-[#E2D9CD]">
+    <div className="min-h-screen w-full flex justify-center bg-[#E2D9CD] dark:bg-[#0f0d0a]">
       <div
         className={`relative w-full max-w-[390px] min-h-screen ${bg} flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.06)]`}
       >
