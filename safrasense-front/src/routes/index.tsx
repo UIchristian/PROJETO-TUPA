@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { X } from "lucide-react";
 import { useAppState, appStore } from "@/lib/app-store";
 import { t, useTranslation } from "@/lib/i18n";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
@@ -58,6 +59,7 @@ function LoginScreen() {
   const [password, setPassword] = useState(state.password || "");
   const [error, setError] = useState("");
   const [consentAccepted, setConsentAccepted] = useState(false);
+  const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -312,7 +314,17 @@ function LoginScreen() {
                 htmlFor="consent"
                 className="text-sm leading-snug text-foreground/90 cursor-pointer"
               >
-                {t("login.consent")}
+                {t("login.consent")}{" "}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setPrivacyModalOpen(true);
+                  }}
+                  className="text-primary font-semibold hover:underline focus:outline-none"
+                >
+                  {t("login.consentLearnMore")}
+                </button>
               </label>
             </div>
           )}
@@ -381,6 +393,178 @@ function LoginScreen() {
           </div>
         </form>
       </div>
+
+      {/* Privacy Policy Modal */}
+      {privacyModalOpen && (
+        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200">
+          <div className="bg-card w-full max-w-[390px] rounded-t-3xl shadow-2xl border border-border/80 flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 duration-300">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between shrink-0">
+              <h2 className="text-base font-bold text-foreground">{t("login.privacyTitle")}</h2>
+              <button
+                type="button"
+                onClick={() => setPrivacyModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-secondary text-muted-foreground cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-5 text-sm text-foreground/90 leading-relaxed">
+              {/* Last updated */}
+              <p className="text-xs text-muted-foreground">
+                {language === "es"
+                  ? "Última actualización: junio de 2025"
+                  : language === "en"
+                    ? "Last updated: June 2025"
+                    : "Última atualização: junho de 2025"}
+              </p>
+
+              {/* Section 1 */}
+              <section className="flex flex-col gap-1.5">
+                <h3 className="font-bold text-foreground">
+                  {language === "es" ? "1. Quiénes somos" : language === "en" ? "1. Who We Are" : "1. Quem somos"}
+                </h3>
+                <p>
+                  {language === "es"
+                    ? "SafraSense es una plataforma de monitoreo agrícola que conecta productores rurales con datos satelitales, seguros paramétricos y programas gubernamentales de apoyo al campo."
+                    : language === "en"
+                      ? "SafraSense is an agricultural monitoring platform that connects rural producers with satellite data, parametric insurance, and government programs supporting the agricultural sector."
+                      : "O SafraSense é uma plataforma de monitoramento agrícola que conecta produtores rurais com dados de satélite, seguros paramétricos e programas governamentais de apoio ao campo."}
+                </p>
+              </section>
+
+              {/* Section 2 */}
+              <section className="flex flex-col gap-1.5">
+                <h3 className="font-bold text-foreground">
+                  {language === "es" ? "2. Datos que recopilamos" : language === "en" ? "2. Data We Collect" : "2. Dados que coletamos"}
+                </h3>
+                <p>
+                  {language === "es"
+                    ? "Recopilamos los siguientes datos para la prestación del servicio:"
+                    : language === "en"
+                      ? "We collect the following data to provide the service:"
+                      : "Coletamos os seguintes dados para a prestação do serviço:"}
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-foreground/80 pl-1">
+                  {language === "es" ? (
+                    <>
+                      <li>Nombre completo, CPF/CNPJ y teléfono</li>
+                      <li>Ubicación y delimitación de la propiedad rural</li>
+                      <li>Número del CAR y documentos adjuntos</li>
+                      <li>Datos de cultivos y producción</li>
+                      <li>Imágenes satelitales del área demarcada</li>
+                    </>
+                  ) : language === "en" ? (
+                    <>
+                      <li>Full name, CPF/CNPJ, and phone number</li>
+                      <li>Location and boundary of rural property</li>
+                      <li>CAR registration number and attached documents</li>
+                      <li>Crop and production data</li>
+                      <li>Satellite imagery of the demarcated area</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Nome completo, CPF/CNPJ e telefone</li>
+                      <li>Localização e delimitação da propriedade rural</li>
+                      <li>Número do CAR e documentos anexados</li>
+                      <li>Dados de cultivo e produção</li>
+                      <li>Imagens de satélite da área demarcada</li>
+                    </>
+                  )}
+                </ul>
+              </section>
+
+              {/* Section 3 */}
+              <section className="flex flex-col gap-1.5">
+                <h3 className="font-bold text-foreground">
+                  {language === "es" ? "3. Finalidad del tratamiento" : language === "en" ? "3. Purpose of Processing" : "3. Finalidade do tratamento"}
+                </h3>
+                <p>
+                  {language === "es"
+                    ? "Sus datos se utilizan exclusivamente para: proveer análisis satelitales de su propiedad, conectarlo con seguros paramétricos y programas gubernamentales, validar la titularidad rural y generar informes técnicos."
+                    : language === "en"
+                      ? "Your data is used exclusively to: provide satellite analysis of your property, connect you with parametric insurance and government programs, validate rural ownership, and generate technical reports."
+                      : "Seus dados são utilizados exclusivamente para: prover análises de satélite da sua propriedade, conectá-lo a seguros paramétricos e programas de governo, validar a titularidade rural e gerar laudos técnicos."}
+                </p>
+              </section>
+
+              {/* Section 4 */}
+              <section className="flex flex-col gap-1.5">
+                <h3 className="font-bold text-foreground">
+                  {language === "es" ? "4. Compartición de datos" : language === "en" ? "4. Data Sharing" : "4. Compartilhamento de dados"}
+                </h3>
+                <p>
+                  {language === "es"
+                    ? "Compartimos sus datos únicamente con operadoras de seguros y órganos gubernamentales cuando sea necesario para la prestación del servicio y siempre con su consentimiento previo. No vendemos datos a terceros."
+                    : language === "en"
+                      ? "We share your data only with insurance operators and government agencies when necessary for service delivery and always with your prior consent. We do not sell data to third parties."
+                      : "Compartilhamos seus dados somente com operadoras de seguro e órgãos governamentais quando necessário para a prestação do serviço e sempre com seu consentimento prévio. Não vendemos dados a terceiros."}
+                </p>
+              </section>
+
+              {/* Section 5 */}
+              <section className="flex flex-col gap-1.5">
+                <h3 className="font-bold text-foreground">
+                  {language === "es" ? "5. Almacenamiento y seguridad" : language === "en" ? "5. Storage & Security" : "5. Armazenamento e segurança"}
+                </h3>
+                <p>
+                  {language === "es"
+                    ? "Sus datos se almacenan en infraestructura segura de Google Firebase / Google Cloud, con cifrado en tránsito y en reposo. Adoptamos medidas técnicas y organizativas para prevenir accesos no autorizados."
+                    : language === "en"
+                      ? "Your data is stored on secure Google Firebase / Google Cloud infrastructure, with encryption in transit and at rest. We adopt technical and organizational measures to prevent unauthorized access."
+                      : "Seus dados são armazenados em infraestrutura segura do Google Firebase / Google Cloud, com criptografia em trânsito e em repouso. Adotamos medidas técnicas e organizacionais para prevenir acessos não autorizados."}
+                </p>
+              </section>
+
+              {/* Section 6 */}
+              <section className="flex flex-col gap-1.5">
+                <h3 className="font-bold text-foreground">
+                  {language === "es"
+                    ? "6. Sus derechos (LGPD)"
+                    : language === "en"
+                      ? "6. Your Rights (LGPD)"
+                      : "6. Seus direitos (LGPD)"}
+                </h3>
+                <p>
+                  {language === "es"
+                    ? "De acuerdo con la Ley General de Protección de Datos (LGPD), usted tiene derecho a: acceder a sus datos, corregirlos, solicitar su eliminación, revocar el consentimiento y obtener información sobre el tratamiento realizado."
+                    : language === "en"
+                      ? "Under the Brazilian General Data Protection Law (LGPD), you have the right to: access your data, correct it, request its deletion, revoke consent, and obtain information about the processing performed."
+                      : "Conforme a Lei Geral de Proteção de Dados (LGPD), você tem direito a: acessar seus dados, corrigi-los, solicitar sua exclusão, revogar o consentimento e obter informações sobre o tratamento realizado."}
+                </p>
+              </section>
+
+              {/* Section 7 */}
+              <section className="flex flex-col gap-1.5">
+                <h3 className="font-bold text-foreground">
+                  {language === "es" ? "7. Contacto" : language === "en" ? "7. Contact" : "7. Contato"}
+                </h3>
+                <p>
+                  {language === "es"
+                    ? "Para ejercer sus derechos o aclarar dudas, contáctenos:"
+                    : language === "en"
+                      ? "To exercise your rights or clarify questions, contact us:"
+                      : "Para exercer seus direitos ou esclarecer dúvidas, entre em contato:"}
+                </p>
+                <p className="font-semibold text-primary">contato@safrasense.com.br</p>
+              </section>
+            </div>
+
+            {/* Footer close button */}
+            <div className="p-4 border-t border-border bg-soft shrink-0">
+              <button
+                type="button"
+                onClick={() => setPrivacyModalOpen(false)}
+                className="h-12 w-full bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-all cursor-pointer"
+              >
+                {t("login.privacyClose")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

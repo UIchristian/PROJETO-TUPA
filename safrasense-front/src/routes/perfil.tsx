@@ -87,7 +87,14 @@ function maskPhoneLgpd(phone: string) {
 }
 
 function PerfilScreen() {
-  const { farmer, password, protected: isProtected, status } = useAppState();
+  const {
+    farmer,
+    password,
+    protected: isProtected,
+    status,
+    documentoValidado = false,
+    documentoArquivoNome = "",
+  } = useAppState();
   const { t, language, setLanguage } = useTranslation();
   const navigate = useNavigate();
   const [profileLoading, setProfileLoading] = useState(true);
@@ -203,7 +210,25 @@ function PerfilScreen() {
   // Push notification banner state
   const [pushNotification, setPushNotification] = useState(false);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+
   const firebaseUid = farmer.firebaseUid || auth.currentUser?.uid || "";
+
+  // Track whether the user has seen the current document status so the badge shows "new"
+  const [seenDocStatus, setSeenDocStatus] = useState<string>(
+    () => localStorage.getItem("safra_seen_doc_status") ?? "",
+  );
+  const currentDocStatus = String(documentoValidado);
+  const hasUnreadDocNotification =
+    (!!documentoArquivoNome || documentoValidado !== false) &&
+    currentDocStatus !== seenDocStatus;
+  const hasUnreadLoteNotification = status !== "healthy";
+  const hasUnread = hasUnreadDocNotification || hasUnreadLoteNotification;
+
+  const handleOpenNotifications = () => {
+    setNotificationModalOpen(true);
+    setSeenDocStatus(currentDocStatus);
+    localStorage.setItem("safra_seen_doc_status", currentDocStatus);
+  };
 
   const syncAppStoreFromProfile = (next: {
     nome: string;
@@ -235,10 +260,10 @@ function PerfilScreen() {
   };
 
   useEffect(() => {
-    const loadProfile = async () => {
+    const loadProfile = async (uid: string) => {
       setProfileError("");
 
-      if (!firebaseUid) {
+      if (!uid) {
         setProfileError(
           language === "es"
             ? "No se pudo identificar el usuario autenticado."
@@ -251,7 +276,7 @@ function PerfilScreen() {
       }
 
       try {
-        const snap = await getDoc(doc(db, "usuarios", firebaseUid));
+        const snap = await getDoc(doc(db, "usuarios", uid));
 
         if (!snap.exists()) {
           setProfileError(
@@ -285,6 +310,11 @@ function PerfilScreen() {
 
         setProfileData(normalized);
         syncAppStoreFromProfile(normalized);
+        // Persist document validation state so notification modal reads it correctly
+        appStore.set({
+          documentoValidado: data.documentoValidado ?? false,
+          documentoArquivoNome: data.documentoArquivoNome || "",
+        });
       } catch (error) {
         console.error(error);
         setProfileError(
@@ -299,8 +329,14 @@ function PerfilScreen() {
       }
     };
 
-    loadProfile();
-  }, [firebaseUid]);
+    const storedUid = appStore.get().farmer.firebaseUid;
+    if (storedUid) loadProfile(storedUid);
+
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user && user.uid !== appStore.get().farmer.firebaseUid) loadProfile(user.uid);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const updateProfileFields = async (patch: Partial<NonNullable<typeof profileData>>) => {
     if (!profileData) return;
@@ -602,7 +638,7 @@ function PerfilScreen() {
         <h1 className="text-xl font-bold">{t("profile.title")}</h1>
         <button
           type="button"
-          onClick={() => setNotificationModalOpen(true)}
+          onClick={handleOpenNotifications}
           className="relative h-10 w-10 rounded-2xl bg-secondary/80 text-foreground flex items-center justify-center hover:bg-secondary transition-all"
           aria-label={
             language === "es"
@@ -613,7 +649,9 @@ function PerfilScreen() {
           }
         >
           <Bell size={18} />
-          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary shadow-sm" />
+          {hasUnread && (
+            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive shadow-sm animate-pulse" />
+          )}
         </button>
       </header>
 
@@ -641,13 +679,13 @@ function PerfilScreen() {
               <div className="p-4 rounded-2xl border border-border bg-soft flex flex-col gap-2.5">
                 <div className="flex items-start gap-2.5">
                   <div className="mt-0.5 shrink-0">
-                    {farmer.documentoValidado === "pendente" ? (
+                    {documentoValidado === "pendente" ? (
                       <span className="text-amber-warn text-xl font-semibold">⏳</span>
-                    ) : farmer.documentoValidado === true ||
-                      farmer.documentoValidado === "valido" ||
-                      farmer.documentoValidado === "validado" ? (
+                    ) : documentoValidado === true ||
+                      documentoValidado === "valido" ||
+                      documentoValidado === "validado" ? (
                       <span className="text-primary text-xl font-semibold">✅</span>
-                    ) : farmer.documentoArquivoNome ? (
+                    ) : documentoArquivoNome ? (
                       <span className="text-rose-500 text-xl font-semibold">❌</span>
                     ) : (
                       <span className="text-blue-500 text-xl font-semibold">ℹ️</span>
@@ -655,21 +693,21 @@ function PerfilScreen() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm text-foreground">
-                      {farmer.documentoValidado === "pendente"
+                      {documentoValidado === "pendente"
                         ? language === "es"
                           ? "Documento en análisis"
                           : language === "en"
                             ? "Document under analysis"
                             : "Documento em análise"
-                        : farmer.documentoValidado === true ||
-                            farmer.documentoValidado === "valido" ||
-                            farmer.documentoValidado === "validado"
+                        : documentoValidado === true ||
+                            documentoValidado === "valido" ||
+                            documentoValidado === "validado"
                           ? language === "es"
                             ? "Documento CAR Validado"
                             : language === "en"
                               ? "CAR Document Validated"
                               : "Documento do CAR Validado"
-                          : farmer.documentoArquivoNome
+                          : documentoArquivoNome
                             ? language === "es"
                               ? "Documento no válido"
                               : language === "en"
@@ -682,21 +720,21 @@ function PerfilScreen() {
                                 : "Comprovar titularidade"}
                     </h4>
                     <p className="text-sm text-foreground/80 mt-1 leading-relaxed">
-                      {farmer.documentoValidado === "pendente"
+                      {documentoValidado === "pendente"
                         ? language === "es"
                           ? "El recibo del CAR enviado está en revisión. Te avisaremos cuando sea validado."
                           : language === "en"
                             ? "The uploaded CAR receipt is under review. We'll notify you once validated."
                             : "O recibo do CAR enviado está em análise. Notificaremos você assim que for validado."
-                        : farmer.documentoValidado === true ||
-                            farmer.documentoValidado === "valido" ||
-                            farmer.documentoValidado === "validado"
+                        : documentoValidado === true ||
+                            documentoValidado === "valido" ||
+                            documentoValidado === "validado"
                           ? language === "es"
                             ? "¡Tu documento fue aprobado con éxito! Tu seguro y acceso a programas están activos."
                             : language === "en"
                               ? "Your document was successfully approved! Your insurance and program access are active."
                               : "Seu documento do CAR foi aprovado com sucesso! Seus programas de governo e proteção estão ativos."
-                          : farmer.documentoArquivoNome
+                          : documentoArquivoNome
                             ? language === "es"
                               ? "El comprobante del CAR no fue aceptado. Por favor, reenvía un documento válido."
                               : language === "en"
@@ -710,11 +748,11 @@ function PerfilScreen() {
                     </p>
                   </div>
                 </div>
-                {((farmer.documentoValidado !== "pendente" &&
-                  farmer.documentoValidado !== true &&
-                  farmer.documentoValidado !== "valido" &&
-                  farmer.documentoValidado !== "validado") ||
-                  !farmer.documentoArquivoNome) && (
+                {((documentoValidado !== "pendente" &&
+                  documentoValidado !== true &&
+                  documentoValidado !== "valido" &&
+                  documentoValidado !== "validado") ||
+                  !documentoArquivoNome) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -723,7 +761,7 @@ function PerfilScreen() {
                     }}
                     className="h-10 w-full mt-1.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl flex items-center justify-center hover:bg-primary/90 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
                   >
-                    {farmer.documentoArquivoNome
+                    {documentoArquivoNome
                       ? language === "es"
                         ? "Reenviar comprobante"
                         : language === "en"
