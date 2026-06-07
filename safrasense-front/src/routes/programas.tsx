@@ -8,14 +8,17 @@ import {
   ArrowRight,
   Lock,
   FileText,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MobileFrame } from "@/components/MobileFrame";
 import { useAppState, appStore } from "@/lib/app-store";
 import { t, useTranslation } from "@/lib/i18n";
 import { TechnicalReportModal } from "@/components/TechnicalReportModal";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { deleteObject, ref } from "firebase/storage";
+import { auth, db, storage } from "../../firebase";
 
 export const Route = createFileRoute("/programas")({
   head: () => {
@@ -28,23 +31,28 @@ export const Route = createFileRoute("/programas")({
 });
 
 function ProgramasScreen() {
-  const { farmer } = useAppState();
+  // documentoValidado and documentoArquivoNome are read from the store (reactive + persisted in
+  // localStorage) so they are available immediately on mount without waiting for Firestore.
+  const { farmer, documentoValidado = false, documentoArquivoNome = "" } = useAppState();
   const { t, language } = useTranslation();
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [whatsappSent, setWhatsappSent] = useState(false);
   const [pushNotification, setPushNotification] = useState(false);
-  const [documentoValidado, setDocumentoValidado] = useState<boolean | string>(false);
+  const [documentoStoragePath, setDocumentoStoragePath] = useState("");
+  const [documentoMotivoRejeicao, setDocumentoMotivoRejeicao] = useState("");
+  const [deletingDoc, setDeletingDoc] = useState(false);
+  const [confirmDeleteDoc, setConfirmDeleteDoc] = useState(false);
 
   const [reportOpen, setReportOpen] = useState(false);
   const [reportType, setReportType] = useState<"public" | "insurance">("public");
   const [reportProgram, setReportProgram] = useState<string | undefined>(undefined);
 
-  const firebaseUid = farmer.firebaseUid || auth.currentUser?.uid || "";
   const documentoEstaValido =
     documentoValidado === true ||
     documentoValidado === "valido" ||
     documentoValidado === "validado";
   const documentoPendente = documentoValidado === "pendente";
+  const documentoRejeitado = documentoValidado === false && !!documentoArquivoNome;
 
   // Eligibility map for current POC rules.
   // Non-eligible programs must remain blocked even with validated documents.
@@ -56,25 +64,27 @@ function ProgramasScreen() {
   };
 
   useEffect(() => {
-    const loadValidationState = async () => {
-      if (!firebaseUid) return;
-
+    const loadData = async (uid: string) => {
       try {
-        const snap = await getDoc(doc(db, "usuarios", firebaseUid));
+        const snap = await getDoc(doc(db, "usuarios", uid));
         if (!snap.exists()) return;
 
         const data = snap.data() as any;
-        setDocumentoValidado(data.documentoValidado ?? false);
+        setDocumentoStoragePath(data.documentoStoragePath || "");
+        setDocumentoMotivoRejeicao(data.documentoMotivoRejeicao || "");
 
         const crops = Array.isArray(data.produtosCultivados) ? data.produtosCultivados : [];
         const cropLabel = data.sistema
           ? `${crops.join(" + ")} (${data.sistema})`
           : crops.join(" + ");
 
+        // Update the store so documentoValidado and documentoArquivoNome are reactive
         appStore.set({
+          documentoValidado: data.documentoValidado ?? false,
+          documentoArquivoNome: data.documentoArquivoNome || "",
           farmer: {
-            ...farmer,
-            firebaseUid,
+            ...appStore.get().farmer,
+            firebaseUid: uid,
             name: data.nome || farmer.name,
             cpf: data.cpf || farmer.cpf,
             phone: data.telefone || farmer.phone,
@@ -92,8 +102,50 @@ function ProgramasScreen() {
       }
     };
 
-    loadValidationState();
-  }, [firebaseUid]);
+    // Load immediately if uid is already known (from store / localStorage)
+    const storedUid = farmer.firebaseUid;
+    if (storedUid) loadData(storedUid);
+
+    // Also subscribe to auth state in case the uid wasn't ready on mount
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user && user.uid !== storedUid) loadData(user.uid);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleDeleteDocument = async () => {
+    const uid = farmer.firebaseUid || auth.currentUser?.uid || "";
+    if (!uid) return;
+    setDeletingDoc(true);
+    try {
+      if (documentoStoragePath) {
+        await deleteObject(ref(storage, documentoStoragePath)).catch(() => {});
+      }
+      await setDoc(
+        doc(db, "usuarios", uid),
+        {
+          documentoValidado: false,
+          documentoArquivoNome: "",
+          documentoArquivoTipo: "",
+          documentoStoragePath: "",
+          documentoDownloadURL: "",
+          documentoMotivoRejeicao: "",
+          documentoEnviadoEm: null,
+          atualizadoEm: serverTimestamp(),
+        },
+        { merge: true },
+      );
+      appStore.set({ documentoValidado: false, documentoArquivoNome: "" });
+      setDocumentoStoragePath("");
+      setDocumentoMotivoRejeicao("");
+      setConfirmDeleteDoc(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeletingDoc(false);
+    }
+  };
 
   return (
     <MobileFrame withNav>
@@ -194,26 +246,18 @@ function ProgramasScreen() {
                   ? "text-primary bg-primary/10"
                   : documentoPendente
                     ? "text-amber-warn bg-amber-warn/10"
-                    : "text-muted-foreground bg-muted"
+                    : documentoRejeitado
+                      ? "text-destructive bg-destructive/10"
+                      : "text-muted-foreground bg-muted"
               }`}
             >
               {documentoEstaValido
-                ? language === "es"
-                  ? "Concluido"
-                  : language === "en"
-                    ? "Completed"
-                    : "Concluido"
+                ? language === "es" ? "Concluido" : language === "en" ? "Completed" : "Concluido"
                 : documentoPendente
-                  ? language === "es"
-                    ? "Pendiente"
-                    : language === "en"
-                      ? "Pending"
-                      : "Pendente"
-                  : language === "es"
-                    ? "No enviado"
-                    : language === "en"
-                      ? "Not sent"
-                      : "Nao enviado"}
+                  ? language === "es" ? "Pendiente" : language === "en" ? "Pending" : "Aguardando aprovação"
+                  : documentoRejeitado
+                    ? language === "es" ? "Rechazado" : language === "en" ? "Rejected" : "Não aprovado"
+                    : language === "es" ? "No enviado" : language === "en" ? "Not sent" : "Nao enviado"}
             </span>
           </h3>
           <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
@@ -222,35 +266,112 @@ function ProgramasScreen() {
                 ? "Su documento fue analizado con éxito, vea abajo los programas disponibles."
                 : language === "en"
                   ? "Your document was successfully reviewed. See the available programs below."
-                  : "Seu documento foi analisado com sucesso, veja abaixo programas disponiveis."
-              : language === "es"
-                ? "Adjunte un documento para revisión. Mientras el estado sea no enviado o pendiente, la etapa no se considera concluida."
-                : language === "en"
-                  ? "Attach a document for review. While status is not sent or pending, this step is not completed."
-                  : "Anexe um documento para revisao. Enquanto o status estiver nao enviado ou pendente, essa etapa nao fica concluida."}
+                  : "Seu documento foi analisado com sucesso, veja abaixo os programas disponíveis."
+              : documentoPendente
+                ? language === "es"
+                  ? "Documento recibido y en análisis. Te notificaremos en breve."
+                  : language === "en"
+                    ? "Document received and under review. You will be notified soon."
+                    : "Seu arquivo foi recebido e está em análise pela equipe SafraSense. Você será notificado em breve."
+                : documentoRejeitado
+                  ? language === "es"
+                    ? "Su documento no fue aprobado. Envíe un nuevo documento para continuar."
+                    : language === "en"
+                      ? "Your document was not approved. Please send a new document to continue."
+                      : "Seu documento não foi aprovado. Envie um novo arquivo para continuar."
+                  : language === "es"
+                    ? "Adjunte un documento para revisión. Mientras el estado sea no enviado o pendiente, la etapa no se considera concluida."
+                    : language === "en"
+                      ? "Attach a document for review. While status is not sent or pending, this step is not completed."
+                      : "Anexe um documento para revisao. Enquanto o status estiver nao enviado ou pendente, essa etapa nao fica concluida."}
           </p>
 
-          {!documentoEstaValido && (
+          {(documentoPendente || documentoRejeitado) && documentoArquivoNome && (
+            <div className="mt-3 rounded-xl border border-border bg-soft/60 p-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center shrink-0">
+                  <FileText size={16} className={documentoPendente ? "text-amber-warn" : "text-destructive"} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground truncate">{documentoArquivoNome}</p>
+                  <p className={`text-xs mt-0.5 font-medium ${documentoPendente ? "text-amber-warn" : "text-destructive"}`}>
+                    {documentoPendente
+                      ? language === "es" ? "⏳ En análisis" : language === "en" ? "⏳ Under review" : "⏳ Aguardando aprovação"
+                      : language === "es" ? "✕ Não aprovado" : language === "en" ? "✕ Not approved" : "✕ Não aprovado"}
+                  </p>
+                </div>
+              </div>
+
+              {!confirmDeleteDoc ? (
+                <div className="flex gap-2 mt-2.5">
+                  <a
+                    href="/comprovar?redirect=%2Fprogramas"
+                    className="flex-1 h-8 rounded-lg border border-border bg-card text-foreground text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                  >
+                    <Pencil size={12} />
+                    {language === "es" ? "Sustituir" : language === "en" ? "Replace" : "Substituir"}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteDoc(true)}
+                    className="flex-1 h-8 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Trash2 size={12} />
+                    {language === "es" ? "Eliminar" : language === "en" ? "Delete" : "Remover"}
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-2.5 rounded-lg bg-destructive/10 border border-destructive/20 p-2.5 flex flex-col gap-2">
+                  <p className="text-xs font-bold text-destructive text-center">
+                    {language === "es" ? "¿Confirmar eliminación?" : language === "en" ? "Confirm deletion?" : "Confirmar remoção do arquivo?"}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteDoc(false)}
+                      className="flex-1 h-8 rounded-lg border border-border bg-card text-foreground text-xs font-semibold active:scale-95 cursor-pointer"
+                    >
+                      {language === "es" ? "Cancelar" : language === "en" ? "Cancel" : "Cancelar"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteDocument}
+                      disabled={deletingDoc}
+                      className="flex-1 h-8 rounded-lg bg-destructive text-white text-xs font-semibold disabled:opacity-60 active:scale-95 cursor-pointer"
+                    >
+                      {deletingDoc ? "..." : language === "es" ? "Confirmar" : language === "en" ? "Confirm" : "Confirmar"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {documentoRejeitado && (
+            <div className="mt-3 rounded-xl bg-destructive/10 border border-destructive/20 px-3 py-2.5">
+              <p className="text-xs font-bold text-destructive">
+                {language === "es" ? "Motivo" : language === "en" ? "Reason" : "Motivo da rejeição"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {documentoMotivoRejeicao ||
+                  (language === "es"
+                    ? "Sin motivo informado."
+                    : language === "en"
+                      ? "No reason provided."
+                      : "Nenhum motivo informado.")}
+              </p>
+            </div>
+          )}
+
+          {(documentoRejeitado || (!documentoEstaValido && !documentoPendente)) && (
             <a
               href="/comprovar?redirect=%2Fprogramas"
               className="mt-3 h-10 w-full rounded-xl bg-navy text-navy-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-soft"
             >
-              {language === "es"
-                ? "Enviar documento en Comprobar"
-                : language === "en"
-                  ? "Send document in Verify"
-                  : "Enviar documento em Comprovar"}
+              {documentoRejeitado
+                ? language === "es" ? "Enviar nuevo documento" : language === "en" ? "Send new document" : "Enviar novo documento"
+                : language === "es" ? "Enviar documento en Comprobar" : language === "en" ? "Send document in Verify" : "Enviar documento em Comprovar"}
             </a>
-          )}
-
-          {documentoPendente && (
-            <p className="mt-2 text-sm font-semibold text-muted-foreground">
-              {language === "es"
-                ? "Documento enviado y pendiente de validación manual."
-                : language === "en"
-                  ? "Document sent and pending manual validation."
-                  : "Documento enviado e pendente de validacao manual."}
-            </p>
           )}
         </div>
 
@@ -309,7 +430,7 @@ function ProgramasScreen() {
               className="mt-4 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
             >
               <Lock size={12} />{" "}
-              {isEligible.pronaf ? t("programs_custom.locked_action") : "Nao elegivel ao programa"}
+              {isEligible.pronaf ? t("programs_custom.locked_action") : language === "es" ? "No elegible al programa" : language === "en" ? "Not eligible for this program" : "Não elegível ao programa"}
             </button>
           )}
         </article>
@@ -378,7 +499,7 @@ function ProgramasScreen() {
               <Lock size={12} />{" "}
               {isEligible.garantia
                 ? t("programs_custom.locked_action")
-                : "Nao elegivel ao programa"}
+                : language === "es" ? "No elegible al programa" : language === "en" ? "Not eligible for this program" : "Não elegível ao programa"}
             </button>
           )}
         </article>
@@ -446,7 +567,7 @@ function ProgramasScreen() {
               className="mt-3 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
             >
               <Lock size={12} />{" "}
-              {isEligible.proagro ? t("programs_custom.locked_action") : "Nao elegivel ao programa"}
+              {isEligible.proagro ? t("programs_custom.locked_action") : language === "es" ? "No elegible al programa" : language === "en" ? "Not eligible for this program" : "Não elegível ao programa"}
             </button>
           )}
         </article>
@@ -510,7 +631,7 @@ function ProgramasScreen() {
               className="mt-3 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
             >
               <Lock size={12} />{" "}
-              {isEligible.psr ? t("programs_custom.locked_action") : "Nao elegivel ao programa"}
+              {isEligible.psr ? t("programs_custom.locked_action") : language === "es" ? "No elegible al programa" : language === "en" ? "Not eligible for this program" : "Não elegível ao programa"}
             </button>
           )}
         </article>

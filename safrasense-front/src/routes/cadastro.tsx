@@ -1046,7 +1046,7 @@ function CadastroScreen() {
                   onClick={handleSearchAddress}
                   disabled={searchingAddress || !address.trim()}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-muted-foreground hover:text-primary active:scale-95 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center"
-                  title="Buscar no mapa"
+                  title={language === "es" ? "Buscar en el mapa" : language === "en" ? "Search on map" : "Buscar no mapa"}
                 >
                   {searchingAddress ? (
                     <span className="block w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
@@ -1078,7 +1078,7 @@ function CadastroScreen() {
                 <Suspense
                   fallback={
                     <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-muted-foreground bg-soft/40">
-                      Carregando mapa...
+                      {language === "es" ? "Cargando mapa..." : language === "en" ? "Loading map..." : "Carregando mapa..."}
                     </div>
                   }
                 >
