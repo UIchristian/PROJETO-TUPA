@@ -99,18 +99,18 @@ function ProgramasScreen() {
     <MobileFrame withNav>
       {/* Simulated WhatsApp Notification Banner */}
       {pushNotification && (
-        <div className="absolute top-4 left-4 right-4 z-50 bg-white/95 backdrop-blur-md border border-border rounded-2xl p-4 shadow-card animate-in slide-in-from-top-12 duration-300 flex gap-3 items-start">
-          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[16px] shrink-0">
+        <div className="absolute top-4 left-4 right-4 z-50 bg-card/95 backdrop-blur-md border border-border rounded-2xl p-4 shadow-card animate-in slide-in-from-top-12 duration-300 flex gap-3 items-start">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-base shrink-0">
             💬
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-[13px] text-foreground">WhatsApp</span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="font-bold text-sm text-foreground">WhatsApp</span>
+              <span className="text-sm text-muted-foreground">
                 {language === "es" ? "ahora" : language === "en" ? "now" : "agora"}
               </span>
             </div>
-            <p className="text-[12px] text-foreground/90 mt-0.5 leading-snug">
+            <p className="text-sm text-foreground/90 mt-0.5 leading-snug">
               <strong>SafraSense:</strong>{" "}
               {language === "es"
                 ? "Enviamos la lista de documentos para el programa "
@@ -124,11 +124,11 @@ function ProgramasScreen() {
       )}
 
       <header className="px-5 pt-6 pb-2">
-        <h1 className="text-[22px] font-bold">{t("programs.title").split(" — ")[0]}</h1>
-        <p className="text-[13.5px] text-navy font-semibold mt-2 leading-snug">
+        <h1 className="text-xl font-bold">{t("programs.title").split(" — ")[0]}</h1>
+        <p className="text-sm text-navy font-semibold mt-2 leading-snug">
           {t("programs.subtitle")}
         </p>
-        <p className="text-[11.5px] text-muted-foreground mt-2 border-t border-border/40 pt-2">
+        <p className="text-sm text-muted-foreground mt-2 border-t border-border/40 pt-2">
           {t("programs.header", {
             property: farmer.property,
             location: farmer.location,
@@ -144,7 +144,7 @@ function ProgramasScreen() {
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <FileText size={20} />
             </div>
-            <h3 className="font-bold text-[14.5px] text-foreground">
+            <h3 className="font-bold text-base text-foreground">
               {language === "es"
                 ? "Reporte para Políticas Públicas"
                 : language === "en"
@@ -152,7 +152,7 @@ function ProgramasScreen() {
                   : "Relatório para Políticas Públicas"}
             </h3>
           </div>
-          <p className="text-[12.5px] text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             {language === "es"
               ? "Exporte el historial de vegetación de Copernicus (NDVI) y los CAR para respaldar su solicitud de Garantia-Safra, crédito Pronaf o Laudo de Emergencia."
               : language === "en"
@@ -167,7 +167,7 @@ function ProgramasScreen() {
               setReportProgram(undefined);
               setReportOpen(true);
             }}
-            className="mt-1 h-11 w-full rounded-xl bg-primary hover:opacity-90 text-white font-semibold text-[13px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer shadow-soft"
+            className="mt-1 h-11 w-full rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer shadow-soft"
           >
             {language === "es"
               ? "Generar evidencia para programa público"
@@ -180,7 +180,7 @@ function ProgramasScreen() {
 
         {/* PASSO 0 — Documento para validação */}
         <div className="rounded-2xl bg-card p-4 shadow-card border-2 border-dashed border-border/60">
-          <h3 className="font-bold text-[14px] text-foreground flex items-center gap-1.5 justify-between">
+          <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5 justify-between">
             <span>
               {language === "es"
                 ? "Enviar documento para validación"
@@ -189,7 +189,7 @@ function ProgramasScreen() {
                   : "Enviar documento para validacao"}
             </span>
             <span
-              className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+              className={`text-sm font-bold px-2 py-0.5 rounded ${
                 documentoEstaValido
                   ? "text-primary bg-primary/10"
                   : documentoPendente
@@ -216,7 +216,7 @@ function ProgramasScreen() {
                       : "Nao enviado"}
             </span>
           </h3>
-          <p className="text-[12.5px] text-muted-foreground mt-1.5 leading-relaxed">
+          <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
             {documentoEstaValido
               ? language === "es"
                 ? "Su documento fue analizado con éxito, vea abajo los programas disponibles."
@@ -233,7 +233,7 @@ function ProgramasScreen() {
           {!documentoEstaValido && (
             <a
               href="/comprovar?redirect=%2Fprogramas"
-              className="mt-3 h-10 w-full rounded-xl bg-navy text-navy-foreground font-semibold text-[13px] flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-soft"
+              className="mt-3 h-10 w-full rounded-xl bg-navy text-navy-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-soft"
             >
               {language === "es"
                 ? "Enviar documento en Comprobar"
@@ -244,7 +244,7 @@ function ProgramasScreen() {
           )}
 
           {documentoPendente && (
-            <p className="mt-2 text-[11.5px] font-semibold text-muted-foreground">
+            <p className="mt-2 text-sm font-semibold text-muted-foreground">
               {language === "es"
                 ? "Documento enviado y pendiente de validación manual."
                 : language === "en"
@@ -262,32 +262,32 @@ function ProgramasScreen() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-[15px]">{t("programs.pronaf_title")}</h3>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                <h3 className="font-bold text-base">{t("programs.pronaf_title")}</h3>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-semibold bg-primary/10 text-primary">
                   <CheckCircle2 size={11} /> {t("programs.badge_eligible")}
                 </span>
               </div>
-              <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">
+              <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
                 {t("programs.pronaf_subtitle")}
               </p>
             </div>
           </div>
 
-          <div className="mt-3 rounded-xl bg-soft px-3 py-2 text-[12px] text-foreground/80">
+          <div className="mt-3 rounded-xl bg-soft px-3 py-2 text-sm text-foreground/80">
             <span className="font-semibold">{t("programs.benefit_label")}</span>{" "}
             {t("programs.pronaf_benefit")}
           </div>
 
           <ul className="mt-3 flex flex-col gap-1.5">
-            <li className="flex items-start gap-2 text-[12px]">
+            <li className="flex items-start gap-2 text-sm">
               <CheckCircle2 size={14} className="text-primary mt-0.5 shrink-0" />
               <span className="text-foreground/80">{t("programs.pronaf_req1")}</span>
             </li>
-            <li className="flex items-start gap-2 text-[12px]">
+            <li className="flex items-start gap-2 text-sm">
               <CheckCircle2 size={14} className="text-primary mt-0.5 shrink-0" />
               <span className="text-foreground/80">{t("programs.pronaf_req2")}</span>
             </li>
-            <li className="flex items-start gap-2 text-[12px]">
+            <li className="flex items-start gap-2 text-sm">
               <CheckCircle2 size={14} className="text-primary mt-0.5 shrink-0" />
               <span className="text-foreground/80">{t("programs.pronaf_req3")}</span>
             </li>
@@ -299,14 +299,14 @@ function ProgramasScreen() {
                 setSelectedProgram("Pronaf");
                 setWhatsappSent(false);
               }}
-              className="mt-4 w-full h-11 rounded-xl bg-navy text-navy-foreground font-semibold text-[13px] flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform cursor-pointer"
+              className="mt-4 w-full h-11 rounded-xl bg-navy text-navy-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform cursor-pointer"
             >
               {t("programs.btn_help_prepare")} <ArrowRight size={14} />
             </button>
           ) : (
             <button
               disabled
-              className="mt-4 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-[12px] flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
+              className="mt-4 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
             >
               <Lock size={12} />{" "}
               {isEligible.pronaf ? t("programs_custom.locked_action") : "Nao elegivel ao programa"}
@@ -322,35 +322,35 @@ function ProgramasScreen() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-[15px]">{t("programs.garantia_title")}</h3>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/10 text-destructive">
+                <h3 className="font-bold text-base">{t("programs.garantia_title")}</h3>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-semibold bg-destructive/10 text-destructive">
                   <AlertCircle size={11} /> {t("programs.badge_ineligible")}
                 </span>
               </div>
-              <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">
+              <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
                 {t("programs.garantia_subtitle")}
               </p>
             </div>
           </div>
 
-          <div className="mt-3 rounded-xl bg-soft px-3 py-2 text-[12px] text-foreground/80">
+          <div className="mt-3 rounded-xl bg-soft px-3 py-2 text-sm text-foreground/80">
             <span className="font-semibold">{t("programs.benefit_label")}</span>{" "}
             {t("programs.garantia_benefit")}
           </div>
 
           <div className="mt-3 p-3 rounded-xl bg-destructive/5 border border-destructive/10 flex flex-col gap-1.5">
-            <span className="text-[12px] font-bold text-destructive">
+            <span className="text-sm font-bold text-destructive">
               {t("programs.garantia_why_ineligible_title")}
             </span>
-            <div className="flex items-start gap-2 text-[12px] text-foreground/80">
+            <div className="flex items-start gap-2 text-sm text-foreground/80">
               <span>{t("programs.garantia_why_ineligible_area")}</span>
             </div>
-            <div className="flex items-start gap-2 text-[12px] text-foreground/80">
+            <div className="flex items-start gap-2 text-sm text-foreground/80">
               <span>{t("programs.garantia_why_ineligible_location")}</span>
             </div>
           </div>
 
-          <p className="text-[12px] text-muted-foreground mt-3 leading-relaxed">
+          <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
             {t("programs.garantia_ineligible_exp")}
           </p>
 
@@ -361,7 +361,7 @@ function ProgramasScreen() {
                 setSelectedProgram("Garantia");
                 setWhatsappSent(false);
               }}
-              className="mt-3 w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-[13px] flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform cursor-pointer"
+              className="mt-3 w-full h-11 rounded-xl bg-navy text-navy-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform cursor-pointer"
             >
               {language === "es"
                 ? "Ayudar a preparar"
@@ -373,7 +373,7 @@ function ProgramasScreen() {
           ) : (
             <button
               disabled
-              className="mt-3 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-[12px] flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
+              className="mt-3 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
             >
               <Lock size={12} />{" "}
               {isEligible.garantia
@@ -391,42 +391,42 @@ function ProgramasScreen() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-[15px]">{t("programs.proagro_title")}</h3>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                <h3 className="font-bold text-base">{t("programs.proagro_title")}</h3>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-semibold bg-primary/10 text-primary">
                   <CheckCircle2 size={11} /> {t("programs.badge_conditional")}
                 </span>
               </div>
-              <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">
+              <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
                 {t("programs.proagro_subtitle")}
               </p>
             </div>
           </div>
 
-          <div className="mt-3 rounded-xl bg-soft px-3 py-2 text-[12px] text-foreground/80">
+          <div className="mt-3 rounded-xl bg-soft px-3 py-2 text-sm text-foreground/80">
             <span className="font-semibold">{t("programs.benefit_label")}</span>{" "}
             {t("programs.proagro_benefit")}
           </div>
 
           <ul className="mt-3 flex flex-col gap-1.5">
-            <li className="flex items-start gap-2 text-[12px]">
+            <li className="flex items-start gap-2 text-sm">
               <CheckCircle2 size={14} className="text-primary mt-0.5 shrink-0" />
               <span className="text-foreground/80">{t("programs.proagro_req1")}</span>
             </li>
-            <li className="flex items-start gap-2 text-[12px]">
+            <li className="flex items-start gap-2 text-sm">
               <CheckCircle2 size={14} className="text-primary mt-0.5 shrink-0" />
               <span className="text-foreground/80">{t("programs.proagro_req2")}</span>
             </li>
-            <li className="flex items-start gap-2 text-[12px]">
+            <li className="flex items-start gap-2 text-sm">
               <CheckCircle2 size={14} className="text-primary mt-0.5 shrink-0" />
               <span className="text-foreground/80">{t("programs.proagro_req3")}</span>
             </li>
-            <li className="flex items-start gap-2 text-[12px]">
+            <li className="flex items-start gap-2 text-sm">
               <CheckCircle2 size={14} className="text-primary mt-0.5 shrink-0" />
               <span className="text-foreground/80">{t("programs.proagro_req4")}</span>
             </li>
           </ul>
 
-          <p className="text-[12px] text-muted-foreground mt-3 leading-relaxed">
+          <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
             {t("programs.proagro_exp")}
           </p>
 
@@ -436,14 +436,14 @@ function ProgramasScreen() {
                 setSelectedProgram("Proagro");
                 setWhatsappSent(false);
               }}
-              className="mt-3 w-full h-11 rounded-xl bg-navy text-navy-foreground font-semibold text-[13px] flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform cursor-pointer"
+              className="mt-3 w-full h-11 rounded-xl bg-navy text-navy-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform cursor-pointer"
             >
               {t("programs.btn_help_prepare")} <ArrowRight size={14} />
             </button>
           ) : (
             <button
               disabled
-              className="mt-3 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-[12px] flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
+              className="mt-3 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
             >
               <Lock size={12} />{" "}
               {isEligible.proagro ? t("programs_custom.locked_action") : "Nao elegivel ao programa"}
@@ -459,38 +459,38 @@ function ProgramasScreen() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-[15px]">{t("programs.psr_title")}</h3>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                <h3 className="font-bold text-base">{t("programs.psr_title")}</h3>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-semibold bg-primary/10 text-primary">
                   <CheckCircle2 size={11} /> {t("programs.badge_eligible")}
                 </span>
               </div>
-              <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">
+              <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
                 {t("programs.psr_subtitle")}
               </p>
             </div>
           </div>
 
-          <div className="mt-3 rounded-xl bg-soft px-3 py-2 text-[12px] text-foreground/80">
+          <div className="mt-3 rounded-xl bg-soft px-3 py-2 text-sm text-foreground/80">
             <span className="font-semibold">{t("programs.benefit_label")}</span>{" "}
             {t("programs.psr_benefit")}
           </div>
 
           <ul className="mt-3 flex flex-col gap-1.5">
-            <li className="flex items-start gap-2 text-[12px]">
+            <li className="flex items-start gap-2 text-sm">
               <CheckCircle2 size={14} className="text-primary mt-0.5 shrink-0" />
               <span className="text-foreground/80">{t("programs.psr_req1")}</span>
             </li>
-            <li className="flex items-start gap-2 text-[12px]">
+            <li className="flex items-start gap-2 text-sm">
               <CheckCircle2 size={14} className="text-primary mt-0.5 shrink-0" />
               <span className="text-foreground/80">{t("programs.psr_req2")}</span>
             </li>
-            <li className="flex items-start gap-2 text-[12px]">
+            <li className="flex items-start gap-2 text-sm">
               <CheckCircle2 size={14} className="text-primary mt-0.5 shrink-0" />
               <span className="text-foreground/80">{t("programs.psr_req3")}</span>
             </li>
           </ul>
 
-          <p className="text-[12px] text-muted-foreground mt-3 leading-relaxed">
+          <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
             {t("programs.psr_exp")}
           </p>
 
@@ -500,14 +500,14 @@ function ProgramasScreen() {
                 setSelectedProgram("PSR");
                 setWhatsappSent(false);
               }}
-              className="mt-3 w-full h-11 rounded-xl bg-navy text-navy-foreground font-semibold text-[13px] flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform cursor-pointer"
+              className="mt-3 w-full h-11 rounded-xl bg-navy text-navy-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform cursor-pointer"
             >
               {t("programs.btn_help_prepare")} <ArrowRight size={14} />
             </button>
           ) : (
             <button
               disabled
-              className="mt-3 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-[12px] flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
+              className="mt-3 w-full h-11 rounded-xl bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 opacity-60 cursor-not-allowed border border-border/40"
             >
               <Lock size={12} />{" "}
               {isEligible.psr ? t("programs_custom.locked_action") : "Nao elegivel ao programa"}
@@ -516,7 +516,7 @@ function ProgramasScreen() {
         </article>
 
         {/* Disclaimer footer */}
-        <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed text-center px-4">
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed text-center px-4">
           {t("programs.disclaimer")}
         </p>
       </div>
@@ -526,7 +526,7 @@ function ProgramasScreen() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center">
           <div className="bg-background w-full max-w-[390px] rounded-t-3xl p-5 flex flex-col gap-4 animate-in slide-in-from-bottom duration-300 max-h-[85vh]">
             <header className="flex justify-between items-center border-b border-border pb-3 shrink-0">
-              <h3 className="font-bold text-[16px] text-foreground">
+              <h3 className="font-bold text-base text-foreground">
                 Documentos —{" "}
                 {selectedProgram === "Pronaf"
                   ? t("programs.pronaf_title")
@@ -539,13 +539,13 @@ function ProgramasScreen() {
                   setSelectedProgram(null);
                   setWhatsappSent(false);
                 }}
-                className="text-[13px] text-muted-foreground hover:underline cursor-pointer"
+                className="text-sm text-muted-foreground hover:underline cursor-pointer"
               >
                 {language === "es" ? "Cerrar" : language === "en" ? "Close" : "Fechar"}
               </button>
             </header>
 
-            <div className="flex-1 overflow-y-auto flex flex-col gap-4 py-2 text-[13px] leading-relaxed">
+            <div className="flex-1 overflow-y-auto flex flex-col gap-4 py-2 text-sm leading-relaxed">
               <p className="font-semibold text-foreground">
                 {language === "es"
                   ? "Lista de documentos necesarios para el programa:"
@@ -765,7 +765,7 @@ function ProgramasScreen() {
                   );
                   setReportOpen(true);
                 }}
-                className="mt-2 h-11 w-full rounded-xl border border-primary text-primary hover:bg-primary/5 font-bold text-[13px] flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                className="mt-2 h-11 w-full rounded-xl border border-primary text-primary hover:bg-primary/5 font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
               >
                 <FileText size={14} />
                 {language === "es"
@@ -792,7 +792,7 @@ function ProgramasScreen() {
                     setTimeout(() => setPushNotification(false), 8000);
                   }}
                   disabled={!documentoEstaValido}
-                  className="mt-4 h-12 w-full rounded-xl bg-primary text-white font-semibold text-[14px] flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-soft cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="mt-4 h-12 w-full rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-soft cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {language === "es"
                     ? "Enviar lista por WhatsApp"
@@ -803,7 +803,7 @@ function ProgramasScreen() {
               )}
 
               {!documentoEstaValido && (
-                <p className="text-[11.5px] text-destructive font-medium mt-2 text-center">
+                <p className="text-sm text-destructive font-medium mt-2 text-center">
                   {language === "es"
                     ? "Solo puedes enviar mensajes cuando el campo documentoValidado esté como válido."
                     : language === "en"

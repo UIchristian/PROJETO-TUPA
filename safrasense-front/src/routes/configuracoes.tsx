@@ -75,8 +75,8 @@ function ConfiguracoesScreen() {
   return (
     <MobileFrame withNav>
       <header className="px-5 pt-6 pb-2">
-        <h1 className="text-[22px] font-bold">{t("settings.title")}</h1>
-        <p className="text-[13.5px] text-navy font-semibold mt-2 leading-snug">
+        <h1 className="text-xl font-bold">{t("settings.title")}</h1>
+        <p className="text-sm text-navy font-semibold mt-2 leading-snug">
           {t("settings.subtitle")}
         </p>
       </header>
@@ -85,7 +85,7 @@ function ConfiguracoesScreen() {
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
           <div className="flex flex-col gap-3">
             <div>
-              <h2 className="text-[15px] font-semibold text-foreground">{t("settings.accessibilityTitle")}</h2>
+              <h2 className="text-base font-semibold text-foreground">{t("settings.accessibilityTitle")}</h2>
               <p className="mt-2 text-sm text-muted-foreground">{t("settings.accessibilityDescription")}</p>
             </div>
             <div className="mt-1">
@@ -96,16 +96,16 @@ function ConfiguracoesScreen() {
 
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
           <div>
-            <h2 className="text-[15px] font-semibold text-foreground">
+            <label htmlFor="language-select" className="block text-base font-semibold text-foreground">
               {language === "es"
                 ? "Idioma"
                 : language === "en"
                   ? "Language"
                   : "Idioma"}
-            </h2>
+            </label>
             <p className="mt-2 text-sm text-muted-foreground">
               {language === "es"
-                ? "Selecciona el idioma de la aplicación."
+                ? "Selecciona el idioma de la aplicação."
                 : language === "en"
                   ? "Select the application language."
                   : "Selecione o idioma do aplicativo."}
@@ -115,9 +115,10 @@ function ConfiguracoesScreen() {
           <div className="mt-4">
             <div className="relative">
               <select
+                id="language-select"
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as any)}
-                className="appearance-none w-full bg-secondary/80 border border-border/80 text-foreground text-[14px] font-semibold rounded-xl py-3 pl-4 pr-10 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
+                className="appearance-none w-full bg-secondary/80 border border-border/80 text-foreground text-sm font-semibold rounded-xl py-3 pl-4 pr-10 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
               >
                 <option value="es">🇪🇸 Español</option>
                 <option value="pt">🇧🇷 Português</option>
@@ -134,7 +135,7 @@ function ConfiguracoesScreen() {
 
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
           <div>
-            <h2 className="text-[15px] font-semibold text-foreground">{t("settings.accountTitle")}</h2>
+            <h2 className="text-base font-semibold text-foreground">{t("settings.accountTitle")}</h2>
             <p className="mt-2 text-sm text-muted-foreground">{t("settings.accountDescription")}</p>
           </div>
 
@@ -142,7 +143,7 @@ function ConfiguracoesScreen() {
             <button
               type="button"
               onClick={handleSignOut}
-              className="h-12 w-full rounded-xl bg-primary text-primary-foreground font-bold text-[14px] transition-all hover:bg-primary/90"
+              className="h-12 w-full rounded-xl bg-primary text-primary-foreground font-bold text-sm transition-all hover:bg-primary/90"
             >
               <span className="inline-flex items-center justify-center gap-2">
                 <LogOut size={16} />
@@ -152,7 +153,7 @@ function ConfiguracoesScreen() {
             <button
               type="button"
               onClick={() => setDeleteDrawerOpen(true)}
-              className="h-12 w-full rounded-xl border border-destructive/20 bg-destructive/5 text-destructive font-medium text-[14px] transition-all hover:bg-destructive/10"
+              className="h-12 w-full rounded-xl border border-destructive/20 bg-destructive/5 text-destructive font-medium text-sm transition-all hover:bg-destructive/10"
             >
               🗑️ {t("profile.deleteDataBtn")}
             </button>
@@ -164,7 +165,7 @@ function ConfiguracoesScreen() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center">
           <div className="bg-background w-full max-w-[390px] rounded-t-3xl p-5 flex flex-col gap-4 animate-in slide-in-from-bottom duration-300 max-h-[85vh]">
             <header className="flex justify-between items-center border-b border-border pb-3 shrink-0">
-              <h3 className="font-bold text-[16px] text-destructive">
+              <h3 className="font-bold text-base text-destructive">
                 {language === "es"
                   ? "Eliminar cuenta"
                   : language === "en"
@@ -175,13 +176,13 @@ function ConfiguracoesScreen() {
                 type="button"
                 onClick={() => setDeleteDrawerOpen(false)}
                 disabled={deleting}
-                className="text-[13px] text-muted-foreground hover:underline disabled:opacity-50"
+                className="text-sm text-muted-foreground hover:underline disabled:opacity-50"
               >
                 {language === "es" ? "Cerrar" : language === "en" ? "Close" : "Fechar"}
               </button>
             </header>
 
-            <p className="text-[13px] text-foreground leading-relaxed">
+            <p className="text-sm text-foreground leading-relaxed">
               {language === "es"
                 ? "¿Está seguro de que desea eliminar su cuenta? Se borrarán sus datos del perfil y no podrá iniciar sesión nuevamente con este CPF/CNPJ. Esta acción no se puede deshacer."
                 : language === "en"
@@ -190,7 +191,7 @@ function ConfiguracoesScreen() {
             </p>
 
             {deleteError && (
-              <p className="text-[12px] text-destructive font-medium">{deleteError}</p>
+              <p className="text-sm text-destructive font-medium">{deleteError}</p>
             )}
 
             <div className="flex gap-2 mt-2">
@@ -198,7 +199,7 @@ function ConfiguracoesScreen() {
                 type="button"
                 onClick={() => setDeleteDrawerOpen(false)}
                 disabled={deleting}
-                className="flex-1 h-12 rounded-xl border border-border font-semibold text-[14px] text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-50"
+                className="flex-1 h-12 rounded-xl border border-border font-semibold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-50"
               >
                 {language === "es" ? "Cancelar" : language === "en" ? "Cancel" : "Cancelar"}
               </button>
@@ -206,7 +207,7 @@ function ConfiguracoesScreen() {
                 type="button"
                 onClick={handleDeleteAccount}
                 disabled={deleting}
-                className="flex-1 h-12 rounded-xl bg-destructive text-white font-semibold text-[14px] hover:bg-destructive/90 active:scale-95 transition-all disabled:opacity-50"
+                className="flex-1 h-12 rounded-xl bg-destructive text-destructive-foreground font-semibold text-sm hover:bg-destructive/90 active:scale-95 transition-all disabled:opacity-50"
               >
                 {language === "es" ? "Eliminar" : language === "en" ? "Delete" : "Excluir"}
               </button>

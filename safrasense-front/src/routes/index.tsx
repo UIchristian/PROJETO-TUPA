@@ -197,12 +197,12 @@ function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen w-full flex justify-center bg-[#E2D9CD]">
+    <div className="min-h-screen w-full flex justify-center bg-secondary">
       <div className="relative w-full max-w-[390px] min-h-screen field-bg flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.06)]">
         {/* Logo block */}
         <div className="flex-1 flex flex-col items-center justify-end px-6 pb-6 pt-12">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-soft animate-pop bg-white p-1">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-soft animate-pop bg-card p-1">
               <img
                 src="/logo.png"
                 alt="SafraSense Logo"
@@ -210,10 +210,10 @@ function LoginScreen() {
               />
             </div>
             <div className="flex items-center gap-2 text-navy mt-1">
-              <h1 className="text-[28px] font-extrabold tracking-tight text-navy">SafraSense</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight text-navy">SafraSense</h1>
             </div>
           </div>
-          <p className="mt-3 text-[14px] text-navy/80 text-center max-w-[280px]">
+          <p className="mt-3 text-sm text-navy/80 text-center max-w-[280px]">
             {t("login.subtitle")}
           </p>
         </div>
@@ -221,14 +221,14 @@ function LoginScreen() {
         {/* Form Container */}
         <form
           onSubmit={handleSubmit}
-          className="px-6 pb-8 flex flex-col gap-3 bg-white/85 backdrop-blur-md rounded-t-3xl pt-7 shadow-[0_-8px_24px_rgba(0,0,0,0.05)]"
+          className="px-6 pb-8 flex flex-col gap-3 bg-card/85 backdrop-blur-md rounded-t-3xl pt-7 shadow-[0_-8px_24px_rgba(0,0,0,0.05)]"
         >
-          <h2 className="text-[18px] font-bold text-navy mb-1">
+          <h2 className="text-lg font-bold text-navy mb-1">
             {isLogin ? t("login.loginTitle") : t("login.registerTitle")}
           </h2>
 
           {error && (
-            <div className="text-[14px] text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
+            <div className="text-sm text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
               ⚠️ {error}
             </div>
           )}
@@ -236,52 +236,56 @@ function LoginScreen() {
           {/* Registration specific field: Full Name */}
           {!isLogin && (
             <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
-              <label className="text-[14px] font-semibold text-foreground/90">
+              <label htmlFor="full-name" className="text-sm font-semibold text-foreground/90">
                 {t("login.fullName")}
               </label>
               <input
+                id="full-name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder={t("login.fullNamePlaceholder")}
-                className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[16px]"
+                className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base"
               />
             </div>
           )}
 
           {/* Shared field: CPF / CNPJ */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] font-semibold text-foreground/90">{t("login.cpf")}</label>
+            <label htmlFor="cpf-input" className="text-sm font-semibold text-foreground/90">{t("login.cpf")}</label>
             <input
+              id="cpf-input"
               value={cpf}
               onChange={(e) => setCpf(maskCpfCnpj(e.target.value))}
               inputMode="numeric"
               placeholder="000.000.000-00 / 00.000.000/0000-00"
-              className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[16px]"
+              className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base"
             />
           </div>
 
           {/* Registration specific field: Phone */}
           {!isLogin && (
             <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
-              <label className="text-[14px] font-semibold text-foreground/90">
+              <label htmlFor="phone-input" className="text-sm font-semibold text-foreground/90">
                 {t("login.phone")}
               </label>
               <input
+                id="phone-input"
                 value={phone}
                 onChange={(e) => setPhone(maskPhone(e.target.value))}
                 inputMode="numeric"
                 placeholder="(00) 00000-0000"
-                className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[16px]"
+                className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base"
               />
             </div>
           )}
 
           {/* Shared field: Password */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[14px] font-semibold text-foreground/90">
+            <label htmlFor="password-input" className="text-sm font-semibold text-foreground/90">
               {t("login.password")}
             </label>
             <input
+              id="password-input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -290,7 +294,7 @@ function LoginScreen() {
                   ? t("login.passwordPlaceholder").replace("Crie", "Digite")
                   : t("login.passwordPlaceholder")
               }
-              className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[16px]"
+              className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base"
             />
           </div>
 
@@ -306,7 +310,7 @@ function LoginScreen() {
               />
               <label
                 htmlFor="consent"
-                className="text-[13px] leading-snug text-foreground/90 cursor-pointer"
+                className="text-sm leading-snug text-foreground/90 cursor-pointer"
               >
                 {t("login.consent")}
               </label>
@@ -316,13 +320,13 @@ function LoginScreen() {
           {/* Main Action Button */}
           <button
             type="submit"
-            className="mt-2 h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-[16px] active:scale-[0.99] transition-transform shadow-soft"
+            className="mt-2 h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-base active:scale-[0.99] transition-transform shadow-soft"
           >
             {isLogin ? t("login.btnEntrar") : t("login.btnRegister")}
           </button>
 
           {/* Switch flow link text */}
-          <div className="text-center text-[14px] text-muted-foreground mt-2.5">
+          <div className="text-center text-sm text-muted-foreground mt-2.5">
             {isLogin ? (
               <>
                 {t("login.noAccount")}{" "}
@@ -354,7 +358,7 @@ function LoginScreen() {
             )}
           </div>
 
-          <p className="text-center text-[12px] text-muted-foreground/90 mt-1">
+          <p className="text-center text-sm text-muted-foreground/90 mt-1">
             {t("login.freeRegistration")}
           </p>
 
@@ -365,9 +369,9 @@ function LoginScreen() {
                 key={lang}
                 type="button"
                 onClick={() => setLanguage(lang)}
-                className={`px-3.5 py-1.5 rounded-lg text-[12.5px] font-extrabold tracking-wider transition-all duration-200 ${
+                className={`px-3.5 py-1.5 rounded-lg text-sm font-extrabold tracking-wider transition-all duration-200 ${
                   language === lang
-                    ? "bg-primary text-white shadow-soft scale-105"
+                    ? "bg-primary text-primary-foreground shadow-soft scale-105"
                     : "bg-soft text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}
               >

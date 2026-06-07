@@ -129,12 +129,12 @@ function BackofficeScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f6f8] text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-soft text-foreground">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold">Backoffice - Documentos pendentes</h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Painel interno para validacao de documentos dos usuarios.
             </p>
           </div>
@@ -142,7 +142,7 @@ function BackofficeScreen() {
             type="button"
             onClick={loadUsers}
             disabled={loading}
-            className="h-10 px-4 rounded-lg border border-slate-300 bg-white text-sm font-semibold hover:bg-slate-50 disabled:opacity-60 inline-flex items-center gap-2"
+            className="h-10 px-4 rounded-lg border border-border bg-card text-foreground text-sm font-semibold hover:bg-soft disabled:opacity-60 inline-flex items-center gap-2"
           >
             <RefreshCcw size={15} /> Atualizar
           </button>
@@ -157,35 +157,35 @@ function BackofficeScreen() {
         )}
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Usuarios cadastrados</p>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Usuarios cadastrados</p>
             <p className="text-2xl font-bold mt-1">{rows.length}</p>
           </div>
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <p className="text-xs uppercase tracking-wide text-amber-700">Documentos pendentes</p>
-            <p className="text-2xl font-bold mt-1 text-amber-900">{pendingRows.length}</p>
+          <div className="rounded-xl border border-amber-warn/20 bg-amber-warn/10 p-4">
+            <p className="text-xs uppercase tracking-wide text-amber-warn">Documentos pendentes</p>
+            <p className="text-2xl font-bold mt-1 text-amber-warn">{pendingRows.length}</p>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Ultima acao</p>
-            <p className="text-sm font-semibold mt-2 text-slate-700">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Ultima acao</p>
+            <p className="text-sm font-semibold mt-2 text-muted-foreground">
               {loading ? "Carregando..." : "Dados sincronizados"}
             </p>
           </div>
         </section>
 
         {loading ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
+          <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
             Carregando usuarios...
           </div>
         ) : pendingRows.length === 0 ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-800">
+          <div className="rounded-xl border border-primary/20 bg-primary/10 p-5 text-sm text-primary">
             Nenhum documento pendente no momento.
           </div>
         ) : (
-          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-soft border-b border-border">
                   <tr>
                     <th className="text-left px-4 py-3 font-semibold">Usuario</th>
                     <th className="text-left px-4 py-3 font-semibold">CPF</th>
@@ -199,7 +199,7 @@ function BackofficeScreen() {
                   {pendingRows.map((user) => (
                     <tr
                       key={user.uid}
-                      className="border-b last:border-b-0 border-slate-100 align-top"
+                      className="border-b last:border-b-0 border-border align-top"
                     >
                       <td className="px-4 py-3 font-medium">{user.nome || "-"}</td>
                       <td className="px-4 py-3">{user.cpf || "-"}</td>
@@ -216,7 +216,7 @@ function BackofficeScreen() {
                           <button
                             type="button"
                             onClick={() => handleViewDocument(user)}
-                            className="h-9 px-3 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 inline-flex items-center gap-1.5 cursor-pointer"
+                            className="h-9 px-3 rounded-md border border-border bg-card text-foreground font-semibold hover:bg-soft inline-flex items-center gap-1.5 cursor-pointer"
                           >
                             <Eye size={14} /> Visualizar
                           </button>
@@ -224,7 +224,7 @@ function BackofficeScreen() {
                             type="button"
                             onClick={() => updateStatus(user.uid, true)}
                             disabled={savingUid === user.uid}
-                            className="h-9 px-3 rounded-md bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-60 inline-flex items-center gap-1.5"
+                            className="h-9 px-3 rounded-md bg-primary text-primary-foreground font-semibold hover:opacity-90 disabled:opacity-60 inline-flex items-center gap-1.5"
                           >
                             <CheckCircle2 size={14} /> Validar
                           </button>
@@ -232,7 +232,7 @@ function BackofficeScreen() {
                             type="button"
                             onClick={() => updateStatus(user.uid, false)}
                             disabled={savingUid === user.uid}
-                            className="h-9 px-3 rounded-md bg-rose-600 text-white font-semibold hover:bg-rose-700 disabled:opacity-60 inline-flex items-center gap-1.5 cursor-pointer"
+                            className="h-9 px-3 rounded-md bg-destructive text-destructive-foreground font-semibold hover:opacity-90 disabled:opacity-60 inline-flex items-center gap-1.5 cursor-pointer"
                           >
                             <XCircle size={14} /> Não válido
                           </button>
@@ -249,66 +249,66 @@ function BackofficeScreen() {
 
       {viewingDocument && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200 dark:border-slate-800">
-            <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
+          <div className="bg-card w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-border">
+            <header className="px-6 py-4 border-b border-border flex justify-between items-center bg-soft">
               <div>
-                <h3 className="font-bold text-base text-slate-900 dark:text-white truncate max-w-[500px]">
+                <h3 className="font-bold text-base text-foreground truncate max-w-[500px]">
                   Visualizar Documento
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                <p className="text-xs text-muted-foreground truncate mt-0.5">
                   {viewingDocument.nome}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setViewingDocument(null)}
-                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
               >
                 <XCircle size={20} />
               </button>
             </header>
 
-            <div className="flex-1 p-6 bg-slate-100 dark:bg-slate-950 overflow-y-auto flex items-center justify-center min-h-[300px]">
+            <div className="flex-1 p-6 bg-soft overflow-y-auto flex items-center justify-center min-h-[300px]">
               {viewingDocument.nome.toLowerCase().endsWith(".pdf") ? (
                 <iframe
                   src={`${viewingDocument.url}#toolbar=0`}
-                  className="w-full h-[65vh] border-0 rounded-xl bg-white shadow-sm"
+                  className="w-full h-[65vh] border-0 rounded-xl bg-card shadow-sm"
                   title={viewingDocument.nome}
                 />
               ) : /\.(jpg|jpeg|png|webp|gif)$/i.test(viewingDocument.nome) ? (
                 <img
                   src={viewingDocument.url}
                   alt={viewingDocument.nome}
-                  className="max-w-full max-h-[65vh] object-contain rounded-xl shadow-md border border-slate-200 dark:border-slate-800"
+                  className="max-w-full max-h-[65vh] object-contain rounded-xl shadow-md border border-border"
                 />
               ) : (
                 <div className="text-center py-10 flex flex-col items-center gap-4 w-full">
-                  <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+                  <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
                     <Eye size={32} />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800 dark:text-slate-200">
+                    <p className="font-semibold text-foreground">
                       Formatos alternativos
                     </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[280px]">
+                    <p className="text-sm text-muted-foreground mt-1 max-w-[280px]">
                       Este arquivo não é uma imagem comum ou PDF. O navegador tentará carregá-lo
                       abaixo.
                     </p>
                   </div>
                   <iframe
                     src={viewingDocument.url}
-                    className="w-full h-[65vh] border-0 rounded-xl bg-white shadow-sm mt-4"
+                    className="w-full h-[65vh] border-0 rounded-xl bg-card shadow-sm mt-4"
                     title={viewingDocument.nome}
                   />
                 </div>
               )}
             </div>
 
-            <footer className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2 bg-slate-50 dark:bg-slate-950">
+            <footer className="px-6 py-4 border-t border-border flex justify-end gap-2 bg-soft">
               <button
                 type="button"
                 onClick={() => setViewingDocument(null)}
-                className="h-10 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 font-semibold text-sm transition-colors cursor-pointer"
+                className="h-10 px-4 rounded-lg bg-feature hover:opacity-90 text-feature-foreground font-semibold text-sm transition-all cursor-pointer"
               >
                 Concluir
               </button>

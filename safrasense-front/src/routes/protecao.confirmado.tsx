@@ -42,7 +42,7 @@ function ConfirmadoScreen() {
 
   return (
     <MobileFrame>
-      <header className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-border bg-white shadow-sm shrink-0">
+      <header className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-border bg-card shadow-sm shrink-0">
         <button
           onClick={() => window.history.back()}
           className="-ml-2 p-2 text-navy hover:bg-secondary rounded-lg shrink-0"
@@ -50,7 +50,7 @@ function ConfirmadoScreen() {
         >
           <ChevronLeft size={22} />
         </button>
-        <h1 className="text-[16px] font-bold text-foreground">
+        <h1 className="text-base font-bold text-foreground">
           {language === "es"
             ? "Propuesta y Evidencias"
             : language === "en"
@@ -62,14 +62,14 @@ function ConfirmadoScreen() {
       <div className="p-5 flex-1 flex flex-col gap-5 overflow-y-auto">
         {/* Intro */}
         <div className="flex flex-col gap-1 text-left">
-          <h2 className="text-[20px] font-extrabold text-foreground leading-tight">
+          <h2 className="text-xl font-extrabold text-foreground leading-tight">
             {language === "es"
               ? "Tus Evidencias para Contato"
               : language === "en"
                 ? "Your Evidence for Contact"
                 : "Suas Evidências para Contato"}
           </h2>
-          <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">
+          <p className="text-sm text-muted-foreground leading-relaxed mt-1">
             {language === "es"
               ? `Compilamos los datos de satélite y registro CAR para que solicites tu cotización directamente con ${insurerName}.`
               : language === "en"
@@ -80,7 +80,7 @@ function ConfirmadoScreen() {
 
         {/* Insurer Info */}
         <div className="p-4 rounded-2xl bg-secondary/30 border border-border flex flex-col gap-2 text-left">
-          <div className="flex items-center gap-2 text-navy font-bold text-[13.5px]">
+          <div className="flex items-center gap-2 text-navy font-bold text-sm">
             🛡️{" "}
             {language === "es"
               ? "Seguradora Seleccionada"
@@ -88,8 +88,8 @@ function ConfirmadoScreen() {
                 ? "Selected Insurer"
                 : "Seguradora Selecionada"}
           </div>
-          <p className="text-[14px] font-bold text-foreground">{insurerName}</p>
-          <p className="text-[12px] text-muted-foreground leading-relaxed">
+          <p className="text-sm font-bold text-foreground">{insurerName}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
             {insurerName === "Mapfre"
               ? language === "es"
                 ? "Operador autorizado por la SUSEP con amplia cobertura de riesgos climáticos agrícolas."
@@ -106,7 +106,7 @@ function ConfirmadoScreen() {
 
         {/* Compiled Evidences Section */}
         <div className="p-4 rounded-2xl bg-card border border-border/85 flex flex-col gap-3 shadow-soft text-left">
-          <div className="text-[12.5px] font-bold text-primary uppercase tracking-wider block">
+          <div className="text-sm font-bold text-primary uppercase tracking-wider block">
             📊{" "}
             {language === "es"
               ? "Evidencias Técnicas"
@@ -115,7 +115,7 @@ function ConfirmadoScreen() {
                 : "Evidências Técnicas Compiladas"}
           </div>
 
-          <div className="grid grid-cols-1 gap-2.5 text-[12px] text-slate-700">
+          <div className="grid grid-cols-1 gap-2.5 text-sm text-foreground">
             <div className="flex justify-between border-b border-border/50 pb-1.5">
               <span className="text-muted-foreground">
                 {language === "es"
@@ -138,7 +138,7 @@ function ConfirmadoScreen() {
             </div>
             <div className="flex justify-between border-b border-border/50 pb-1.5">
               <span className="text-muted-foreground">Registro CAR</span>
-              <span className="font-mono font-semibold text-foreground text-[11px] truncate block max-w-[160px]">
+              <span className="font-mono font-semibold text-foreground text-sm truncate block max-w-[160px]">
                 {farmer.car || "BR-MG-3170107-123456-78"}
               </span>
             </div>
@@ -160,7 +160,7 @@ function ConfirmadoScreen() {
                     ? "NDVI Deviation"
                     : "Desvio NDVI (Maio)"}
               </span>
-              <span className="font-bold text-red-600">-24% (Crítico)</span>
+              <span className="font-bold text-destructive">-24% (Crítico)</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">
@@ -170,13 +170,13 @@ function ConfirmadoScreen() {
                     ? "Mapping Accuracy"
                     : "Acurácia do Mapeamento"}
               </span>
-              <span className="font-bold text-emerald-600">96% (Homologado)</span>
+              <span className="font-bold text-primary">96% (Homologado)</span>
             </div>
           </div>
         </div>
 
         {/* CTA Callout */}
-        <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 text-[12px] text-muted-foreground leading-relaxed text-left">
+        <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 text-sm text-muted-foreground leading-relaxed text-left">
           {language === "es"
             ? "Oprimir el botón enviará un mensaje pre-formateado a la seguradora con la clave de tu CAR y las evidencias Copernicus para agilizar la cotización."
             : language === "en"
@@ -192,7 +192,7 @@ function ConfirmadoScreen() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[15px] flex items-center justify-center gap-2 active:scale-[0.99] transition-all shadow-soft cursor-pointer text-center"
+            className="h-14 rounded-2xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.99] transition-all shadow-soft cursor-pointer text-center"
           >
             💬{" "}
             {language === "es"
@@ -204,7 +204,7 @@ function ConfirmadoScreen() {
 
           <button
             onClick={() => navigate({ to: "/lavoura" })}
-            className="h-12 flex items-center justify-center gap-1.5 text-muted-foreground hover:text-foreground font-medium text-[13px] transition-colors cursor-pointer"
+            className="h-12 flex items-center justify-center gap-1.5 text-muted-foreground hover:text-foreground font-medium text-sm transition-colors cursor-pointer"
           >
             {language === "es"
               ? "Volver a mi propiedad"

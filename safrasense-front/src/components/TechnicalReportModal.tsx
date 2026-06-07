@@ -344,20 +344,20 @@ export function TechnicalReportModal({
   let currentNdvi = latestAverage?.ndviMedio ?? 0.32;
   let devText = rt.sec3_comp_emergency;
   let visualClass = rt.sec3_status_emergency;
-  let textClassColor = "text-red-600 bg-red-50 dark:bg-red-950/20";
+  let textClassColor = "text-destructive bg-destructive/15";
   let statusEmoji = "🔴";
 
   if (status === "healthy") {
     currentNdvi = 0.72;
     devText = rt.sec3_comp_healthy;
     visualClass = rt.sec3_status_healthy;
-    textClassColor = "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20";
+    textClassColor = "text-primary bg-primary/15";
     statusEmoji = "🟢";
   } else if (status === "alert") {
     currentNdvi = 0.54;
     devText = rt.sec3_comp_alert;
     visualClass = rt.sec3_status_alert;
-    textClassColor = "text-amber-600 bg-amber-50 dark:bg-amber-950/20";
+    textClassColor = "text-amber-warn bg-amber-warn/15";
     statusEmoji = "🟡";
   }
 
@@ -386,10 +386,10 @@ export function TechnicalReportModal({
         });
     const historical = monthlyAverage[monthlyAverage.length - (monthlyRows.slice(-6).length - index)] ?? row.ndviMedio;
     const details = row.ndviMedio >= 0.65
-      ? { status: rt.sec3_status_healthy, color: "text-emerald-600" }
+      ? { status: rt.sec3_status_healthy, color: "text-primary" }
       : row.ndviMedio >= 0.5
-        ? { status: rt.sec3_status_alert, color: "text-amber-600" }
-        : { status: rt.sec3_status_emergency, color: "text-red-600 font-bold" };
+        ? { status: rt.sec3_status_alert, color: "text-amber-warn" }
+        : { status: rt.sec3_status_emergency, color: "text-destructive font-bold" };
 
     return {
       period,
@@ -454,52 +454,52 @@ export function TechnicalReportModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-0 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-0 sm:p-4 overflow-y-auto">
       {/* Toast Notification */}
       {successToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white rounded-xl px-4 py-2.5 shadow-xl text-[12px] font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-4 duration-300">
-          <CheckCircle2 size={14} className="text-emerald-400" />
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-feature text-feature-foreground rounded-xl px-4 py-2.5 shadow-xl text-sm font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 size={14} className="text-primary" />
           {successToast}
         </div>
       )}
 
-      <div className="bg-slate-100 dark:bg-slate-900 w-full max-w-[390px] h-full sm:h-[92vh] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-border">
+      <div className="bg-soft w-full max-w-[390px] h-full sm:h-[92vh] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-border">
         {/* Document Viewer Header Bar */}
-        <div className="bg-slate-900 text-white px-4 py-3 flex.items-center justify-between flex shrink-0 border-b border-slate-800">
+        <div className="bg-feature text-feature-foreground px-4 py-3 flex items-center justify-between flex shrink-0 border-b border-border">
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors cursor-pointer text-[12px] font-semibold"
+            className="flex items-center gap-1 text-feature-foreground/60 hover:text-feature-foreground transition-colors cursor-pointer text-sm font-semibold"
           >
             <ArrowLeft size={16} />
             {rt.btn_back}
           </button>
-          <span className="text-[11px] font-extrabold tracking-wider uppercase text-slate-400">
+          <span className="text-sm font-extrabold tracking-wider uppercase text-feature-foreground/60">
             {type === "public" ? "POLÍTICA PÚBLICA" : "SEGURO PARAMÉTRICO"}
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="p-1 rounded-full hover:bg-feature-foreground/10 text-feature-foreground/60 hover:text-feature-foreground transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Scrollable A4 Document Container */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 bg-slate-200/50 dark:bg-slate-950/20 text-slate-800">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 bg-secondary/50 text-foreground">
           {/* Document Sheet simulating A4 Paper */}
-          <div className="bg-white dark:bg-slate-900 shadow-md rounded-2xl border border-slate-300/80 dark:border-slate-800 p-4 sm:p-5 flex flex-col gap-4 text-left relative overflow-hidden">
+          <div className="bg-card shadow-md rounded-2xl border border-border p-4 sm:p-5 flex flex-col gap-4 text-left relative overflow-hidden">
             {/* Demo Watermark Ribbon */}
-            <div className="absolute top-3 -right-12 bg-amber-500 text-white font-extrabold text-[8px] uppercase py-1 px-12 rotate-45 tracking-widest shadow-sm select-none z-20 pointer-events-none flex items-center justify-center">
+            <div className="absolute top-3 -right-12 bg-amber-warn text-amber-warn-foreground font-extrabold text-sm uppercase py-1 px-12 rotate-45 tracking-widest shadow-sm select-none z-20 pointer-events-none flex items-center justify-center">
               {rt.demo_badge}
             </div>
 
             {/* Cabeçalho */}
-            <header className="border-b border-slate-200 dark:border-slate-800 pb-3 flex flex-col gap-2">
+            <header className="border-b border-border pb-3 flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-emerald-600 p-1 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-primary p-1 flex items-center justify-center shrink-0">
                     <img
                       src="/logo.png"
                       alt="SafraSense"
@@ -507,16 +507,16 @@ export function TechnicalReportModal({
                     />
                   </div>
                   <div>
-                    <span className="font-extrabold text-[13px] text-slate-900 dark:text-white tracking-tight block">
+                    <span className="font-extrabold text-sm text-foreground tracking-tight block">
                       SafraSense
                     </span>
-                    <span className="text-[8px] text-slate-400 block -mt-0.5">
+                    <span className="text-sm text-muted-foreground block -mt-0.5">
                       Copernicus Telemetry Node
                     </span>
                   </div>
                 </div>
-                <div className="text-right text-[8.5px] font-mono text-slate-500">
-                  <div className="font-bold text-slate-800 dark:text-slate-200">
+                <div className="text-right text-sm font-mono text-muted-foreground">
+                  <div className="font-bold text-foreground">
                     REF: SS-2026-0001
                   </div>
                   <div>
@@ -525,66 +525,66 @@ export function TechnicalReportModal({
                 </div>
               </div>
 
-              <h1 className="text-[13px] font-extrabold text-slate-900 dark:text-white uppercase tracking-tight leading-snug mt-1.5">
+              <h1 className="text-sm font-extrabold text-foreground uppercase tracking-tight leading-snug mt-1.5">
                 {rt.title}
               </h1>
 
-              <p className="text-[7.5px] text-slate-400 leading-tight italic">{rt.data_source}</p>
+              <p className="text-sm text-muted-foreground leading-tight italic">{rt.data_source}</p>
             </header>
 
             {/* Seção 1 — Identificación */}
             <section className="flex flex-col gap-1.5">
-              <h2 className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 border-b border-slate-100 dark:border-slate-800 pb-0.5">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary border-b border-border pb-0.5">
                 {rt.sec1_title}
               </h2>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[9.5px] text-slate-600 dark:text-slate-400">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
                 <div>
-                  <span className="text-[7.5px] uppercase font-bold text-slate-400 block">
+                  <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec1_farmer}
                   </span>
-                  <span className="font-bold text-slate-900 dark:text-slate-200">
+                  <span className="font-bold text-foreground">
                     {farmer.name || "Geraldo Dias"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[7.5px] uppercase font-bold text-slate-400 block">
+                  <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec1_car}
                   </span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-slate-200">
+                  <span className="font-mono font-bold text-foreground">
                     {farmer.car || "MG-3170107-123456-78"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[7.5px] uppercase font-bold text-slate-400 block">
+                  <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec1_location}
                   </span>
-                  <span className="font-bold text-slate-900 dark:text-slate-200">
+                  <span className="font-bold text-foreground">
                     {farmer.location.includes("Minas Gerais")
                       ? farmer.location
                       : `${farmer.location}, Minas Gerais, Brasil`}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[7.5px] uppercase font-bold text-slate-400 block">
+                  <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec1_coords}
                   </span>
-                  <span className="font-mono font-medium text-slate-900 dark:text-slate-200">
+                  <span className="font-mono font-medium text-foreground">
                     Lat: -16.3572, Lon: -46.9061
                   </span>
                 </div>
                 <div>
-                  <span className="text-[7.5px] uppercase font-bold text-slate-400 block">
+                  <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec1_area}
                   </span>
-                  <span className="font-bold text-slate-900 dark:text-slate-200">
+                  <span className="font-bold text-foreground">
                     {farmer.area} ha
                   </span>
                 </div>
                 <div>
-                  <span className="text-[7.5px] uppercase font-bold text-slate-400 block">
+                  <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec1_crop}
                   </span>
-                  <span className="font-bold text-slate-900 dark:text-slate-200">
+                  <span className="font-bold text-foreground">
                     {translateCropString(farmer.crop, globalT)}
                   </span>
                 </div>
@@ -593,23 +593,23 @@ export function TechnicalReportModal({
 
             {/* Seção 2 — Período analizado */}
             <section className="flex flex-col gap-1.5">
-              <h2 className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 border-b border-slate-100 dark:border-slate-800 pb-0.5">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary border-b border-border pb-0.5">
                 {rt.sec2_title}
               </h2>
-              <div className="grid grid-cols-2 gap-3 text-[9.5px] text-slate-600 dark:text-slate-400">
+              <div className="grid grid-cols-2 gap-3 text-sm text-muted-foreground">
                 <div>
-                  <span className="text-[7.5px] uppercase font-bold text-slate-400 block">
+                  <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec2_window}
                   </span>
-                  <span className="font-medium text-slate-900 dark:text-slate-200">
+                  <span className="font-medium text-foreground">
                     {rt.sec2_window_val}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[7.5px] uppercase font-bold text-slate-400 block">
+                  <span className="text-sm uppercase font-bold text-muted-foreground block">
                     {rt.sec2_recent}
                   </span>
-                  <span className="font-medium text-slate-900 dark:text-slate-200">
+                  <span className="font-medium text-foreground">
                     {rt.sec2_recent_val}
                   </span>
                 </div>
@@ -618,30 +618,30 @@ export function TechnicalReportModal({
 
             {/* Seção 3 — Estado actual de la tierra */}
             <section className="flex flex-col gap-1.5">
-              <h2 className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 border-b border-slate-100 dark:border-slate-800 pb-0.5">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary border-b border-border pb-0.5">
                 {rt.sec3_title}
               </h2>
-              <div className="flex flex-col gap-2 text-[9.5px] text-slate-600 dark:text-slate-400">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+              <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center justify-between border-b border-border pb-1">
                   <span>{rt.sec3_ndvi}:</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-slate-200">
+                  <span className="font-mono font-bold text-foreground">
                     {currentNdvi}{" "}
-                    <span className="text-[7.5px] font-semibold text-amber-600 font-sans">
+                    <span className="text-sm font-semibold text-amber-warn font-sans">
                       ({rt.demo_badge})
                     </span>
                   </span>
                 </div>
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                <div className="flex items-center justify-between border-b border-border pb-1">
                   <span>{rt.sec3_class}:</span>
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[8.5px] font-extrabold flex items-center gap-1 ${textClassColor}`}
+                    className={`px-2 py-0.5 rounded-full text-sm font-extrabold flex items-center gap-1 ${textClassColor}`}
                   >
                     <span>{statusEmoji}</span> {visualClass}
                   </span>
                 </div>
                 <div className="flex items-center justify-between pb-0.5">
                   <span>{rt.sec3_comp}:</span>
-                  <span className="font-bold text-slate-900 dark:text-slate-200">{devText}</span>
+                  <span className="font-bold text-foreground">{devText}</span>
                 </div>
               </div>
             </section>
@@ -650,16 +650,16 @@ export function TechnicalReportModal({
             <section
               className={`flex flex-col gap-2 rounded-xl p-2.5 transition-all ${
                 type === "insurance"
-                  ? "bg-blue-500/5 dark:bg-blue-500/10 border-2 border-blue-500/30"
-                  : "border border-slate-200 dark:border-slate-800"
+                  ? "bg-primary/5 border-2 border-primary/30"
+                  : "border border-border"
               }`}
             >
-              <div className="flex justify-between items-center border-b border-slate-200/60 dark:border-slate-800 pb-0.5">
-                <h2 className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+              <div className="flex justify-between items-center border-b border-border pb-0.5">
+                <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary">
                   {rt.sec4_title}
                 </h2>
                 {type === "insurance" && (
-                  <span className="text-[7px] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                  <span className="text-sm font-extrabold text-primary bg-primary/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
                     {lang === "es"
                       ? "Énfasis Seguro"
                       : lang === "pt"
@@ -670,24 +670,24 @@ export function TechnicalReportModal({
               </div>
 
               {type === "insurance" && (
-                <div className="text-[8px] font-bold text-blue-800 dark:text-blue-300 leading-tight bg-blue-100/60 dark:bg-blue-900/20 p-2 rounded-lg">
+                <div className="text-sm font-bold text-primary leading-tight bg-primary/10 p-2 rounded-lg">
                   💡 {rt.sec4_param_ref}{" "}
-                  <span className="text-[7.5px] font-normal text-muted-foreground">
+                  <span className="text-sm font-normal text-muted-foreground">
                     ({rt.demo_badge})
                   </span>
                 </div>
               )}
 
               {/* NdviChart component */}
-              <div className="bg-slate-50 dark:bg-slate-950/40 rounded-xl p-2 border border-slate-200/50 dark:border-slate-800/80 scale-[0.98] origin-top">
+              <div className="bg-card rounded-xl p-2 border border-border scale-[0.98] origin-top">
                 <NdviChart status={status} />
               </div>
 
               {/* Table */}
-              <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden mt-1.5">
-                <table className="w-full text-[8.5px] text-left border-collapse">
+              <div className="border border-border rounded-lg overflow-hidden mt-1.5">
+                <table className="w-full text-sm text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase text-[7px] font-bold">
+                    <tr className="bg-soft border-b border-border text-muted-foreground uppercase text-sm font-bold">
                       <th className="px-2 py-1">{rt.sec4_table_period}</th>
                       <th className="px-2 py-1 text-center">{rt.sec4_table_current}</th>
                       <th className="px-2 py-1 text-center">{rt.sec4_table_historical}</th>
@@ -695,25 +695,25 @@ export function TechnicalReportModal({
                       <th className="px-2 py-1 text-right">{rt.sec4_table_status}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                  <tbody className="divide-y divide-border text-foreground">
                     {monthsData.map((m, idx) => {
                       const devVal = Math.round(((m.current - m.historical) / m.historical) * 100);
                       const isNegative = devVal < 0;
                       return (
-                        <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-850/50">
+                        <tr key={idx} className="hover:bg-secondary/50">
                           <td className="px-2 py-1 font-semibold">{m.period}</td>
                           <td className="px-2 py-1 text-center font-mono font-medium">
                             {m.current.toFixed(2)}
                           </td>
-                          <td className="px-2 py-1 text-center font-mono text-slate-400">
+                          <td className="px-2 py-1 text-center font-mono text-muted-foreground">
                             {m.historical.toFixed(2)}
                           </td>
                           <td
-                            className={`px-2 py-1 text-center font-mono font-bold ${isNegative ? "text-red-500" : "text-emerald-500"}`}
+                            className={`px-2 py-1 text-center font-mono font-bold ${isNegative ? "text-destructive" : "text-primary"}`}
                           >
                             {devVal > 0 ? `+${devVal}` : devVal}%
                           </td>
-                          <td className={`px-2 py-1 text-right font-bold text-[7.5px] ${m.color}`}>
+                          <td className={`px-2 py-1 text-right font-bold text-sm ${m.color}`}>
                             {m.status}
                           </td>
                         </tr>
@@ -728,18 +728,18 @@ export function TechnicalReportModal({
             <section
               className={`flex flex-col gap-2 rounded-xl p-2.5 transition-all ${
                 type === "public"
-                  ? "bg-red-500/5 dark:bg-red-950/15 border-2 border-red-500/30"
-                  : "border border-slate-200 dark:border-slate-800"
+                  ? "bg-destructive/5 border-2 border-destructive/30"
+                  : "border border-border"
               }`}
             >
-              <div className="flex justify-between items-center border-b border-slate-200/60 dark:border-slate-800 pb-0.5">
-                <h2 className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+              <div className="flex justify-between items-center border-b border-border pb-0.5">
+                <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary">
                   {rt.sec5_title}
                 </h2>
                 {type === "public" && (
-                  <span className="text-[7px] font-extrabold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                  <span className="text-sm font-extrabold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
                     {lang === "es"
-                      ? "Énfasis Gobierno"
+                      ? "Énfasis Governo"
                       : lang === "pt"
                         ? "Ênfase Governo"
                         : "Government Focus"}
@@ -747,7 +747,7 @@ export function TechnicalReportModal({
                 )}
               </div>
 
-              <div className="text-[9.5px] text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+              <div className="text-sm text-foreground leading-relaxed font-medium">
                 {status === "healthy" ? (
                   <span>
                     {lang === "es"
@@ -769,10 +769,10 @@ export function TechnicalReportModal({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-[9px] mt-1 text-slate-600 dark:text-slate-400">
-                <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+              <div className="grid grid-cols-2 gap-2 text-sm mt-1 text-muted-foreground">
+                <div className="flex justify-between border-b border-border pb-1">
                   <span>{rt.sec5_severity}:</span>
-                  <span className="font-bold text-slate-900 dark:text-slate-200">
+                  <span className="font-bold text-foreground">
                     {status === "healthy"
                       ? rt.sec5_sev_healthy
                       : status === "alert"
@@ -780,24 +780,24 @@ export function TechnicalReportModal({
                         : rt.sec5_sev_emergency}
                   </span>
                 </div>
-                <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                <div className="flex justify-between border-b border-border pb-1">
                   <span>{rt.sec5_confidence}:</span>
-                  <span className="font-bold text-slate-900 dark:text-slate-200">
+                  <span className="font-bold text-foreground">
                     {confidenceLevel}
                   </span>
                 </div>
               </div>
 
               {isLowConfidence && (
-                <div className="mt-1 text-[8.5px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 p-1.5 rounded border border-red-200/50">
+                <div className="mt-1 text-sm font-bold text-destructive bg-destructive/10 p-1.5 rounded border border-destructive/20">
                   {rt.sec5_conf_warning}
                 </div>
               )}
 
               {type === "public" && status !== "healthy" && (
-                <div className="mt-1.5 text-[8.5px] font-bold text-red-700 dark:text-red-400 border-t border-red-200/30 pt-1.5 italic">
+                <div className="mt-1.5 text-sm font-bold text-destructive border-t border-border/30 pt-1.5 italic">
                   ✓ {rt.sec5_compatible.replace("{program}", programName || "Pronaf")}{" "}
-                  <span className="text-[7px] font-normal text-muted-foreground">
+                  <span className="text-sm font-normal text-muted-foreground">
                     ({rt.demo_badge})
                   </span>
                 </div>
@@ -806,57 +806,57 @@ export function TechnicalReportModal({
 
             {/* Seção 6 — Verificación de consistencia */}
             <section className="flex flex-col gap-1.5">
-              <h2 className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 border-b border-slate-100 dark:border-slate-800 pb-0.5">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary border-b border-border pb-0.5">
                 {rt.sec6_title}
               </h2>
 
-              <ul className="flex flex-col gap-1 text-[9px] text-slate-700 dark:text-slate-300">
-                <li className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+              <ul className="flex flex-col gap-1 text-sm text-foreground">
+                <li className="flex items-center justify-between border-b border-border pb-1">
                   <span className="flex items-center gap-1.5">
-                    <CheckCircle2 size={12} className="text-emerald-500" />
+                    <CheckCircle2 size={12} className="text-primary" />
                     {rt.sec6_car_valid}
                   </span>
-                  <span className="font-extrabold text-emerald-600 uppercase text-[8px]">
+                  <span className="font-extrabold text-primary uppercase text-sm">
                     {rt.sec6_yes}
                   </span>
                 </li>
-                <li className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                <li className="flex items-center justify-between border-b border-border pb-1">
                   <span className="flex items-center gap-1.5">
-                    <CheckCircle2 size={12} className="text-emerald-500" />
+                    <CheckCircle2 size={12} className="text-primary" />
                     {rt.sec6_poly_valid}
                   </span>
-                  <span className="font-extrabold text-emerald-600 uppercase text-[8px]">
+                  <span className="font-extrabold text-primary uppercase text-sm">
                     {rt.sec6_yes}
                   </span>
                 </li>
                 <li className="flex items-center justify-between pb-0.5">
                   <span className="flex items-center gap-1.5">
-                    <CheckCircle2 size={12} className="text-emerald-500" />
+                    <CheckCircle2 size={12} className="text-primary" />
                     {rt.sec6_sat_valid}
                   </span>
-                  <span className="font-extrabold text-emerald-600 uppercase text-[8px]">
+                  <span className="font-extrabold text-primary uppercase text-sm">
                     {rt.sec6_yes}
                   </span>
                 </li>
               </ul>
 
-              <p className="text-[7.5px] text-slate-400 leading-snug italic mt-0.5">
+              <p className="text-sm text-muted-foreground leading-snug italic mt-0.5">
                 {rt.sec6_note}
               </p>
             </section>
 
             {/* Seção 7 — Finalidad y reservas */}
             <section className="flex flex-col gap-2">
-              <h2 className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 border-b border-slate-100 dark:border-slate-800 pb-0.5">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary border-b border-border pb-0.5">
                 {rt.sec7_title}
               </h2>
-              <p className="text-[9px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+              <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                 {rt.sec7_purpose}
               </p>
 
               {/* Ressalva (Aviso Destacado) */}
-              <div className="bg-amber-500/5 dark:bg-amber-500/10 border-l-4 border-amber-500 p-2.5 rounded-r-xl">
-                <p className="text-[8.5px] leading-relaxed text-amber-800 dark:text-amber-300 font-semibold">
+              <div className="bg-amber-warn/5 border-l-4 border-amber-warn p-2.5 rounded-r-xl">
+                <p className="text-sm leading-relaxed text-amber-warn font-semibold">
                   ⚠️{" "}
                   <strong>
                     {lang === "es"
@@ -871,11 +871,11 @@ export function TechnicalReportModal({
             </section>
 
             {/* Bloco Extra "Próximos passos" */}
-            <section className="border-t border-slate-200 dark:border-slate-800 pt-3 flex flex-col gap-1.5 text-left">
-              <h3 className="font-extrabold text-[10px] text-slate-900 dark:text-white uppercase tracking-tight">
+            <section className="border-t border-border pt-3 flex flex-col gap-1.5 text-left">
+              <h3 className="font-extrabold text-sm text-foreground uppercase tracking-tight">
                 👉 {rt.next_steps_title}
               </h3>
-              <ul className="flex flex-col gap-1 text-[9px] text-slate-600 dark:text-slate-400 leading-snug">
+              <ul className="flex flex-col gap-1 text-sm text-muted-foreground leading-snug">
                 {type === "public" ? (
                   <>
                     <li>{rt.next_steps_public_1.replace("{institution}", institution)}</li>
@@ -893,7 +893,7 @@ export function TechnicalReportModal({
             </section>
 
             {/* Rodapé */}
-            <footer className="border-t border-slate-200 dark:border-slate-800 pt-2.5 mt-2 flex flex-col gap-1 text-center text-[7.5px] text-slate-400">
+            <footer className="border-t border-border pt-2.5 mt-2 flex flex-col gap-1 text-center text-sm text-muted-foreground">
               <div>{rt.footer_tag}</div>
               <div className="font-mono">
                 SHA-256: 8f9b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b · v2.4.1-copernicus
@@ -903,12 +903,12 @@ export function TechnicalReportModal({
         </div>
 
         {/* Document Viewer Action Footer */}
-        <div className="bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3.5 flex items-center gap-2.5 shrink-0">
+        <div className="bg-soft border-t border-border px-4 py-3.5 flex items-center gap-2.5 shrink-0">
           <button
             type="button"
             disabled={exporting}
             onClick={handleExportPDF}
-            className="flex-1 h-11 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-900 rounded-xl font-bold text-[12.5px] flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all disabled:opacity-60 cursor-pointer"
+            className="flex-1 h-11 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all disabled:opacity-60 cursor-pointer"
           >
             {exporting ? (
               <>
@@ -926,7 +926,7 @@ export function TechnicalReportModal({
           <button
             type="button"
             onClick={handleShare}
-            className="h-11 px-4 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl font-bold text-[12.5px] flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer"
+            className="h-11 px-4 border border-border text-foreground bg-card hover:bg-soft rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer"
           >
             <Share2 size={14} />
             <span className="hidden xs:inline">{rt.btn_share}</span>
@@ -935,7 +935,7 @@ export function TechnicalReportModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-11 px-4 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-bold text-[12.5px] transition-colors cursor-pointer"
+            className="h-11 px-4 text-muted-foreground hover:text-foreground hover:bg-soft rounded-xl font-bold text-sm transition-colors cursor-pointer"
           >
             {rt.btn_back}
           </button>

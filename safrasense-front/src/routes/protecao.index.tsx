@@ -58,8 +58,8 @@ function ProtecaoScreen() {
   return (
     <MobileFrame withNav>
       <header className="px-5 pt-6 pb-2">
-        <h1 className="text-[22px] font-bold">{t("protection_custom.title")}</h1>
-        <p className="text-[13px] text-muted-foreground mt-2 leading-relaxed">
+        <h1 className="text-xl font-bold">{t("protection_custom.title")}</h1>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
           {t("protection_custom.subtitle")}
         </p>
       </header>
@@ -70,17 +70,17 @@ function ProtecaoScreen() {
           <div className="flex items-start gap-2.5">
             <AlertTriangle className="text-amber-warn shrink-0 mt-0.5" size={18} />
             <div className="flex-1">
-              <p className="text-[13px] font-bold text-amber-warn">
+              <p className="text-sm font-bold text-amber-warn">
                 {t("protection_custom.verification_warning")}
               </p>
-              <p className="text-[11.5px] text-muted-foreground mt-1 font-semibold">
+              <p className="text-sm text-muted-foreground mt-1 font-semibold">
                 {t("protection_custom.verification_status_pending")}
               </p>
             </div>
           </div>
           <button
             onClick={() => navigate({ to: "/comprovar", search: { redirect: "/protecao" } })}
-            className="w-full h-10 rounded-xl bg-amber-warn hover:opacity-90 text-white font-semibold text-[12.5px] flex items-center justify-center gap-1 active:scale-[0.99] transition-transform shadow-soft"
+            className="w-full h-10 rounded-xl bg-amber-warn hover:opacity-90 text-amber-warn-foreground font-semibold text-sm flex items-center justify-center gap-1 active:scale-[0.99] transition-transform shadow-soft"
           >
             {t("protection_custom.verification_btn")}
           </button>
@@ -98,30 +98,30 @@ function ProtecaoScreen() {
                 <div className="w-10 h-10 rounded-xl bg-soft flex items-center justify-center shrink-0">
                   <ShieldCheck size={18} className="text-primary" />
                 </div>
-                <h3 className="font-bold text-[16px] text-foreground">{opt.name}</h3>
+                <h3 className="font-bold text-base text-foreground">{opt.name}</h3>
               </div>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 uppercase shrink-0">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-extrabold bg-amber-warn/10 text-amber-warn border border-amber-warn/20 uppercase shrink-0">
                 {t("protection_custom.status_eval")}
               </span>
             </div>
 
             <div className="rounded-xl bg-soft/50 border border-border/40 p-3.5 flex flex-col gap-2.5">
-              <p className="text-[12.5px] text-foreground/90 font-medium leading-relaxed">
+              <p className="text-sm text-foreground/90 font-medium leading-relaxed">
                 {opt.description}
               </p>
-              <ul className="text-[11.5px] text-muted-foreground flex flex-col gap-1.5 list-disc pl-4 border-t border-border/30 pt-2.5 mt-1">
+              <ul className="text-sm text-muted-foreground flex flex-col gap-1.5 list-disc pl-4 border-t border-border/30 pt-2.5 mt-1">
                 {opt.features.map((feat, idx) => (
                   <li key={idx} className="leading-snug">
                     {feat}
                   </li>
                 ))}
               </ul>
-              <div className="text-[10.5px] text-primary/80 italic border-t border-border/30 pt-2.5 mt-0.5 leading-snug">
+              <div className="text-sm text-primary/80 italic border-t border-border/30 pt-2.5 mt-0.5 leading-snug">
                 {t("protection_custom.example_disclaimer")}
               </div>
             </div>
 
-            <p className="text-[9.5px] text-muted-foreground leading-relaxed px-0.5 mt-0.5">
+            <p className="text-sm text-muted-foreground leading-relaxed px-0.5 mt-0.5">
               {opt.footerNote}
             </p>
 
@@ -129,14 +129,14 @@ function ProtecaoScreen() {
               {carVerified ? (
                 <button
                   onClick={() => handleAction(opt.name)}
-                  className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px] flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform shadow-soft"
+                  className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform shadow-soft"
                 >
                   {t("protection.btn_know_conditions")} <ArrowRight size={14} />
                 </button>
               ) : (
                 <button
                   disabled
-                  className="w-full h-12 rounded-xl bg-secondary text-muted-foreground font-semibold text-[12.5px] flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75"
+                  className="w-full h-12 rounded-xl bg-secondary text-muted-foreground font-semibold text-sm flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75"
                 >
                   {t("protection_custom.locked_action")}
                 </button>
@@ -151,7 +151,7 @@ function ProtecaoScreen() {
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <FileText size={20} />
             </div>
-            <h3 className="font-bold text-[14.5px] text-foreground">
+            <h3 className="font-bold text-base text-foreground">
               {language === "es"
                 ? "Informe para Cotización"
                 : language === "en"
@@ -159,7 +159,7 @@ function ProtecaoScreen() {
                   : "Laudo para Cotação de Seguro"}
             </h3>
           </div>
-          <p className="text-[12.5px] text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             {language === "es"
               ? "Genere el informe satelital de Copernicus con el histórico de NDVI de los últimos 6 meses para enviar a las seguradoras asociadas."
               : language === "en"
@@ -170,7 +170,7 @@ function ProtecaoScreen() {
           <button
             type="button"
             onClick={() => setReportOpen(true)}
-            className="mt-1 h-11 w-full rounded-xl bg-primary hover:opacity-90 text-white font-semibold text-[13px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer shadow-soft"
+            className="mt-1 h-11 w-full rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer shadow-soft"
           >
             {language === "es"
               ? "Generar informe para cotización de seguro"
@@ -182,7 +182,7 @@ function ProtecaoScreen() {
         </div>
 
         {/* Screen footer notice */}
-        <p className="text-center text-[11.5px] text-muted-foreground/90 leading-relaxed px-4 py-2 bg-soft/30 rounded-xl border border-border/20 shadow-soft">
+        <p className="text-center text-sm text-muted-foreground/90 leading-relaxed px-4 py-2 bg-soft/30 rounded-xl border border-border/20 shadow-soft">
           {t("protection_custom.more_allies")}
         </p>
       </div>

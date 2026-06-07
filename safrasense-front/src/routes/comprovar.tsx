@@ -104,7 +104,7 @@ function ComprovarScreen() {
 
   return (
     <MobileFrame>
-      <header className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-border bg-white shadow-sm shrink-0">
+      <header className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-border bg-card shadow-sm shrink-0">
         <button
           onClick={() => window.history.back()}
           className="-ml-2 p-2 text-navy hover:bg-secondary rounded-lg shrink-0"
@@ -112,11 +112,11 @@ function ComprovarScreen() {
         >
           <ChevronLeft size={22} />
         </button>
-        <h1 className="text-[16px] font-bold text-foreground">{t("comprovar.title")}</h1>
+        <h1 className="text-base font-bold text-foreground">{t("comprovar.title")}</h1>
       </header>
 
       <div className="p-5 flex-1 flex flex-col gap-5 overflow-y-auto">
-        <p className="text-[13.5px] text-muted-foreground leading-relaxed">{t("comprovar.desc")}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{t("comprovar.desc")}</p>
 
         {!success ? (
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-5">
@@ -136,10 +136,10 @@ function ComprovarScreen() {
                 {uploading ? (
                   <div className="flex flex-col items-center gap-2.5 max-w-[280px] mx-auto p-2 w-full animate-in fade-in duration-200">
                     <Loader2 size={20} className="text-primary animate-spin" />
-                    <span className="text-[13px] font-bold text-primary uppercase tracking-wider text-center">
+                    <span className="text-sm font-bold text-primary uppercase tracking-wider text-center">
                       {t("comprovar.uploading")}
                     </span>
-                    <span className="text-[12px] text-muted-foreground text-center">
+                    <span className="text-sm text-muted-foreground text-center">
                       {language === "es"
                         ? "Subiendo archivo al almacenamiento seguro..."
                         : language === "en"
@@ -150,10 +150,10 @@ function ComprovarScreen() {
                 ) : file ? (
                   <div className="flex flex-col items-center gap-2">
                     <span className="text-3xl">📄</span>
-                    <span className="text-[13.5px] font-semibold text-primary truncate max-w-[240px]">
+                    <span className="text-sm font-semibold text-primary truncate max-w-[240px]">
                       {file.name}
                     </span>
-                    <span className="text-[11px] text-muted-foreground hover:underline mt-1">
+                    <span className="text-sm text-muted-foreground hover:underline mt-1">
                       {language === "es"
                         ? "Cambiar archivo"
                         : language === "en"
@@ -166,10 +166,10 @@ function ComprovarScreen() {
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                       <Upload size={22} />
                     </div>
-                    <span className="text-[13.5px] font-semibold text-foreground">
+                    <span className="text-sm font-semibold text-foreground">
                       {t("comprovar.select_file")}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                       PDF, PNG ou JPG de até 10MB
                     </span>
                   </div>
@@ -182,14 +182,14 @@ function ComprovarScreen() {
                 href="https://www.car.gov.br"
                 target="_blank"
                 rel="noreferrer"
-                className="text-[12px] text-primary hover:underline leading-relaxed font-semibold block"
+                className="text-sm text-primary hover:underline leading-relaxed font-semibold block"
               >
                 {t("comprovar.help_link")}
               </a>
             </div>
 
             <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 flex flex-col gap-2 shadow-soft">
-              <h4 className="font-bold text-[13px] text-primary flex items-center gap-1.5">
+              <h4 className="font-bold text-sm text-primary flex items-center gap-1.5">
                 🛡️{" "}
                 {language === "es"
                   ? "¿Cómo se valida?"
@@ -197,7 +197,7 @@ function ComprovarScreen() {
                     ? "How is it validated?"
                     : "Como funciona a validacao?"}
               </h4>
-              <p className="text-[11.5px] text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {language === "es"
                   ? "El documento se almacena de forma segura y queda con estado pendiente para revisión manual."
                   : language === "en"
@@ -207,7 +207,7 @@ function ComprovarScreen() {
             </div>
 
             {errorMessage && (
-              <div className="p-3 rounded-xl bg-destructive/5 border border-destructive/20 text-[12px] text-destructive font-semibold">
+              <div className="p-3 rounded-xl bg-destructive/5 border border-destructive/20 text-sm text-destructive font-semibold">
                 {errorMessage}
               </div>
             )}
@@ -217,7 +217,7 @@ function ComprovarScreen() {
             <button
               type="submit"
               disabled={!file || uploading}
-              className="h-14 w-full rounded-2xl bg-primary text-primary-foreground font-semibold text-[16px] flex items-center justify-center gap-2 active:scale-[0.99] transition-all shadow-soft disabled:opacity-40 shrink-0 cursor-pointer"
+              className="h-14 w-full rounded-2xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.99] transition-all shadow-soft disabled:opacity-40 shrink-0 cursor-pointer"
             >
               {t("comprovar.submit_btn")}
             </button>
@@ -228,14 +228,14 @@ function ComprovarScreen() {
               <CheckCircle2 size={36} />
             </div>
             <div className="flex flex-col gap-1">
-              <h2 className="font-bold text-[18px] text-foreground">
+              <h2 className="font-bold text-lg text-foreground">
                 {language === "es"
                   ? "¡Documento Enviado!"
                   : language === "en"
                     ? "Document Submitted!"
                     : "Documento Enviado!"}
               </h2>
-              <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
                 {language === "es"
                   ? "Enviado para revisión manual. Estado actualizado a pendiente. Redireccionando..."
                   : language === "en"

@@ -559,7 +559,7 @@ function PerfilScreen() {
   if (profileLoading) {
     return (
       <MobileFrame withNav>
-        <div className="px-5 pt-6 pb-6 text-[14px] text-muted-foreground">
+        <div className="px-5 pt-6 pb-6 text-sm text-muted-foreground">
           {language === "es"
             ? "Cargando perfil..."
             : language === "en"
@@ -574,32 +574,32 @@ function PerfilScreen() {
     <MobileFrame withNav>
       {/* Simulated WhatsApp Notification Banner */}
       {pushNotification && (
-        <div className="absolute top-4 left-4 right-4 z-50 bg-white/95 backdrop-blur-md border border-border rounded-2xl p-4 shadow-card animate-in slide-in-from-top-12 duration-300 flex gap-3 items-start">
-          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[16px] shrink-0">
+        <div className="absolute top-4 left-4 right-4 z-50 bg-card/95 backdrop-blur-md border border-border rounded-2xl p-4 shadow-card animate-in slide-in-from-top-12 duration-300 flex gap-3 items-start">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-base shrink-0">
             💬
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-[13px] text-foreground">WhatsApp</span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="font-bold text-sm text-foreground">WhatsApp</span>
+              <span className="text-sm text-muted-foreground">
                 {language === "es" ? "ahora" : language === "en" ? "now" : "agora"}
               </span>
             </div>
-            <p className="text-[12px] text-foreground/90 mt-0.5 leading-snug">
+            <p className="text-sm text-foreground/90 mt-0.5 leading-snug">
               <strong>SafraSense:</strong>{" "}
               {language === "es"
                 ? "Tu código de confirmación es:"
                 : language === "en"
                   ? "Your confirmation code is:"
                   : "Seu código de confirmação é:"}{" "}
-              <span className="font-bold text-[14px] text-primary">{validationCode}</span>
+              <span className="font-bold text-sm text-primary">{validationCode}</span>
             </p>
           </div>
         </div>
       )}
 
       <header className="px-5 pt-6 pb-4 flex justify-between items-center">
-        <h1 className="text-[22px] font-bold">{t("profile.title")}</h1>
+        <h1 className="text-xl font-bold">{t("profile.title")}</h1>
         <button
           type="button"
           onClick={() => setNotificationModalOpen(true)}
@@ -619,9 +619,9 @@ function PerfilScreen() {
 
       {notificationModalOpen && (
         <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-[340px] shadow-2xl border border-border/80 flex flex-col max-h-[90%] overflow-hidden animate-in zoom-in-95 duration-200 text-left">
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-slate-900 text-white shrink-0">
-              <span className="text-[14px] font-bold tracking-wide uppercase flex items-center gap-1.5">
+          <div className="bg-card rounded-3xl w-full max-w-[340px] shadow-2xl border border-border/80 flex flex-col max-h-[90%] overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-feature text-feature-foreground shrink-0">
+              <span className="text-sm font-bold tracking-wide uppercase flex items-center gap-1.5">
                 <Bell size={15} />{" "}
                 {language === "es"
                   ? "Notificaciones"
@@ -632,21 +632,21 @@ function PerfilScreen() {
               <button
                 type="button"
                 onClick={() => setNotificationModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-300 cursor-pointer"
+                className="p-1.5 rounded-full hover:bg-feature-foreground/10 text-feature-foreground/80 cursor-pointer"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-4">
-              <div className="p-4 rounded-2xl border border-border bg-slate-50 flex flex-col gap-2.5">
+              <div className="p-4 rounded-2xl border border-border bg-soft flex flex-col gap-2.5">
                 <div className="flex items-start gap-2.5">
                   <div className="mt-0.5 shrink-0">
                     {farmer.documentoValidado === "pendente" ? (
-                      <span className="text-amber-500 text-xl font-semibold">⏳</span>
+                      <span className="text-amber-warn text-xl font-semibold">⏳</span>
                     ) : farmer.documentoValidado === true ||
                       farmer.documentoValidado === "valido" ||
                       farmer.documentoValidado === "validado" ? (
-                      <span className="text-emerald-500 text-xl font-semibold">✅</span>
+                      <span className="text-primary text-xl font-semibold">✅</span>
                     ) : farmer.documentoArquivoNome ? (
                       <span className="text-rose-500 text-xl font-semibold">❌</span>
                     ) : (
@@ -654,7 +654,7 @@ function PerfilScreen() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-[14px] text-foreground">
+                    <h4 className="font-bold text-sm text-foreground">
                       {farmer.documentoValidado === "pendente"
                         ? language === "es"
                           ? "Documento en análisis"
@@ -681,7 +681,7 @@ function PerfilScreen() {
                                 ? "Verify ownership"
                                 : "Comprovar titularidade"}
                     </h4>
-                    <p className="text-[12.5px] text-foreground/80 mt-1 leading-relaxed">
+                    <p className="text-sm text-foreground/80 mt-1 leading-relaxed">
                       {farmer.documentoValidado === "pendente"
                         ? language === "es"
                           ? "El recibo del CAR enviado está en revisión. Te avisaremos cuando sea validado."
@@ -721,7 +721,7 @@ function PerfilScreen() {
                       setNotificationModalOpen(false);
                       navigate({ to: "/comprovar" });
                     }}
-                    className="h-10 w-full mt-1.5 bg-primary text-primary-foreground font-bold text-[13px] rounded-xl flex items-center justify-center hover:bg-primary/90 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+                    className="h-10 w-full mt-1.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl flex items-center justify-center hover:bg-primary/90 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
                   >
                     {farmer.documentoArquivoNome
                       ? language === "es"
@@ -738,13 +738,13 @@ function PerfilScreen() {
                 )}
               </div>
 
-              <div className="p-4 rounded-2xl border border-border bg-slate-50 flex flex-col gap-2.5">
+              <div className="p-4 rounded-2xl border border-border bg-soft flex flex-col gap-2.5">
                 <div className="flex items-start gap-2.5">
                   <div className="mt-0.5 shrink-0 text-xl font-semibold">
                     {status === "healthy" ? "🟢" : status === "alert" ? "🟡" : "🔴"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-[14px] text-foreground">
+                    <h4 className="font-bold text-sm text-foreground">
                       {status === "healthy"
                         ? language === "es"
                           ? "Lote saludable"
@@ -763,7 +763,7 @@ function PerfilScreen() {
                               ? "Plot in critical state"
                               : "Lote em estado crítico"}
                     </h4>
-                    <p className="text-[12.5px] text-foreground/80 mt-1 leading-relaxed">
+                    <p className="text-sm text-foreground/80 mt-1 leading-relaxed">
                       {status === "healthy"
                         ? language === "es"
                           ? "El satélite indica que tu plantación tiene un excelente desarrollo vegetativo."
@@ -786,11 +786,11 @@ function PerfilScreen() {
                 </div>
               </div>
             </div>
-            <div className="p-4 border-t border-border bg-slate-50 shrink-0">
+            <div className="p-4 border-t border-border bg-soft shrink-0">
               <button
                 type="button"
                 onClick={() => setNotificationModalOpen(false)}
-                className="h-12 w-full bg-slate-900 text-white rounded-xl font-bold text-[14px] hover:opacity-90 transition-all cursor-pointer animate-in fade-in"
+                className="h-12 w-full bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-all cursor-pointer animate-in fade-in"
               >
                 {language === "es" ? "Cerrar" : language === "en" ? "Close" : "Fechar"}
               </button>
@@ -801,7 +801,7 @@ function PerfilScreen() {
 
       <div className="px-5 pb-6 flex-1 flex flex-col gap-4">
         {profileError && (
-          <div className="text-[12.5px] text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
+          <div className="text-sm text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
             {profileError}
           </div>
         )}
@@ -819,14 +819,14 @@ function PerfilScreen() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-[16px]">{profileName}</h2>
-            <p className="text-[12px] text-muted-foreground flex items-center gap-1 truncate">
+            <h2 className="font-semibold text-base">{profileName}</h2>
+            <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
               <MapPin size={12} /> {profileProperty} · {profileLocation}
             </p>
           </div>
           <button
             onClick={() => setShowAvatarPicker(!showAvatarPicker)}
-            className="text-[13.5px] text-primary hover:underline font-bold shrink-0 cursor-pointer"
+            className="text-sm text-primary hover:underline font-bold shrink-0 cursor-pointer"
           >
             {t("profile.changePhoto")}
           </button>
@@ -836,12 +836,12 @@ function PerfilScreen() {
         {showAvatarPicker && (
           <div className="rounded-2xl bg-card p-4 shadow-card border border-border/60 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex justify-between items-center mb-2.5">
-              <h3 className="font-bold text-[14.5px] text-foreground">
+              <h3 className="font-bold text-base text-foreground">
                 {t("profile.avatarTitle")}
               </h3>
               <button
                 onClick={() => setShowAvatarPicker(false)}
-                className="text-[13px] text-primary hover:underline font-bold cursor-pointer"
+                className="text-sm text-primary hover:underline font-bold cursor-pointer"
               >
                 {t("profile.avatarDone")}
               </button>
@@ -883,10 +883,10 @@ function PerfilScreen() {
 
         {/* Personal data card */}
         <div className="rounded-2xl bg-card p-4 shadow-card border border-border/60">
-          <h3 className="font-bold text-[15.5px] text-foreground mb-3">
+          <h3 className="font-bold text-base text-foreground mb-3">
             {t("profile.personalData")}
           </h3>
-          <dl className="text-[14.5px] font-semibold grid grid-cols-2 gap-y-3.5 items-center">
+          <dl className="text-base font-semibold grid grid-cols-2 gap-y-3.5 items-center">
             <dt className="text-foreground/85 font-normal">{t("profile.nameLabel")}</dt>
             <dd className="font-bold text-foreground truncate max-w-[150px]">{profileName}</dd>
 
@@ -913,7 +913,7 @@ function PerfilScreen() {
                     setPasswordSuccess(false);
                     setPasswordDrawerOpen(true);
                   }}
-                  className="text-[13px] text-primary hover:underline font-bold transition-colors cursor-pointer"
+                  className="text-sm text-primary hover:underline font-bold transition-colors cursor-pointer"
                 >
                   {t("profile.edit")}
                 </button>
@@ -928,7 +928,7 @@ function PerfilScreen() {
               setTempPhone(profilePhone);
               setEditPersonalOpen(true);
             }}
-            className="w-full mt-4 h-11 bg-primary text-white rounded-xl text-[14px] font-bold active:scale-[0.99] transition-all shadow-soft flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full mt-4 h-11 bg-primary text-primary-foreground rounded-xl text-sm font-bold active:scale-[0.99] transition-all shadow-soft flex items-center justify-center gap-1.5 cursor-pointer"
           >
             {language === "es"
               ? "Editar Datos Personales"
@@ -941,14 +941,14 @@ function PerfilScreen() {
         {/* Terrains Section */}
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center px-1 mt-1">
-            <h3 className="font-bold text-[14px] text-foreground">
+            <h3 className="font-bold text-sm text-foreground">
               {language === "es"
                 ? "Tus Terrenos"
                 : language === "en"
                   ? "Your Terrains"
                   : "Meus Terrenos"}
             </h3>
-            <span className="text-[11.5px] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full shrink-0">
+            <span className="text-sm font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full shrink-0">
               Total: {parsedTerrenos.reduce((sum, t) => sum + (parseFloat(t.sizeVal) || 0), 0)} ha
             </span>
           </div>
@@ -962,7 +962,7 @@ function PerfilScreen() {
                 {/* Terrain Header */}
                 <div className="flex justify-between items-center border-b border-border/40 pb-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-[14px] text-foreground">{terreno.name}</span>
+                    <span className="font-bold text-sm text-foreground">{terreno.name}</span>
                   </div>
 
                   <div className="flex items-center gap-2.5 shrink-0">
@@ -981,7 +981,7 @@ function PerfilScreen() {
                         setCarError("");
                         setEditTerrenoOpen(true);
                       }}
-                      className="text-[11.5px] text-primary font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                      className="text-sm text-primary font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
                     >
                       ✏️ {language === "es" ? "Editar" : language === "en" ? "Edit" : "Editar"}
                     </button>
@@ -995,7 +995,7 @@ function PerfilScreen() {
                         setMapCenter(terreno.points?.[0] || null);
                         setMapOpen(true);
                       }}
-                      className="text-[11.5px] text-primary font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                      className="text-sm text-primary font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
                     >
                       🗺️{" "}
                       {language === "es"
@@ -1009,7 +1009,7 @@ function PerfilScreen() {
                       <button
                         type="button"
                         onClick={() => handleRemoveTerrenoProfile(terreno.id)}
-                        className="w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white text-[12px] font-extrabold flex items-center justify-center border border-white shadow cursor-pointer shrink-0"
+                        className="w-7 h-7 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground text-sm font-extrabold flex items-center justify-center border border-border shadow cursor-pointer shrink-0"
                         title={
                           language === "es" ? "Eliminar" : language === "en" ? "Delete" : "Excluir"
                         }
@@ -1021,7 +1021,7 @@ function PerfilScreen() {
                 </div>
 
                 {/* Details layout */}
-                <dl className="text-[13px] grid grid-cols-2 gap-y-2.5 items-center">
+                <dl className="text-sm grid grid-cols-2 gap-y-2.5 items-center">
                   <dt className="text-muted-foreground font-normal">{t("profile.size")}</dt>
                   <dd className="font-semibold text-foreground">
                     {terreno.sizeVal}{" "}
@@ -1068,7 +1068,7 @@ function PerfilScreen() {
                 setMapCenter(null);
                 setMapOpen(true);
               }}
-              className="h-11 rounded-xl flex items-center justify-center gap-2 text-primary font-bold text-[13px] border border-dashed border-primary hover:bg-primary/5 transition-all cursor-pointer w-full bg-card"
+              className="h-11 rounded-xl flex items-center justify-center gap-2 text-primary font-bold text-sm border border-dashed border-primary hover:bg-primary/5 transition-all cursor-pointer w-full bg-card"
             >
               +{" "}
               {language === "es"
@@ -1086,7 +1086,7 @@ function PerfilScreen() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center">
           <div className="bg-background w-full max-w-[390px] rounded-t-3xl p-5 flex flex-col gap-4 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto">
             <header className="flex justify-between items-center border-b border-border pb-3 shrink-0">
-              <h3 className="font-bold text-[16px] text-foreground">
+              <h3 className="font-bold text-base text-foreground">
                 {language === "es"
                   ? "Editar Datos Personales"
                   : language === "en"
@@ -1100,24 +1100,25 @@ function PerfilScreen() {
                   setDrawerError("");
                 }}
                 disabled={profileSaving}
-                className="text-[13px] text-muted-foreground hover:underline disabled:opacity-50"
+                className="text-sm text-muted-foreground hover:underline disabled:opacity-50"
               >
                 {language === "es" ? "Cerrar" : language === "en" ? "Close" : "Fechar"}
               </button>
             </header>
 
             {drawerError && (
-              <div className="text-[12.5px] text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
+              <div className="text-sm text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
                 {drawerError}
               </div>
             )}
 
             <div className="flex flex-col gap-4 flex-1">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-foreground/80">
+                <label htmlFor="edit-profile-name" className="text-sm font-medium text-foreground/80">
                   {t("profile.nameLabel")}
                 </label>
                 <input
+                  id="edit-profile-name"
                   type="text"
                   value={tempName}
                   onChange={(e) => setTempName(e.target.value)}
@@ -1129,21 +1130,22 @@ function PerfilScreen() {
                         ? "e.g., Geraldo Dias"
                         : "Ex: Geraldo Dias"
                   }
-                  className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[15px] w-full font-semibold"
+                  className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full font-semibold"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-foreground/80">
+                <label htmlFor="edit-profile-phone" className="text-sm font-medium text-foreground/80">
                   {t("profile.phone")}
                 </label>
                 <input
+                  id="edit-profile-phone"
                   type="text"
                   value={tempPhone}
                   onChange={(e) => setTempPhone(maskPhone(e.target.value))}
                   disabled={profileSaving}
                   placeholder="(99) 99999-9999"
-                  className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[15px] w-full font-semibold"
+                  className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full font-semibold"
                 />
               </div>
             </div>
@@ -1156,7 +1158,7 @@ function PerfilScreen() {
                   setDrawerError("");
                 }}
                 disabled={profileSaving}
-                className="flex-1 h-12 rounded-xl border border-border font-semibold text-[14px] text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-50"
+                className="flex-1 h-12 rounded-xl border border-border font-semibold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-50"
               >
                 {language === "es" ? "Cancelar" : language === "en" ? "Cancel" : "Cancelar"}
               </button>
@@ -1203,7 +1205,7 @@ function PerfilScreen() {
                   }
                 }}
                 disabled={profileSaving}
-                className="flex-1 h-12 rounded-xl bg-primary text-white font-semibold text-[14px] active:scale-95 transition-all shadow-soft disabled:opacity-60 flex items-center justify-center"
+                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm active:scale-95 transition-all shadow-soft disabled:opacity-60 flex items-center justify-center"
               >
                 {profileSaving ? (
                   <span className="block w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
@@ -1225,7 +1227,7 @@ function PerfilScreen() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center">
           <div className="bg-background w-full max-w-[390px] rounded-t-3xl p-5 flex flex-col gap-4 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto">
             <header className="flex justify-between items-center border-b border-border pb-3 shrink-0">
-              <h3 className="font-bold text-[16px] text-foreground">
+              <h3 className="font-bold text-base text-foreground">
                 {language === "es"
                   ? "Editar Terreno"
                   : language === "en"
@@ -1239,14 +1241,14 @@ function PerfilScreen() {
                   setCarsFound([]);
                   setCarError("");
                 }}
-                className="text-[13px] text-muted-foreground hover:underline"
+                className="text-sm text-muted-foreground hover:underline"
               >
                 {language === "es" ? "Cerrar" : language === "en" ? "Close" : "Fechar"}
               </button>
             </header>
 
             {carError && (
-              <div className="text-[12px] font-bold text-destructive bg-destructive/5 border border-destructive/20 rounded-lg p-2 text-center">
+              <div className="text-sm font-bold text-destructive bg-destructive/5 border border-destructive/20 rounded-lg p-2 text-center">
                 ⚠️ {carError}
               </div>
             )}
@@ -1254,7 +1256,7 @@ function PerfilScreen() {
             <div className="flex flex-col gap-4 flex-1">
               {/* Terrain Name */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-foreground/80">
+                <label htmlFor="edit-terrain-name" className="text-sm font-medium text-foreground/80">
                   {language === "es"
                     ? "Nombre de la Tierra"
                     : language === "en"
@@ -1262,33 +1264,36 @@ function PerfilScreen() {
                       : "Nome do Terreno"}
                 </label>
                 <input
+                  id="edit-terrain-name"
                   type="text"
                   value={tempTerrenoName}
                   onChange={(e) => setTempTerrenoName(e.target.value)}
                   placeholder="Ex: Terreno 1"
-                  className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[15px] w-full font-semibold"
+                  className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full font-semibold"
                 />
               </div>
 
               {/* Terrain Size */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-foreground/80">
+                <label htmlFor="edit-terrain-size" className="text-sm font-medium text-foreground/80">
                   {t("cadastro.size_label_v2")}
                 </label>
                 <div className="flex gap-2">
                   <input
+                    id="edit-terrain-size"
                     type="number"
                     min="0"
                     step="0.01"
                     value={tempTerrenoSizeVal}
                     onChange={(e) => setTempTerrenoSizeVal(e.target.value)}
                     placeholder="0"
-                    className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[15px] flex-1 font-semibold"
+                    className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base flex-1 font-semibold"
                   />
                   <select
+                    aria-label="Unidade de medida"
                     value={tempTerrenoSizeUnit}
                     onChange={(e) => setTempTerrenoSizeUnit(e.target.value as any)}
-                    className="h-12 px-3 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[14px] font-semibold cursor-pointer"
+                    className="h-12 px-3 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm font-semibold cursor-pointer"
                   >
                     <option value="ha">{t("cadastro.unit_ha")}</option>
                     <option value="alqueire_mg">{t("cadastro.unit_alqueire_mg")}</option>
@@ -1301,7 +1306,7 @@ function PerfilScreen() {
               {/* CAR Number */}
               <div className="flex flex-col gap-1.5 bg-soft/30 p-3 rounded-2xl border border-border/40">
                 <div className="flex justify-between items-center">
-                  <label className="text-[13px] font-medium text-foreground/80">
+                  <label htmlFor="edit-terrain-car" className="text-sm font-medium text-foreground/80">
                     {t("cadastro.car_number")}
                   </label>
                   {/* Fetch CAR trigger */}
@@ -1319,7 +1324,7 @@ function PerfilScreen() {
                       (parsedTerrenos.find((t) => t.id === editingTerrenoId)?.points?.length || 0) <
                         3
                     }
-                    className="text-[11px] text-primary hover:underline font-bold flex items-center gap-0.5 active:scale-95 disabled:opacity-50 shrink-0 cursor-pointer"
+                    className="text-sm text-primary hover:underline font-bold flex items-center gap-0.5 active:scale-95 disabled:opacity-50 shrink-0 cursor-pointer"
                   >
                     {carSearchingId === editingTerrenoId
                       ? `🔍 ${t("cadastro.searching")}`
@@ -1328,14 +1333,14 @@ function PerfilScreen() {
                 </div>
 
                 {carSearchingId === editingTerrenoId && (
-                  <div className="text-[11px] text-muted-foreground bg-soft border border-border rounded-lg p-2.5 text-center mt-1">
+                  <div className="text-sm text-muted-foreground bg-soft border border-border rounded-lg p-2.5 text-center mt-1">
                     Verificando dados. Pode levar até 2 minutos...
                   </div>
                 )}
 
                 {carsFound.length > 0 && !tempTerrenoSelectedCar ? (
-                  <div className="flex flex-col gap-1.5 p-2 bg-amber-500/5 border border-amber-500/20 rounded-lg animate-in fade-in duration-200 mt-1">
-                    <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                  <div className="flex flex-col gap-1.5 p-2 bg-amber-warn/5 border border-amber-warn/20 rounded-lg animate-in fade-in duration-200 mt-1">
+                    <span className="text-sm font-bold text-amber-warn">
                       {carsFound.length} CAR(s) encontrado(s). Escolha seu CAR:
                     </span>
                     <div className="flex flex-col gap-1 max-h-[140px] overflow-y-auto pr-1">
@@ -1351,18 +1356,18 @@ function PerfilScreen() {
                               setTempTerrenoSelectedCar(car);
                               setTempTerrenoCarVal(code);
                             }}
-                            className="w-full text-left px-2.5 py-1.5 bg-white dark:bg-soft hover:bg-secondary rounded-lg border border-border text-[11px] font-medium flex justify-between items-center gap-1.5 transition-all cursor-pointer"
+                            className="w-full text-left px-2.5 py-1.5 bg-card hover:bg-secondary rounded-lg border border-border text-sm font-medium flex justify-between items-center gap-1.5 transition-all cursor-pointer"
                           >
                             <span className="flex flex-col min-w-0">
                               <span className="text-foreground font-semibold truncate">{code}</span>
                               {location && (
-                                <span className="text-muted-foreground text-[10px] truncate">
+                                <span className="text-muted-foreground text-sm truncate">
                                   {location}
                                 </span>
                               )}
                             </span>
                             {area !== null && (
-                              <span className="text-primary font-bold whitespace-nowrap text-[10px]">
+                              <span className="text-primary font-bold whitespace-nowrap text-sm">
                                 {area.toFixed(2)} ha
                               </span>
                             )}
@@ -1374,17 +1379,18 @@ function PerfilScreen() {
                 ) : (
                   <div className="flex flex-col gap-1.5 mt-1">
                     <input
+                      id="edit-terrain-car"
                       value={tempTerrenoCarVal}
                       onChange={(e) => {
                         setTempTerrenoCarVal(e.target.value);
                         if (tempTerrenoSelectedCar) setTempTerrenoSelectedCar(null);
                       }}
                       placeholder="Ex: BR-MG-3170107-..."
-                      className="h-11 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[14px] w-full font-semibold"
+                      className="h-11 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm w-full font-semibold"
                     />
                     {tempTerrenoSelectedCar && (
                       <div className="flex items-center justify-between gap-1.5 bg-primary/5 p-1 px-2 rounded-lg border border-primary/20">
-                        <span className="text-[10px] text-primary font-bold">
+                        <span className="text-sm text-primary font-bold">
                           CAR selecionado e pronto para salvar.
                         </span>
                         <button
@@ -1394,7 +1400,7 @@ function PerfilScreen() {
                             setTempTerrenoCarVal("");
                             setCarsFound([]);
                           }}
-                          className="text-[9.5px] text-muted-foreground hover:underline font-bold"
+                          className="text-sm text-muted-foreground hover:underline font-bold"
                         >
                           Trocar
                         </button>
@@ -1406,7 +1412,7 @@ function PerfilScreen() {
 
               {/* Crops Checklist */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-foreground/80">
+                <label className="text-sm font-medium text-foreground/80">
                   {t("profile.crop")}
                 </label>
                 <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto p-1">
@@ -1423,7 +1429,7 @@ function PerfilScreen() {
                             setTempTerrenoCropsVal([...tempTerrenoCropsVal, crop]);
                           }
                         }}
-                        className={`h-8 px-3 rounded-lg text-[11px] font-semibold border active:scale-95 transition-all cursor-pointer ${
+                        className={`h-8 px-3 rounded-lg text-sm font-semibold border active:scale-95 transition-all cursor-pointer ${
                           active
                             ? "bg-primary border-primary text-primary-foreground font-bold"
                             : "bg-soft border-border text-foreground/80 hover:bg-secondary"
@@ -1438,13 +1444,14 @@ function PerfilScreen() {
 
               {/* Crop System Dropdown */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-foreground/80">
+                <label htmlFor="edit-terrain-system" className="text-sm font-medium text-foreground/80">
                   {t("cadastro.system")}
                 </label>
                 <select
+                  id="edit-terrain-system"
                   value={tempTerrenoSystemVal}
                   onChange={(e) => setTempTerrenoSystemVal(e.target.value)}
-                  className="h-12 px-3 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[14px] font-semibold cursor-pointer"
+                  className="h-12 px-3 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm font-semibold cursor-pointer"
                 >
                   <option value="">
                     {language === "es"
@@ -1469,7 +1476,7 @@ function PerfilScreen() {
                   setCarsFound([]);
                   setCarError("");
                 }}
-                className="flex-1 h-12 rounded-xl border border-border font-semibold text-[14px] text-foreground/80 hover:bg-secondary active:scale-95 transition-all"
+                className="flex-1 h-12 rounded-xl border border-border font-semibold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all"
               >
                 {language === "es" ? "Cancelar" : language === "en" ? "Cancel" : "Cancelar"}
               </button>
@@ -1518,7 +1525,7 @@ function PerfilScreen() {
                   setCarsFound([]);
                   setCarError("");
                 }}
-                className="flex-1 h-12 rounded-xl bg-primary text-white font-semibold text-[14px] active:scale-95 transition-all shadow-soft flex items-center justify-center"
+                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm active:scale-95 transition-all shadow-soft flex items-center justify-center"
               >
                 {profileSaving ? (
                   <span className="block w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
@@ -1540,39 +1547,39 @@ function PerfilScreen() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center">
           <div className="bg-background w-full max-w-[390px] rounded-t-3xl p-5 flex flex-col gap-4 animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto">
             <header className="flex justify-between items-center border-b border-border pb-3 shrink-0">
-              <h3 className="font-bold text-[16px] text-foreground">
+              <h3 className="font-bold text-base text-foreground">
                 {password ? t("profile.drawerTitle_edit") : t("profile.drawerTitle_create")}
               </h3>
               <button
                 type="button"
                 onClick={() => setPasswordDrawerOpen(false)}
-                className="text-[13px] text-muted-foreground hover:underline"
+                className="text-sm text-muted-foreground hover:underline"
               >
                 {language === "es" ? "Cerrar" : language === "en" ? "Close" : "Fechar"}
               </button>
             </header>
 
             {validationError && (
-              <div className="text-[12.5px] text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
+              <div className="text-sm text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
                 {validationError}
               </div>
             )}
 
             {passwordSuccess ? (
               <div className="flex flex-col items-center gap-3 py-6 text-center animate-in fade-in duration-300">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   <CheckCircle2 size={32} />
                 </div>
-                <h4 className="font-bold text-[16px] text-foreground">
+                <h4 className="font-bold text-base text-foreground">
                   {t("profile.successTitle")}
                 </h4>
-                <p className="text-[13px] text-muted-foreground leading-relaxed px-4">
+                <p className="text-sm text-muted-foreground leading-relaxed px-4">
                   {t("profile.successDesc")}
                 </p>
                 <button
                   type="button"
                   onClick={() => setPasswordDrawerOpen(false)}
-                  className="w-full mt-4 h-12 bg-primary text-white font-semibold rounded-xl text-[14px] active:scale-95 transition-all shadow-soft flex items-center justify-center"
+                  className="w-full mt-4 h-12 bg-primary text-primary-foreground font-semibold rounded-xl text-sm active:scale-95 transition-all shadow-soft flex items-center justify-center"
                 >
                   OK
                 </button>
@@ -1580,33 +1587,35 @@ function PerfilScreen() {
             ) : !codeSent ? (
               // Step 1: Input New Password
               <div className="flex flex-col gap-4">
-                <p className="text-[13px] text-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {t("profile.drawerDesc")}
                 </p>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-medium text-foreground/80">
+                  <label htmlFor="new-password" className="text-sm font-medium text-foreground/80">
                     {t("profile.newPassword")}
                   </label>
                   <input
+                    id="new-password"
                     type="password"
                     value={newPasswordInput}
                     onChange={(e) => setNewPasswordInput(e.target.value)}
                     placeholder={t("profile.newPasswordPlaceholder")}
-                    className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[15px] w-full font-semibold"
+                    className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full font-semibold"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-medium text-foreground/80">
+                  <label htmlFor="confirm-password" className="text-sm font-medium text-foreground/80">
                     {t("profile.confirmPassword")}
                   </label>
                   <input
+                    id="confirm-password"
                     type="password"
                     value={confirmPasswordInput}
                     onChange={(e) => setConfirmPasswordInput(e.target.value)}
                     placeholder={t("profile.confirmPasswordPlaceholder")}
-                    className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[15px] w-full font-semibold"
+                    className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full font-semibold"
                   />
                 </div>
 
@@ -1651,7 +1660,7 @@ function PerfilScreen() {
                       );
                     }
                   }}
-                  className="w-full mt-2 h-12 bg-primary text-white font-semibold rounded-xl text-[14px] active:scale-95 transition-all shadow-soft flex items-center justify-center gap-1.5"
+                  className="w-full mt-2 h-12 bg-primary text-primary-foreground font-semibold rounded-xl text-sm active:scale-95 transition-all shadow-soft flex items-center justify-center gap-1.5"
                 >
                   {t("profile.sendCodeBtn")}
                 </button>
@@ -1659,21 +1668,22 @@ function PerfilScreen() {
             ) : (
               // Step 2: Verification Code
               <div className="flex flex-col gap-4">
-                <p className="text-[13px] text-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {t("profile.codeSentDesc").replace("{phone}", maskPhoneLgpd(profilePhone))}
                 </p>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-medium text-foreground/80">
+                  <label htmlFor="verification-code" className="text-sm font-medium text-foreground/80">
                     {t("profile.codeLabel")}
                   </label>
                   <input
+                    id="verification-code"
                     type="text"
                     maxLength={4}
                     value={inputCode}
                     onChange={(e) => setInputCode(e.target.value.replace(/\D/g, ""))}
                     placeholder={t("profile.codePlaceholder")}
-                    className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[15px] w-full font-semibold text-center tracking-widest"
+                    className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full font-semibold text-center tracking-widest"
                   />
                 </div>
 
@@ -1685,7 +1695,7 @@ function PerfilScreen() {
                       setInputCode("");
                       setValidationError("");
                     }}
-                    className="flex-1 h-12 rounded-xl border border-border font-semibold text-[14px] text-foreground/80 hover:bg-secondary active:scale-95 transition-all"
+                    className="flex-1 h-12 rounded-xl border border-border font-semibold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all"
                   >
                     {t("profile.backBtn")}
                   </button>
@@ -1702,7 +1712,7 @@ function PerfilScreen() {
                       appStore.set({ password: newPasswordInput.trim() });
                       setPasswordSuccess(true);
                     }}
-                    className="flex-1 h-12 rounded-xl bg-primary text-white font-semibold text-[14px] active:scale-95 transition-all shadow-soft flex items-center justify-center"
+                    className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm active:scale-95 transition-all shadow-soft flex items-center justify-center"
                   >
                     {t("profile.confirmBtn")}
                   </button>
@@ -1716,7 +1726,7 @@ function PerfilScreen() {
       {/* Expanded Map Drawer Overlay */}
       {mapOpen && (
         <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in slide-in-from-bottom duration-300">
-          <header className="px-5 pt-5 pb-3 flex items-center gap-3 border-b border-border bg-white shadow-sm shrink-0">
+          <header className="px-5 pt-5 pb-3 flex items-center gap-3 border-b border-border bg-card shadow-sm shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -1727,7 +1737,7 @@ function PerfilScreen() {
             >
               <ChevronLeft size={22} />
             </button>
-            <h2 className="text-[16px] font-bold text-foreground">
+            <h2 className="text-base font-bold text-foreground">
               {editingTerrenoId && parsedTerrenos.some((t) => t.id === editingTerrenoId)
                 ? language === "es"
                   ? "Redimitar Terreno"
@@ -1744,11 +1754,12 @@ function PerfilScreen() {
 
           <div className="p-5 flex flex-col gap-4 flex-1 overflow-y-auto">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-foreground/80">
+              <label htmlFor="terrain-map-search" className="text-sm font-medium text-foreground/80">
                 {t("cadastro.address_label")}
               </label>
               <div className="relative">
                 <input
+                  id="terrain-map-search"
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -1759,7 +1770,7 @@ function PerfilScreen() {
                     }
                   }}
                   placeholder={t("cadastro.address_placeholder")}
-                  className="h-12 pl-4 pr-12 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[15px] w-full"
+                  className="h-12 pl-4 pr-12 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full"
                 />
                 <button
                   type="button"
@@ -1776,28 +1787,28 @@ function PerfilScreen() {
                 </button>
               </div>
               {searchAddressError && (
-                <p className="text-[11px] font-semibold text-red-500 animate-in fade-in duration-200 mt-0.5">
+                <p className="text-sm font-semibold text-destructive animate-in fade-in duration-200 mt-0.5">
                   ⚠️ {searchAddressError}
                 </p>
               )}
             </div>
 
             <div className="flex-1 flex flex-col gap-2 min-h-[240px]">
-              <label className="text-[13px] font-medium text-foreground/80 flex items-center justify-between">
+              <label className="text-sm font-medium text-foreground/80 flex items-center justify-between">
                 <span>{t("cadastro.outline_label")}</span>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   {points.length} {points.length === 1 ? t("cadastro.point") : t("cadastro.points")}
                 </span>
               </label>
 
               <div className="relative flex-1 rounded-2xl overflow-hidden border border-border select-none min-h-[260px] bg-secondary">
-                <div className="absolute top-3 left-3 z-[500] bg-navy/80 backdrop-blur text-white text-[11px] px-2.5 py-1.5 rounded-lg shadow pointer-events-none">
+                <div className="absolute top-3 left-3 z-[500] bg-navy/80 backdrop-blur text-navy-foreground text-sm px-2.5 py-1.5 rounded-lg shadow pointer-events-none">
                   {t("cadastro.map_helper")}
                 </div>
 
                 <Suspense
                   fallback={
-                    <div className="absolute inset-0 flex items-center justify-center text-[12px] font-semibold text-muted-foreground bg-soft/40">
+                    <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-muted-foreground bg-soft/40">
                       Carregando mapa...
                     </div>
                   }
@@ -1806,7 +1817,7 @@ function PerfilScreen() {
                 </Suspense>
 
                 {points.length === 0 && (
-                  <div className="absolute inset-x-4 bottom-4 z-[500] rounded-xl bg-white/90 backdrop-blur px-3 py-2 text-[12px] font-medium text-navy shadow pointer-events-none text-center">
+                  <div className="absolute inset-x-4 bottom-4 z-[500] rounded-xl bg-card/90 backdrop-blur px-3 py-2 text-sm font-medium text-navy shadow pointer-events-none text-center">
                     {t("cadastro.map_empty")}
                   </div>
                 )}
@@ -1818,7 +1829,7 @@ function PerfilScreen() {
                 type="button"
                 onClick={() => setPoints([])}
                 disabled={points.length === 0}
-                className="h-12 px-3 rounded-xl border border-border font-semibold text-[13px] text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
+                className="h-12 px-3 rounded-xl border border-border font-semibold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
               >
                 {t("cadastro.clear_btn")}
               </button>
@@ -1826,14 +1837,14 @@ function PerfilScreen() {
                 type="button"
                 onClick={() => setPoints(points.slice(0, -1))}
                 disabled={points.length === 0}
-                className="h-12 px-3 rounded-xl border border-border font-semibold text-[13px] text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
+                className="h-12 px-3 rounded-xl border border-border font-semibold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
               >
                 {t("cadastro.undo_btn")}
               </button>
               <button
                 type="button"
                 onClick={handleConfirmMap}
-                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px] flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
               >
                 {t("cadastro.confirm_land_btn")}
               </button>

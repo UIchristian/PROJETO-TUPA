@@ -577,26 +577,26 @@ function CadastroScreen() {
           <ChevronLeft size={22} />
         </Link>
         <ProgressDots step={2} />
-        <span className="text-[12px] text-muted-foreground">2/3</span>
+        <span className="text-sm text-muted-foreground">2/3</span>
       </header>
 
       <div className="px-5 pb-6 flex-1 flex flex-col gap-5">
         <div>
-          <h2 className="text-[22px] font-bold text-foreground">{t("cadastro.where")}</h2>
-          <p className="text-[15px] text-foreground/80 mt-1">{t("cadastro.demarcate")}</p>
+          <h2 className="text-xl font-bold text-foreground">{t("cadastro.where")}</h2>
+          <p className="text-base text-foreground/80 mt-1">{t("cadastro.demarcate")}</p>
         </div>
 
         {/* Terrains tab selector */}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center">
-            <span className="text-[14.5px] font-bold text-foreground/90">
+            <span className="text-base font-bold text-foreground/90">
               {language === "es"
                 ? "Tus Terrenos"
                 : language === "en"
                   ? "Your Terrains"
                   : "Seus Terrenos"}
             </span>
-            <span className="text-[13px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full shrink-0">
+            <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full shrink-0">
               Total: {terrenos.reduce((acc, curr) => acc + (parseFloat(curr.sizeVal) || 0), 0)}{" "}
               {sizeUnit}
             </span>
@@ -609,9 +609,9 @@ function CadastroScreen() {
                   <button
                     type="button"
                     onClick={() => setActiveId(t.id)}
-                    className={`h-11 px-4 rounded-xl text-[14px] font-bold border transition-all cursor-pointer ${
+                    className={`h-11 px-4 rounded-xl text-sm font-bold border transition-all cursor-pointer ${
                       isActive
-                        ? "bg-primary border-primary text-white shadow-soft"
+                        ? "bg-primary border-primary text-primary-foreground shadow-soft"
                         : "bg-soft border-border text-foreground/80 hover:bg-secondary"
                     }`}
                   >
@@ -621,7 +621,7 @@ function CadastroScreen() {
                     <button
                       type="button"
                       onClick={() => handleRemoveTerreno(t.id)}
-                      className="absolute -top-2 -right-1.5 w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white text-[12px] font-extrabold flex items-center justify-center border border-white shadow-md cursor-pointer"
+                      className="absolute -top-2 -right-1.5 w-7 h-7 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground text-sm font-extrabold flex items-center justify-center border border-border shadow-md cursor-pointer"
                       title={
                         language === "es" ? "Eliminar" : language === "en" ? "Delete" : "Excluir"
                       }
@@ -635,7 +635,7 @@ function CadastroScreen() {
             <button
               type="button"
               onClick={handleAddTerreno}
-              className="h-11 px-4 rounded-xl text-[13.5px] font-bold border border-dashed border-primary text-primary hover:bg-primary/5 transition-all cursor-pointer shrink-0"
+              className="h-11 px-4 rounded-xl text-sm font-bold border border-dashed border-primary text-primary hover:bg-primary/5 transition-all cursor-pointer shrink-0"
             >
               +{" "}
               {language === "es"
@@ -663,19 +663,19 @@ function CadastroScreen() {
             }}
           />
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-navy px-4">
-            <div className="w-12 h-12 rounded-full bg-white shadow-card flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-full bg-card shadow-card flex items-center justify-center shrink-0">
               <MapPin size={22} className="text-primary" />
             </div>
-            <span className="text-[14.5px] font-bold">
+            <span className="text-base font-bold">
               {points.length >= 3 ? t("cadastro.success") : t("cadastro.tap_map")}
             </span>
             {points.length > 0 && (
-              <span className="text-[13px] text-primary font-bold">
+              <span className="text-sm text-primary font-bold">
                 {points.length} {points.length === 1 ? t("cadastro.point") : t("cadastro.points")}
               </span>
             )}
             {address && (
-              <span className="text-[13px] text-foreground/80 truncate max-w-full font-medium">
+              <span className="text-sm text-foreground/80 truncate max-w-full font-medium">
                 {address}
               </span>
             )}
@@ -685,7 +685,7 @@ function CadastroScreen() {
         {/* Form fields */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <span className="text-[14.5px] font-bold text-foreground/90">
+            <span className="text-base font-bold text-foreground/90">
               {t("cadastro.crops_grown")}
             </span>
             <div className="flex flex-wrap gap-2">
@@ -715,7 +715,7 @@ function CadastroScreen() {
                         setCrops([...crops, c]);
                       }
                     }}
-                    className={`h-11 px-4 rounded-xl text-[14.5px] font-semibold border active:scale-95 transition-all flex items-center gap-1.5 ${
+                    className={`h-11 px-4 rounded-xl text-base font-semibold border active:scale-95 transition-all flex items-center gap-1.5 ${
                       active
                         ? "bg-primary border-primary text-primary-foreground shadow-soft"
                         : "bg-soft border-border text-foreground/80 hover:bg-secondary"
@@ -731,7 +731,7 @@ function CadastroScreen() {
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
-              <span className="text-[14.5px] font-bold text-foreground/90">
+              <span className="text-base font-bold text-foreground/90">
                 {t("cadastro.system")}
               </span>
               <button
@@ -754,7 +754,7 @@ function CadastroScreen() {
               }}
             />
             {showSystemInfo && (
-              <div className="rounded-xl bg-primary/5 border border-primary/20 p-3.5 mt-1 text-[13.5px] text-foreground/90 flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              <div className="rounded-xl bg-primary/5 border border-primary/20 p-3.5 mt-1 text-sm text-foreground/90 flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
                 <div>
                   <strong className="text-primary">{t("cadastro.first_harvest")}:</strong>{" "}
                   {t("cadastro.first_harvest_desc")}
@@ -772,22 +772,25 @@ function CadastroScreen() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-[14.5px] font-bold text-foreground/90">
+            <label htmlFor="land-size" className="text-base font-bold text-foreground/90">
               {t("cadastro.size_label_v2")}
-            </span>
+            </label>
             <div className="flex gap-2">
               <input
+                id="land-size"
                 type="number"
                 min="0"
                 step="any"
                 value={sizeVal}
                 onChange={(e) => setSizeVal(e.target.value)}
-                className="h-12 flex-1 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[16px] w-full font-semibold"
+                className="h-12 flex-1 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full font-semibold"
               />
               <select
+                id="land-size-unit"
+                aria-label="Unidade de medida"
                 value={sizeUnit}
                 onChange={(e) => setSizeUnit(e.target.value as any)}
-                className="h-12 w-48 px-3 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[15px] font-semibold cursor-pointer"
+                className="h-12 w-48 px-3 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base font-semibold cursor-pointer"
               >
                 <option value="ha">{t("cadastro.unit_ha")}</option>
                 <option value="alqueire_mg">{t("cadastro.unit_alqueire_mg")}</option>
@@ -801,7 +804,7 @@ function CadastroScreen() {
               <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-card flex flex-col gap-3 animate-in fade-in duration-200 mt-1">
                 {/* Equivalency text */}
                 {sizeUnit !== "ha" && (
-                  <div className="text-[13.5px] text-foreground/90 font-semibold">
+                  <div className="text-sm text-foreground/90 font-semibold">
                     {t("cadastro.equiv_label").replace(
                       "{val}",
                       formattedHectares.toLocaleString(undefined, { maximumFractionDigits: 2 }),
@@ -812,19 +815,19 @@ function CadastroScreen() {
                 {/* Classification badge and info */}
                 <div className="flex flex-col items-start gap-2.5 w-full">
                   {farmerClass === "pequeno" ? (
-                    <div className="px-3 py-1 rounded-full text-[12px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase shrink-0">
+                    <div className="px-3 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary border border-primary/20 uppercase shrink-0">
                       {t("cadastro.class_pequeno")}
                     </div>
                   ) : farmerClass === "medio" ? (
-                    <div className="px-3 py-1 rounded-full text-[12px] font-bold bg-amber-50 text-amber-700 border border-amber-100 uppercase shrink-0">
+                    <div className="px-3 py-1 rounded-full text-sm font-bold bg-amber-warn/10 text-amber-warn border border-amber-warn/20 uppercase shrink-0">
                       {t("cadastro.class_medio")}
                     </div>
                   ) : (
-                    <div className="px-3 py-1 rounded-full text-[12px] font-bold bg-stone-100 text-stone-700 border border-stone-200 uppercase shrink-0">
+                    <div className="px-3 py-1 rounded-full text-sm font-bold bg-stone-100 text-stone-700 border border-stone-200 uppercase shrink-0">
                       {t("cadastro.class_grande")}
                     </div>
                   )}
-                  <p className="text-[13.5px] text-foreground/80 leading-relaxed">
+                  <p className="text-sm text-foreground/80 leading-relaxed">
                     {farmerClass === "pequeno"
                       ? t("cadastro.class_pequeno_desc")
                       : farmerClass === "medio"
@@ -838,14 +841,14 @@ function CadastroScreen() {
 
           <div className="flex flex-col gap-2.5 p-3.5 bg-soft/50 rounded-xl border border-border/40">
             <div className="flex justify-between items-center">
-              <span className="text-[14px] font-bold text-foreground/90">
+              <span className="text-sm font-bold text-foreground/90">
                 {t("cadastro.car_number")}
               </span>
               <button
                 type="button"
                 onClick={handleFetchCarByArea}
                 disabled={carSearching || points.length < 3}
-                className="text-[13.5px] text-primary hover:underline font-bold flex items-center gap-1 active:scale-95 disabled:opacity-50 shrink-0"
+                className="text-sm text-primary hover:underline font-bold flex items-center gap-1 active:scale-95 disabled:opacity-50 shrink-0"
               >
                 {carSearching
                   ? `🔍 ${t("cadastro.searching")}`
@@ -857,7 +860,7 @@ function CadastroScreen() {
               </button>
             </div>
             {carSearching && (
-              <div className="text-[13.5px] text-foreground/80 bg-soft border border-border rounded-xl p-2.5 text-center animate-in fade-in duration-200">
+              <div className="text-sm text-foreground/80 bg-soft border border-border rounded-xl p-2.5 text-center animate-in fade-in duration-200">
                 {language === "es"
                   ? "Consultando el backend. Esto puede tardar hasta 2 minutos..."
                   : language === "en"
@@ -866,14 +869,14 @@ function CadastroScreen() {
               </div>
             )}
             {carError && (
-              <div className="text-[13px] font-bold text-destructive bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200 mt-1">
+              <div className="text-sm font-bold text-destructive bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200 mt-1">
                 ⚠️ {carError}
               </div>
             )}
 
             {carsFound.length > 0 && !selectedCar ? (
-              <div className="flex flex-col gap-2 p-2.5 bg-amber-500/5 border border-amber-500/20 rounded-xl animate-in fade-in duration-200">
-                <span className="text-[13px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+              <div className="flex flex-col gap-2 p-2.5 bg-amber-warn/5 border border-amber-warn/20 rounded-xl animate-in fade-in duration-200">
+                <span className="text-sm font-bold text-amber-warn flex items-center gap-1">
                   ⚠️{" "}
                   {language === "es"
                     ? `${carsFound.length} CAR(s) encontrado(s). Elige tu propriedade:`
@@ -891,18 +894,18 @@ function CadastroScreen() {
                         key={`${code}-${idx}`}
                         type="button"
                         onClick={() => handleSelectCar(car, idx)}
-                        className="w-full text-left px-4 py-3 bg-white dark:bg-soft hover:bg-secondary rounded-xl border border-border text-[14.5px] font-medium flex justify-between items-center gap-2 transition-all active:scale-[0.99] shadow-soft cursor-pointer"
+                        className="w-full text-left px-4 py-3 bg-card hover:bg-secondary rounded-xl border border-border text-base font-medium flex justify-between items-center gap-2 transition-all active:scale-[0.99] shadow-soft cursor-pointer"
                       >
                         <span className="flex flex-col min-w-0">
                           <span className="text-foreground font-semibold truncate">{code}</span>
                           {location && (
-                            <span className="text-muted-foreground text-[12.5px] truncate">
+                            <span className="text-muted-foreground text-sm truncate">
                               {location}
                             </span>
                           )}
                         </span>
                         {area !== null && (
-                          <span className="text-primary font-extrabold whitespace-nowrap text-[13px]">
+                          <span className="text-primary font-extrabold whitespace-nowrap text-sm">
                             {area.toFixed(2)} ha
                           </span>
                         )}
@@ -912,9 +915,12 @@ function CadastroScreen() {
                 </div>
               </div>
             ) : (
-              (carOpen || carNumber) && (
                 <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
+                  <label htmlFor="car-number" className="text-sm font-bold text-foreground/90">
+                    {language === "es" ? "Número de CAR" : language === "en" ? "CAR Number" : "Número do CAR"}
+                  </label>
                   <input
+                    id="car-number"
                     value={carNumber}
                     onChange={(e) => {
                       setCarNumber(e.target.value);
@@ -922,11 +928,11 @@ function CadastroScreen() {
                       if (selectedCar) setSelectedCar(null);
                     }}
                     placeholder="Ex: BR-MG-3170107-..."
-                    className="h-12 px-4 rounded-xl bg-soft border border-border outline-none text-[15px]"
+                    className="h-12 px-4 rounded-xl bg-soft border border-border outline-none text-base"
                   />
                   {selectedCar ? (
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[13px] text-primary font-bold">
+                      <span className="text-sm text-primary font-bold">
                         {language === "es"
                           ? "CAR seleccionado y listo para guardar."
                           : language === "en"
@@ -936,28 +942,28 @@ function CadastroScreen() {
                       <button
                         type="button"
                         onClick={handleResetSelectedCar}
-                        className="text-[13px] text-primary font-bold hover:underline"
+                        className="text-sm text-primary font-bold hover:underline"
                       >
                         {language === "es" ? "Cambiar" : language === "en" ? "Change" : "Trocar"}
                       </button>
                     </div>
                   ) : (
                     carFound && (
-                      <span className="text-[13px] text-primary font-bold animate-pulse">
+                      <span className="text-sm text-primary font-bold animate-pulse">
                         {t("cadastro.car_found")}
                       </span>
                     )
                   )}
                 </div>
               )
-            )}
+            }
           </div>
         </div>
 
         <div className="flex-1" />
 
         {saveError && (
-          <div className="text-[14px] text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
+          <div className="text-sm text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
             {saveError}
           </div>
         )}
@@ -965,7 +971,7 @@ function CadastroScreen() {
         <button
           onClick={handleConfirmCadastro}
           disabled={saving}
-          className="h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-[16px] active:scale-[0.99] shadow-soft shrink-0 disabled:opacity-60"
+          className="h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-base active:scale-[0.99] shadow-soft shrink-0 disabled:opacity-60"
         >
           {saving
             ? language === "es"
@@ -982,14 +988,14 @@ function CadastroScreen() {
           <div className="w-full max-w-[320px] rounded-3xl bg-card border border-border shadow-2xl p-5 flex flex-col items-center gap-4 text-center">
             <Loader2 size={28} className="animate-spin text-primary" />
             <div className="space-y-1">
-              <p className="text-[17px] font-bold text-foreground">
+              <p className="text-lg font-bold text-foreground">
                 {language === "es"
                   ? "Creando tu cuenta..."
                   : language === "en"
                     ? "Creating your account..."
                     : "Criando sua conta..."}
               </p>
-              <p className="text-[13px] text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {language === "es"
                   ? "Un momento mientras validamos tu cuenta."
                   : language === "en"
@@ -1007,7 +1013,7 @@ function CadastroScreen() {
       {/* Expanded Map Drawer Overlay */}
       {mapOpen && (
         <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in slide-in-from-bottom duration-300">
-          <header className="px-5 pt-5 pb-3 flex items-center gap-3 border-b border-border bg-white shadow-sm shrink-0">
+          <header className="px-5 pt-5 pb-3 flex items-center gap-3 border-b border-border bg-card shadow-sm shrink-0">
             <button
               type="button"
               onClick={() => setMapOpen(false)}
@@ -1020,11 +1026,12 @@ function CadastroScreen() {
 
           <div className="p-5 flex flex-col gap-4 flex-1 overflow-y-auto">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[14px] font-bold text-foreground/90">
+              <label htmlFor="map-search-address" className="text-sm font-bold text-foreground/90">
                 {t("cadastro.address_label")}
               </label>
               <div className="relative">
                 <input
+                  id="map-search-address"
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -1035,7 +1042,7 @@ function CadastroScreen() {
                     }
                   }}
                   placeholder={t("cadastro.address_placeholder")}
-                  className="h-12 pl-4 pr-12 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[15px] w-full"
+                  className="h-12 pl-4 pr-12 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base w-full"
                 />
                 <button
                   type="button"
@@ -1052,28 +1059,28 @@ function CadastroScreen() {
                 </button>
               </div>
               {searchAddressError && (
-                <p className="text-[13px] font-semibold text-red-500 animate-in fade-in duration-200 mt-0.5">
+                <p className="text-sm font-semibold text-destructive animate-in fade-in duration-200 mt-0.5">
                   ⚠️ {searchAddressError}
                 </p>
               )}
             </div>
 
             <div className="flex-1 flex flex-col gap-2 min-h-[240px]">
-              <label className="text-[14px] font-bold text-foreground/90 flex items-center justify-between">
+              <label className="text-sm font-bold text-foreground/90 flex items-center justify-between">
                 <span>{t("cadastro.outline_label")}</span>
-                <span className="text-[13px] text-foreground/75 font-semibold">
+                <span className="text-sm text-foreground/75 font-semibold">
                   {points.length} {points.length === 1 ? t("cadastro.point") : t("cadastro.points")}
                 </span>
               </label>
 
               <div className="relative flex-1 rounded-2xl overflow-hidden border border-border select-none min-h-[260px] bg-secondary">
-                <div className="absolute top-3 left-3 z-[500] bg-navy/85 backdrop-blur text-white text-[12.5px] px-3.5 py-2 rounded-lg shadow pointer-events-none">
+                <div className="absolute top-3 left-3 z-[500] bg-navy/85 backdrop-blur text-navy-foreground text-sm px-3.5 py-2 rounded-lg shadow pointer-events-none">
                   {t("cadastro.map_helper")}
                 </div>
 
                 <Suspense
                   fallback={
-                    <div className="absolute inset-0 flex items-center justify-center text-[12px] font-semibold text-muted-foreground bg-soft/40">
+                    <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-muted-foreground bg-soft/40">
                       Carregando mapa...
                     </div>
                   }
@@ -1082,7 +1089,7 @@ function CadastroScreen() {
                 </Suspense>
 
                 {points.length === 0 && (
-                  <div className="absolute inset-x-4 bottom-4 z-[500] rounded-xl bg-white/95 backdrop-blur px-3.5 py-2.5 text-[13.5px] font-bold text-navy shadow pointer-events-none text-center">
+                  <div className="absolute inset-x-4 bottom-4 z-[500] rounded-xl bg-card/95 backdrop-blur px-3.5 py-2.5 text-sm font-bold text-navy shadow pointer-events-none text-center">
                     {t("cadastro.map_empty")}
                   </div>
                 )}
@@ -1094,7 +1101,7 @@ function CadastroScreen() {
                 type="button"
                 onClick={() => setPoints([])}
                 disabled={points.length === 0}
-                className="h-12 px-4 rounded-xl border border-border font-bold text-[14px] text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
+                className="h-12 px-4 rounded-xl border border-border font-bold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
               >
                 {t("cadastro.clear_btn")}
               </button>
@@ -1102,7 +1109,7 @@ function CadastroScreen() {
                 type="button"
                 onClick={() => setPoints(points.slice(0, -1))}
                 disabled={points.length === 0}
-                className="h-12 px-4 rounded-xl border border-border font-bold text-[14px] text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
+                className="h-12 px-4 rounded-xl border border-border font-bold text-sm text-foreground/80 hover:bg-secondary active:scale-95 transition-all disabled:opacity-40"
               >
                 {t("cadastro.undo_btn")}
               </button>
@@ -1111,7 +1118,7 @@ function CadastroScreen() {
                 onClick={() => {
                   setMapOpen(false);
                 }}
-                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold text-[14.5px] flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center gap-1.5 active:scale-95 transition-all"
               >
                 {t("cadastro.confirm_land_btn")}
               </button>
@@ -1126,7 +1133,7 @@ function CadastroScreen() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-[13px] font-medium text-foreground/80">{label}</span>
+      <span className="text-sm font-medium text-foreground/80">{label}</span>
       {children}
     </label>
   );
@@ -1148,7 +1155,7 @@ function Select({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12 w-full appearance-none px-4 pr-10 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-[16px]"
+        className="h-12 w-full appearance-none px-4 pr-10 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base"
       >
         {options.map((o) => (
           <option key={o} value={o}>

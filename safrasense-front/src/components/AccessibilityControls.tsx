@@ -78,7 +78,7 @@ export default function AccessibilityControls() {
           aria-pressed={theme === "light"}
           title="Modo claro"
           onClick={() => setTheme("light")}
-          className={`h-11 rounded-xl border px-4 text-[13px] font-semibold transition-all ${theme === "light" ? "bg-primary/10 border-primary text-primary" : "bg-card border-border text-foreground"}`}
+          className={`h-11 rounded-xl border px-4 text-sm font-semibold transition-all ${theme === "light" ? "bg-primary/10 border-primary text-primary" : "bg-card border-border text-foreground"}`}
         >
           Claro
         </button>
@@ -87,7 +87,7 @@ export default function AccessibilityControls() {
           aria-pressed={theme === "dark"}
           title="Modo escuro"
           onClick={() => setTheme("dark")}
-          className={`h-11 rounded-xl border px-4 text-[13px] font-semibold transition-all ${theme === "dark" ? "bg-primary/10 border-primary text-primary" : "bg-card border-border text-foreground"}`}
+          className={`h-11 rounded-xl border px-4 text-sm font-semibold transition-all ${theme === "dark" ? "bg-primary/10 border-primary text-primary" : "bg-card border-border text-foreground"}`}
         >
           <Moon size={16} className="inline-block mr-1" /> Escuro
         </button>

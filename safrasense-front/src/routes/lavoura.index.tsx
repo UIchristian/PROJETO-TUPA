@@ -142,25 +142,25 @@ function LavouraScreen() {
       percent: "96%",
       label: t("dashboard.confidence_high"),
       desc: t("dashboard.confidence_high_desc"),
-      bg: "bg-emerald-500/20 border-emerald-400/30",
-      textColor: "text-emerald-100",
-      accent: "text-emerald-300",
+      bg: "bg-primary/20 border-primary/30",
+      textColor: "text-primary-foreground/90",
+      accent: "text-primary-foreground",
     },
     medium: {
       percent: "74%",
       label: t("dashboard.confidence_medium"),
       desc: t("dashboard.confidence_medium_desc"),
-      bg: "bg-amber-500/20 border-amber-400/30",
-      textColor: "text-amber-100",
-      accent: "text-amber-300",
+      bg: "bg-amber-warn/20 border-amber-warn/30",
+      textColor: "text-amber-warn-foreground/90",
+      accent: "text-amber-warn-foreground",
     },
     low: {
       percent: "48%",
       label: t("dashboard.confidence_low"),
       desc: t("dashboard.confidence_low_desc"),
-      bg: "bg-rose-500/25 border-rose-400/30",
-      textColor: "text-rose-100",
-      accent: "text-rose-300",
+      bg: "bg-destructive/25 border-destructive/30",
+      textColor: "text-destructive-foreground/90",
+      accent: "text-destructive-foreground",
     },
   }[confidenceLevel];
 
@@ -205,16 +205,16 @@ function LavouraScreen() {
       <section className={`${cfg.bg} text-white px-5 pt-6 pb-10 relative`}>
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0 pr-2">
-            <p className="text-[13px] text-white font-medium">{cfg.update}</p>
+            <p className="text-sm text-white font-medium">{cfg.update}</p>
             {farmer.terrenos && farmer.terrenos.length > 1 ? (
               <div className="relative mt-1 max-w-[240px]">
                 <select
                   value={activeTerrenoId || "1"}
                   onChange={(e) => appStore.setActiveTerreno(e.target.value)}
-                  className="bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl pl-3 pr-8 py-1.5 text-[14px] font-bold text-white outline-none cursor-pointer appearance-none w-full transition-all truncate"
+                  className="bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl pl-3 pr-8 py-1.5 text-sm font-bold text-white outline-none cursor-pointer appearance-none w-full transition-all truncate"
                 >
                   {farmer.terrenos.map((t) => (
-                    <option key={t.id} value={t.id} className="text-navy bg-white">
+                    <option key={t.id} value={t.id} className="text-navy bg-card">
                       {t.name} ·{" "}
                       {t.status === "healthy"
                         ? "🟢 Saudável"
@@ -229,7 +229,7 @@ function LavouraScreen() {
                 </div>
               </div>
             ) : (
-              <p className="text-[13.5px] font-bold mt-1.5 truncate">
+              <p className="text-sm font-bold mt-1.5 truncate">
                 {currentTerreno
                   ? `${currentTerreno.name} · ${currentTerreno.address}`
                   : `${farmer.property} · ${farmer.location}`}
@@ -262,11 +262,11 @@ function LavouraScreen() {
               />
             </div>
           </div>
-          <span className="mt-3 text-[12.5px] tracking-[0.15em] font-bold text-white">
+          <span className="mt-3 text-sm tracking-[0.15em] font-bold text-white">
             {cfg.pill}
           </span>
-          <h1 className="text-[22px] font-bold mt-1 text-center">{cfg.title}</h1>
-          <p className="text-[14px] text-white/95 mt-1.5 text-center max-w-[280px]">{cfg.sub}</p>
+          <h1 className="text-xl font-bold mt-1 text-center">{cfg.title}</h1>
+          <p className="text-sm text-white/95 mt-1.5 text-center max-w-[280px]">{cfg.sub}</p>
 
           {/* Model Confidence Glassmorphic Badge */}
           <button
@@ -279,17 +279,17 @@ function LavouraScreen() {
               {confidenceCfg.percent}
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-[12px] tracking-wider uppercase font-bold block opacity-90">
+              <span className="text-sm tracking-wider uppercase font-bold block opacity-90">
                 {language === "es"
                   ? "CONFIANZA DEL MODELO"
                   : language === "en"
                     ? "MODEL CONFIDENCE"
                     : "CONFIANÇA DO MODELO"}
               </span>
-              <span className="text-[13.5px] font-bold block leading-snug">
+              <span className="text-sm font-bold block leading-snug">
                 {confidenceCfg.label}
               </span>
-              <p className="text-[12px] opacity-90 mt-0.5 leading-normal truncate max-w-full">
+              <p className="text-sm opacity-90 mt-0.5 leading-normal truncate max-w-full">
                 {confidenceCfg.desc}
               </p>
             </div>
@@ -300,7 +300,7 @@ function LavouraScreen() {
       <section className="bg-background rounded-t-3xl -mt-5 px-5 pt-6 pb-6 flex flex-col gap-4 relative z-10">
         <div className="rounded-2xl bg-card p-3 shadow-card border border-border/60">
           <NdviChart status={status} />
-          <div className="flex flex-col gap-1.5 px-2 pt-2.5 text-[13px] text-foreground/80 border-t border-border/40 mt-1">
+          <div className="flex flex-col gap-1.5 px-2 pt-2.5 text-sm text-foreground/80 border-t border-border/40 mt-1">
             <div className="flex items-center gap-4 flex-wrap">
               <Legend swatch color="#FFD700" label={dynamicLegendLabel} />
               <Legend dashed color="#9E9E9E" label={t("dashboard.legend_historical")} />
@@ -310,14 +310,14 @@ function LavouraScreen() {
 
         {/* Guia Didático do Gráfico */}
         <div className="rounded-2xl bg-primary/5 border border-primary/20 p-4 flex flex-col gap-2.5 shadow-soft">
-          <h3 className="font-bold text-[14.5px] text-primary flex items-center gap-1.5">
+          <h3 className="font-bold text-base text-primary flex items-center gap-1.5">
             {language === "es"
               ? "🌱 Entenda la saúde de su tierra de forma sencilla:"
               : language === "en"
                 ? "🌱 Understand the health of your land in a simple way:"
                 : "🌱 Entenda a saúde da sua terra de forma simples:"}
           </h3>
-          <div className="text-[14px] flex flex-col gap-2.5 text-foreground/85 leading-relaxed">
+          <div className="text-sm flex flex-col gap-2.5 text-foreground/85 leading-relaxed">
             <div className="flex gap-2">
               <span className="shrink-0 mt-0.5" aria-hidden>
                 🟢
@@ -341,11 +341,11 @@ function LavouraScreen() {
 
         {isEmergency ? (
           <div className="rounded-2xl bg-alert/5 border-l-4 border-alert p-4 shadow-card">
-            <div className="flex items-center gap-2 font-bold text-[15px] text-alert">
+            <div className="flex items-center gap-2 font-bold text-base text-alert">
               <Siren size={16} />
               {t("dashboard.emergency_card_title")}
             </div>
-            <p className="text-[14px] text-foreground/90 mt-1.5 leading-relaxed">
+            <p className="text-sm text-foreground/90 mt-1.5 leading-relaxed">
               {isProtected
                 ? t("dashboard.emergency_card_desc_protected")
                 : `${language === "es" ? "Tu propiedad está con vigor severamente por debajo de lo normal hace 21 dias. " : language === "en" ? "Your property has been severely below normal for 21 days. " : "Sua propriedade está com vigor severamente abaixo do normal há 21 dias. "}${t("dashboard.emergency_card_desc_unprotected")}`}
@@ -353,11 +353,11 @@ function LavouraScreen() {
           </div>
         ) : isAlert ? (
           <div className="rounded-2xl bg-card border-l-4 border-amber-warn p-4 shadow-card">
-            <div className="flex items-center gap-2 font-bold text-[15px]">
+            <div className="flex items-center gap-2 font-bold text-base">
               <AlertTriangle size={16} className="text-amber-warn" />
               {t("dashboard.alert_card_title")}
             </div>
-            <p className="text-[14px] text-foreground/80 mt-1.5 leading-relaxed">
+            <p className="text-sm text-foreground/80 mt-1.5 leading-relaxed">
               {t("dashboard.alert_card_desc")}
             </p>
           </div>
@@ -379,7 +379,7 @@ function LavouraScreen() {
         {isEmergency && !isProtected && (
           <button
             onClick={() => navigate({ to: "/lavoura/acao" })}
-            className="h-14 rounded-2xl bg-alert text-alert-foreground font-semibold text-[16px] flex items-center justify-center gap-2 active:scale-[0.99] shadow-soft"
+            className="h-14 rounded-2xl bg-alert text-alert-foreground font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.99] shadow-soft"
           >
             {t("dashboard.btn_what_to_do_now")} <ArrowRight size={18} />
           </button>
@@ -388,7 +388,7 @@ function LavouraScreen() {
         {isAlert && (
           <button
             onClick={() => navigate({ to: "/lavoura/acao" })}
-            className="h-14 rounded-2xl bg-amber-warn text-amber-warn-foreground font-semibold text-[16px] flex items-center justify-center gap-2 active:scale-[0.99] shadow-soft"
+            className="h-14 rounded-2xl bg-amber-warn text-amber-warn-foreground font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.99] shadow-soft"
           >
             {t("dashboard.btn_what_to_do_now")} <ArrowRight size={18} />
           </button>
@@ -397,10 +397,10 @@ function LavouraScreen() {
       {/* Homologation Modal */}
       {homologationModalOpen && (
         <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-[340px] shadow-2xl border border-border/80 flex flex-col max-h-[90%] overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+          <div className="bg-card rounded-3xl w-full max-w-[340px] shadow-2xl border border-border/80 flex flex-col max-h-[90%] overflow-hidden animate-in zoom-in-95 duration-200 text-left">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-slate-900 text-white shrink-0">
-              <span className="text-[14px] font-bold tracking-wide uppercase">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-feature text-feature-foreground shrink-0">
+              <span className="text-sm font-bold tracking-wide uppercase">
                 {language === "es"
                   ? "Homologación de Datos"
                   : language === "en"
@@ -410,7 +410,7 @@ function LavouraScreen() {
               <button
                 type="button"
                 onClick={() => setHomologationModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-300 cursor-pointer"
+                className="p-1.5 rounded-full hover:bg-feature-foreground/10 text-feature-foreground/80 cursor-pointer"
               >
                 <X size={20} />
               </button>
@@ -420,14 +420,14 @@ function LavouraScreen() {
             <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-4">
               <div className="text-center">
                 <span className="text-3xl">🛡️</span>
-                <h4 className="font-bold text-[15.5px] text-foreground mt-2">
+                <h4 className="font-bold text-base text-foreground mt-2">
                   {language === "es"
                     ? "Garantía de Acuracidad para Seguradoras"
                     : language === "en"
                       ? "Accuracy Guarantee for Insurers"
                       : "Garantia de Acurácia para Seguradoras"}
                 </h4>
-                <p className="text-[13.5px] text-foreground/80 mt-1 leading-relaxed">
+                <p className="text-sm text-foreground/80 mt-1 leading-relaxed">
                   {language === "es"
                     ? "Para que el laudo de satélite sea aceptado por las seguradoras, es necesario aumentar la acuracidad de los datos por medio de validación complementaria."
                     : language === "en"
@@ -437,7 +437,7 @@ function LavouraScreen() {
               </div>
 
               {/* Status Atual */}
-              <div className="p-3.5 rounded-xl border border-border bg-slate-50 flex items-center justify-between text-[13.5px]">
+              <div className="p-3.5 rounded-xl border border-border bg-soft flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
                   {language === "es"
                     ? "Acuracidad Actual:"
@@ -454,7 +454,7 @@ function LavouraScreen() {
 
               {/* Método 1: Fotos de Campo */}
               <div className="p-4 rounded-xl border border-border flex flex-col gap-2.5">
-                <h5 className="font-bold text-[14px] text-foreground flex items-center gap-1.5">
+                <h5 className="font-bold text-sm text-foreground flex items-center gap-1.5">
                   📸{" "}
                   {language === "es"
                     ? "1. Fotos Georreferenciadas"
@@ -462,7 +462,7 @@ function LavouraScreen() {
                       ? "1. Georeferenced Photos"
                       : "1. Fotos Georreferenciadas"}
                 </h5>
-                <p className="text-[13px] text-foreground/85 leading-relaxed">
+                <p className="text-sm text-foreground/85 leading-relaxed">
                   {language === "es"
                     ? "Tome fotos de su plantación seca. El app firmará las fotos con fecha y GPS del lote para comprobación sin fraude."
                     : language === "en"
@@ -470,7 +470,7 @@ function LavouraScreen() {
                       : "Tire fotos de sua plantação seca. O app assina as fotos com a data e coordenadas GPS do lote para comprovação sem fraudes."}
                 </p>
                 {fieldPhotoUploaded ? (
-                  <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-[12.5px] font-bold rounded-lg flex items-center gap-1.5">
+                  <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-sm font-bold rounded-lg flex items-center gap-1.5">
                     <CheckCircle2 size={14} />
                     {language === "es"
                       ? "Foto de campo enviada (GPS validado)"
@@ -479,7 +479,7 @@ function LavouraScreen() {
                         : "Foto de campo enviada (GPS verificado)"}
                   </div>
                 ) : (
-                  <label className="h-12 border border-dashed border-primary/50 bg-primary/5 rounded-lg flex items-center justify-center text-primary text-[14px] font-bold cursor-pointer hover:bg-primary/10 transition-colors">
+                  <label className="h-12 border border-dashed border-primary/50 bg-primary/5 rounded-lg flex items-center justify-center text-primary text-sm font-bold cursor-pointer hover:bg-primary/10 transition-colors">
                     <input
                       type="file"
                       accept="image/*"
@@ -497,7 +497,7 @@ function LavouraScreen() {
 
               {/* Método 2: Revisão de Agrônomo (CREA) */}
               <div className="p-4 rounded-xl border border-border flex flex-col gap-2.5">
-                <h5 className="font-bold text-[14px] text-foreground flex items-center gap-1.5">
+                <h5 className="font-bold text-sm text-foreground flex items-center gap-1.5">
                   👷{" "}
                   {language === "es"
                     ? "2. Laudo CREA / Vistoria"
@@ -505,7 +505,7 @@ function LavouraScreen() {
                       ? "2. Agronomist Verification (CREA)"
                       : "2. Laudo CREA / Vistoria"}
                 </h5>
-                <p className="text-[13px] text-foreground/85 leading-relaxed">
+                <p className="text-sm text-foreground/85 leading-relaxed">
                   {language === "es"
                     ? "Solicite una revisión remota o presencial de un agrónomo credenciado de su cooperativa para emitir la firma ART."
                     : language === "en"
@@ -513,7 +513,7 @@ function LavouraScreen() {
                       : "Solicite uma revisão remota ou presencial de um agrônomo credenciado de sua cooperativa para emissão da assinatura ART."}
                 </p>
                 {inspectionsRequested ? (
-                  <div className="p-2.5 bg-primary/10 border border-primary/20 text-primary text-[12.5px] font-bold rounded-lg flex items-center gap-1.5">
+                  <div className="p-2.5 bg-primary/10 border border-primary/20 text-primary text-sm font-bold rounded-lg flex items-center gap-1.5">
                     <CheckCircle2 size={14} />
                     {language === "es"
                       ? "Vistoria Solicitada"
@@ -530,7 +530,7 @@ function LavouraScreen() {
                         fieldPhotoUploaded: true,
                       });
                     }}
-                    className="h-12 bg-primary text-primary-foreground rounded-lg text-[14px] font-bold flex items-center justify-center hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer w-full"
+                    className="h-12 bg-primary text-primary-foreground rounded-lg text-sm font-bold flex items-center justify-center hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer w-full"
                   >
                     {language === "es"
                       ? "Solicitar Validación CREA"
@@ -543,11 +543,11 @@ function LavouraScreen() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-border bg-slate-50 shrink-0">
+            <div className="p-4 border-t border-border bg-soft shrink-0">
               <button
                 type="button"
                 onClick={() => setHomologationModalOpen(false)}
-                className="h-12 w-full bg-slate-900 text-white rounded-xl font-bold text-[14px] hover:opacity-90 transition-all cursor-pointer"
+                className="h-12 w-full bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-all cursor-pointer"
               >
                 {language === "es" ? "Confirmar" : language === "en" ? "Confirm" : "Confirmar"}
               </button>
@@ -563,10 +563,10 @@ function LavouraScreen() {
 function InfoCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
     <div className="rounded-2xl bg-card p-4 shadow-card border border-border/60">
-      <div className="flex items-center gap-2 font-bold text-[15px]">
+      <div className="flex items-center gap-2 font-bold text-base">
         {icon} {title}
       </div>
-      <p className="text-[14px] text-foreground/80 mt-1.5 leading-relaxed">{body}</p>
+      <p className="text-sm text-foreground/80 mt-1.5 leading-relaxed">{body}</p>
     </div>
   );
 }

@@ -20,12 +20,22 @@ export type NdviDataset = {
 function normalizeDate(value: any): string | null {
   if (value === undefined || value === null || value === "") return null;
 
-  const parsed = new Date(String(value));
+  const strValue = String(value);
+  const parsed = new Date(strValue);
   if (!Number.isNaN(parsed.getTime())) {
     return parsed.toISOString().slice(0, 10);
   }
 
-  return String(value);
+  // Tentar extrair com expressão regular a primeira data no formato AAAA-MM-DD embutida na string
+  const match = strValue.match(/\b\d{4}-\d{2}-\d{2}\b/);
+  if (match) {
+    const extractedDate = new Date(match[0]);
+    if (!Number.isNaN(extractedDate.getTime())) {
+      return match[0];
+    }
+  }
+
+  return strValue;
 }
 
 export function parseLocaleNumber(value: any): number | null {
@@ -126,8 +136,18 @@ export function parseNdviDataset(payload: any): NdviDataset {
       const ndvi = pickNdviValue(row);
       if (!data || ndvi === null) return null;
 
-      const dataInicial = normalizeDate(row?.data_inicial ?? row?.inicio ?? row?.start_date);
-      const dataFinal = normalizeDate(row?.data_final ?? row?.fim ?? row?.end_date);
+      let dataInicial = normalizeDate(row?.data_inicial ?? row?.inicio ?? row?.start_date);
+      let dataFinal = normalizeDate(row?.data_final ?? row?.fim ?? row?.end_date);
+
+      // Extract from referencia_semana or reference if start/end dates are missing
+      const refSem = String(row?.referencia_semana ?? row?.referencia ?? "");
+      if (refSem && (!dataInicial || !dataFinal)) {
+        const dates = refSem.match(/\d{4}-\d{2}-\d{2}/g);
+        if (dates) {
+          if (!dataInicial) dataInicial = dates[0];
+          if (!dataFinal && dates.length > 1) dataFinal = dates[1];
+        }
+      }
 
       return {
         ...row,

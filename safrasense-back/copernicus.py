@@ -8,9 +8,8 @@ CDSE_BASE_URL = "https://sh.dataspace.copernicus.eu"
 CDSE_TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 
 # Credenciais padrao do backend (evita depender de variaveis de ambiente).
-COPERNICUS_CLIENT_ID = ""
-COPERNICUS_CLIENT_SECRET = ""
-
+COPERNICUS_CLIENT_ID = "sh-6f94eed3-8546-491d-ac21-5e86119238d9"
+COPERNICUS_CLIENT_SECRET = "d2k6JBAUAfgy2wQkUA1jzCliptQDrEKi"
 
 EVALSCRIPT_NDVI = """
 //VERSION=3

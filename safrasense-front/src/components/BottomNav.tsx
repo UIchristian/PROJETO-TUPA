@@ -20,7 +20,7 @@ export function BottomNav() {
   return (
     <>
       <nav
-        className="sticky bottom-0 left-0 right-0 bg-white dark:bg-[#2a241a] border-t border-border shadow-[0_-2px_12px_rgba(0,0,0,0.04)] z-30"
+        className="sticky bottom-0 left-0 right-0 bg-card border-t border-border shadow-[0_-2px_12px_rgba(0,0,0,0.04)] z-30"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <ul className="grid grid-cols-5">
@@ -34,7 +34,7 @@ export function BottomNav() {
                   style={{ color: active ? "var(--primary)" : "var(--muted-foreground)" }}
                 >
                   <Icon size={22} strokeWidth={active ? 2.4 : 2} />
-                  <span className="text-[11px] font-medium">{label}</span>
+                  <span className="text-sm font-medium">{label}</span>
                 </Link>
               </li>
             );

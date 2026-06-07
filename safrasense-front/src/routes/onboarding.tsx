@@ -33,10 +33,10 @@ function OnboardingScreen() {
             <CheckCircle2 size={22} className="text-primary" />
           </div>
           <div>
-            <h2 className="text-[22px] font-bold leading-tight">
+            <h2 className="text-xl font-bold leading-tight">
               {t("onboarding.title", { name: farmer.name.split(" ")[0] })}
             </h2>
-            <p className="text-[14px] text-muted-foreground mt-1">{t("onboarding.subtitle")}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("onboarding.subtitle")}</p>
           </div>
         </div>
 
@@ -60,7 +60,7 @@ function OnboardingScreen() {
           />
         </div>
 
-        <p className="text-[12px] text-muted-foreground leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           {t("onboarding.footer")}
         </p>
 
@@ -68,7 +68,7 @@ function OnboardingScreen() {
 
         <button
           onClick={() => navigate({ to: "/lavoura" })}
-          className="h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-[16px] flex items-center justify-center gap-2 active:scale-[0.99] shadow-soft shrink-0"
+          className="h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.99] shadow-soft shrink-0"
         >
           {t("onboarding.btnStart")} <ArrowRight size={18} />
         </button>
@@ -102,14 +102,14 @@ function PathCard({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="font-semibold text-[15px]">{title}</h3>
+            <h3 className="font-semibold text-base">{title}</h3>
             {badge && (
-              <span className="text-[10px] font-bold tracking-wide bg-primary text-primary-foreground px-2 py-0.5 rounded-full whitespace-nowrap">
+              <span className="text-sm font-bold tracking-wide bg-primary text-primary-foreground px-2 py-0.5 rounded-full whitespace-nowrap">
                 {badge}
               </span>
             )}
           </div>
-          <p className="text-[13px] text-muted-foreground mt-1 leading-relaxed">{subtitle}</p>
+          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{subtitle}</p>
         </div>
       </div>
     </div>
