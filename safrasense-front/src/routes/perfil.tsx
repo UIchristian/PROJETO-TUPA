@@ -212,6 +212,7 @@ function PerfilScreen() {
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
 
   const firebaseUid = farmer.firebaseUid || auth.currentUser?.uid || "";
+  const [documentoMotivoRejeicao, setDocumentoMotivoRejeicao] = useState("");
 
   // Track whether the user has seen the current document status so the badge shows "new"
   const [seenDocStatus, setSeenDocStatus] = useState<string>(
@@ -315,6 +316,7 @@ function PerfilScreen() {
           documentoValidado: data.documentoValidado ?? false,
           documentoArquivoNome: data.documentoArquivoNome || "",
         });
+        setDocumentoMotivoRejeicao(data.documentoMotivoRejeicao || "");
       } catch (error) {
         console.error(error);
         setProfileError(
@@ -746,6 +748,22 @@ function PerfilScreen() {
                                 ? "Submit your CAR registration receipt to activate your parametric protection."
                                 : "Envie o recibo de inscrição do CAR para habilitar a proteção paramétrica e acessar os programas de governo."}
                     </p>
+                    {/* Rejection reason block — shown only when document was rejected */}
+                    {documentoValidado === false && documentoArquivoNome && (
+                      <div className="mt-2 rounded-lg bg-destructive/10 border border-destructive/20 px-2.5 py-2">
+                        <p className="text-xs font-bold text-destructive">
+                          {language === "es" ? "Motivo" : language === "en" ? "Reason" : "Motivo da rejeição"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {documentoMotivoRejeicao ||
+                            (language === "es"
+                              ? "Sin motivo informado."
+                              : language === "en"
+                                ? "No reason provided."
+                                : "Nenhum motivo informado.")}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 {((documentoValidado !== "pendente" &&

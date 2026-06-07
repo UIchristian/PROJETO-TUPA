@@ -97,9 +97,6 @@ function formatWeeklyLabel(item: NdviHistoryRow, language: "pt" | "es" | "en") {
     rangeStr = `${formatDay(dStart)}/${formatMonth(dStart)}`;
   }
 
-  if (weekNum) {
-    return `${weekPrefix}${weekNum} (${rangeStr})`;
-  }
   return rangeStr;
 }
 

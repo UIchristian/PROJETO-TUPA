@@ -394,7 +394,8 @@ function BackofficeScreen() {
         {
           documentoValidado: value,
           atualizadoEm: serverTimestamp(),
-          ...(motivo !== undefined ? { documentoMotivoRejeicao: motivo } : {}),
+          // When validating, clear any previous rejection reason; when rejecting, save the new one
+          documentoMotivoRejeicao: motivo !== undefined ? motivo : "",
         },
         { merge: true },
       );
@@ -442,25 +443,48 @@ function BackofficeScreen() {
     setRejectTarget(null);
   };
 
-  const renderActions = (user: BackofficeUser) => (
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={() => handleViewDocument(user)}
-        className="h-9 px-3 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 inline-flex items-center gap-1.5 cursor-pointer text-xs"
-      >
-        <Eye size={13} /> Visualizar
-      </button>
-      {user.documentoValidado === "pendente" && (
-        <>
-          <button
-            type="button"
-            onClick={() => setConfirmTarget({ uid: user.uid, nome: user.nome })}
-            disabled={savingUid === user.uid}
-            className="h-9 px-3 rounded-md bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-60 inline-flex items-center gap-1.5 cursor-pointer text-xs"
-          >
-            <CheckCircle2 size={13} /> Validar
-          </button>
+  const renderActions = (user: BackofficeUser) => {
+    const isValidated =
+      user.documentoValidado === true ||
+      user.documentoValidado === "valido" ||
+      user.documentoValidado === "validado";
+    const isPending = user.documentoValidado === "pendente";
+    const isRejected = user.documentoValidado === false && !!user.documentoArquivoNome;
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => handleViewDocument(user)}
+          className="h-9 px-3 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+        >
+          <Eye size={13} /> Visualizar
+        </button>
+
+        {/* Pending: both actions available */}
+        {isPending && (
+          <>
+            <button
+              type="button"
+              onClick={() => setConfirmTarget({ uid: user.uid, nome: user.nome })}
+              disabled={savingUid === user.uid}
+              className="h-9 px-3 rounded-md bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-60 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+            >
+              <CheckCircle2 size={13} /> Validar
+            </button>
+            <button
+              type="button"
+              onClick={() => setRejectTarget({ uid: user.uid, nome: user.nome })}
+              disabled={savingUid === user.uid}
+              className="h-9 px-3 rounded-md bg-rose-600 text-white font-semibold hover:bg-rose-700 disabled:opacity-60 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+            >
+              <XCircle size={13} /> Rejeitar
+            </button>
+          </>
+        )}
+
+        {/* Already approved: allow reverting to rejection */}
+        {isValidated && (
           <button
             type="button"
             onClick={() => setRejectTarget({ uid: user.uid, nome: user.nome })}
@@ -469,10 +493,22 @@ function BackofficeScreen() {
           >
             <XCircle size={13} /> Rejeitar
           </button>
-        </>
-      )}
-    </div>
-  );
+        )}
+
+        {/* Already rejected: allow re-approving */}
+        {isRejected && (
+          <button
+            type="button"
+            onClick={() => setConfirmTarget({ uid: user.uid, nome: user.nome })}
+            disabled={savingUid === user.uid}
+            className="h-9 px-3 rounded-md bg-emerald-600 text-white font-semibold hover:bg-emerald-700 disabled:opacity-60 inline-flex items-center gap-1.5 cursor-pointer text-xs"
+          >
+            <CheckCircle2 size={13} /> Validar
+          </button>
+        )}
+      </div>
+    );
+  };
 
   const handleSearchChange = (v: string) => {
     setSearch(v);
