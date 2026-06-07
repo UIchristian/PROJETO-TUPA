@@ -19,7 +19,7 @@ type BackofficeUser = {
 
 export const Route = createFileRoute("/backoffice")({
   head: () => ({
-    meta: [{ title: "Backoffice - Validacao de documentos" }],
+    meta: [{ title: "teste leo bobao- Validacao de documentos" }],
   }),
   component: BackofficeScreen,
 });
