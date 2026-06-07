@@ -53,10 +53,10 @@ function LoginScreen() {
   // false = Cadastro (Registration), true = Login (Acesse sua conta)
   const [isLogin, setIsLogin] = useState(false);
 
-  const [fullName, setFullName] = useState(state.farmer.name || "");
-  const [cpf, setCpf] = useState(state.farmer.cpf || "");
-  const [phone, setPhone] = useState(state.farmer.phone || "");
-  const [password, setPassword] = useState(state.password || "");
+  const [fullName, setFullName] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
