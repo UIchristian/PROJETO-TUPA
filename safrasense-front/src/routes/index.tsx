@@ -339,18 +339,7 @@ function LoginScreen() {
             {isLogin ? t("login.btnEntrar") : t("login.btnRegister")}
           </button>
 
-          {/* Access Demo Mode Button */}
-          <button
-            type="button"
-            onClick={() => {
-              appStore.loadDemoData();
-              navigate({ to: "/lavoura" });
-            }}
-            className="h-12 rounded-2xl border border-primary/40 text-primary font-semibold text-sm hover:bg-primary/5 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 shadow-soft cursor-pointer"
-          >
-            🚀 {t("login.useDemoMode")}
-          </button>
-
+         
           {/* Switch flow link text */}
           <div className="text-center text-sm text-muted-foreground mt-2.5">
             {isLogin ? (
