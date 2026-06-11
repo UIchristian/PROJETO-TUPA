@@ -1,0 +1,22 @@
+{
+  "name": "safrasense-front",
+  "compatibility_date": "2026-06-08",
+  "main": "dist/server/index.mjs",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "dist/client"
+  },
+  "no_bundle": true,
+  "rules": [
+    {
+      "type": "ESModule",
+      "globs": [
+        "**/*.mjs",
+        "**/*.js"
+      ]
+    }
+  ]
+}
