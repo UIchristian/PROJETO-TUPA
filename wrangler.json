@@ -1,13 +1,13 @@
 {
-  "name": "safrasense-front",
+  "name": "safrasense",
   "compatibility_date": "2026-06-08",
-  "main": "dist/server/index.mjs",
+  "main": "safrasense-front/dist/server/index.mjs",
   "compatibility_flags": [
     "nodejs_compat"
   ],
   "assets": {
     "binding": "ASSETS",
-    "directory": "dist/client"
+    "directory": "safrasense-front/dist/client"
   },
   "no_bundle": true,
   "rules": [
@@ -18,5 +18,8 @@
         "**/*.js"
       ]
     }
-  ]
+  ],
+  "build": {
+    "command": "cd safrasense-front && npm install && npm run build"
+  }
 }
