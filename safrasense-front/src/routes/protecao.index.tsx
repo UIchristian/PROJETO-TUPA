@@ -32,15 +32,15 @@ function ProtecaoScreen() {
 
   const insuranceOptions = [
     {
-      id: "newe",
-      name: "Newe Seguros",
-      description: t("protection_custom.newe_desc"),
+      id: "swiss",
+      name: "Swiss Re",
+      description: t("protection_custom.swiss_desc"),
       features: [
-        t("protection_custom.newe_feat_cov"),
-        t("protection_custom.newe_feat_pay"),
-        t("protection_custom.newe_feat_foc"),
+        t("protection_custom.swiss_feat_cov"),
+        t("protection_custom.swiss_feat_pay"),
+        t("protection_custom.swiss_feat_foc"),
       ],
-      footerNote: t("protection_custom.newe_footer"),
+      footerNote: t("protection_custom.swiss_footer"),
     },
     {
       id: "mapfre",

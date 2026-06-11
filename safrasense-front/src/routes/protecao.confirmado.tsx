@@ -97,10 +97,10 @@ function ConfirmadoScreen() {
                   ? "SUSEP authorized operator with extensive agricultural climate risk coverage."
                   : "Operadora autorizada pela SUSEP com ampla cobertura de riscos climáticos agrícolas."
               : language === "es"
-                ? "Pionera insurtech brasileña enfocada en agricultura familiar y seguros paramétricos por satélite."
+                ? "Líder global en reaseguros y soluciones paramétricas, brindando una protección sólida basada en datos satelitales."
                 : language === "en"
-                  ? "Pioneering Brazilian insurtech focused on family farming and satellite parametric insurance."
-                  : "Insurtech brasileira pioneira focada em agricultura familiar e seguros paramétricos por satélite."}
+                  ? "Global leader in reinsurance and parametric solutions, providing robust protection based on satellite data."
+                  : "Líder global em resseguros e soluções paramétricas, fornecendo proteção robusta com base em dados de satélite."}
           </p>
         </div>
 
