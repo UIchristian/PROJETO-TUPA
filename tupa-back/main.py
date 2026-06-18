@@ -86,6 +86,10 @@ def _load_example_imovel():
             "numero_car": row.get("numero_car", "BR-MG-3170107-123456-78"),
             "geometry": row.geometry,
         }
+        numero_car = _imoveis_store[imovel_id]['numero_car']
+        logger.info(f"CAR identificado: {numero_car}")
+        logger.info(f"Polígono identificado: {row.geometry}")
+
     logger.info("Imóvel de exemplo carregado: %s", list(_imoveis_store.keys()))
 
 
