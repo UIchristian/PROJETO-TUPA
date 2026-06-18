@@ -1,0 +1,25 @@
+{
+  "type": "FeatureCollection",
+  "name": "declarado_car_exemplo",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "fazenda-sol-nascente",
+        "numero_car": "BR-MG-3170107-123456-78",
+        "tipo": "AREA_IMOVEL"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.900, -16.345],
+          [-46.870, -16.345],
+          [-46.870, -16.370],
+          [-46.900, -16.370],
+          [-46.900, -16.345]
+        ]]
+      }
+    }
+  ]
+}

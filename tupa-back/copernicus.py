@@ -7,10 +7,6 @@ from shapely.geometry import Polygon
 CDSE_BASE_URL = "https://sh.dataspace.copernicus.eu"
 CDSE_TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 
-# Credenciais padrao do backend (evita depender de variaveis de ambiente).
-COPERNICUS_CLIENT_ID = "sh-6f94eed3-8546-491d-ac21-5e86119238d9"
-COPERNICUS_CLIENT_SECRET = "d2k6JBAUAfgy2wQkUA1jzCliptQDrEKi"
-
 EVALSCRIPT_NDVI = """
 //VERSION=3
 function setup() {
@@ -61,8 +57,8 @@ def _normalize_polygon_points(poligono_frontend):
 def _build_sh_config():
     from sentinelhub import SHConfig
 
-    client_id = COPERNICUS_CLIENT_ID or os.getenv("COPERNICUS_CLIENT_ID") or os.getenv("SH_CLIENT_ID")
-    client_secret = COPERNICUS_CLIENT_SECRET or os.getenv("COPERNICUS_CLIENT_SECRET") or os.getenv("SH_CLIENT_SECRET")
+    client_id = os.getenv("COPERNICUS_CLIENT_ID") or os.getenv("SH_CLIENT_ID")
+    client_secret = os.getenv("COPERNICUS_CLIENT_SECRET") or os.getenv("SH_CLIENT_SECRET")
 
     if not client_id or not client_secret:
         raise ValueError(

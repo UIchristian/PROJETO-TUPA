@@ -1,0 +1,61 @@
+{
+  "type": "FeatureCollection",
+  "name": "vegetacao_nativa_exemplo",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "classe": "Cerrado Sentido Restrito",
+        "fonte": "SNIF/IBGE",
+        "ano_referencia": 2020
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.900, -16.345],
+          [-46.890, -16.345],
+          [-46.890, -16.355],
+          [-46.900, -16.355],
+          [-46.900, -16.345]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "classe": "Mata Ciliar",
+        "fonte": "SNIF/IBGE",
+        "ano_referencia": 2020
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.900, -16.355],
+          [-46.870, -16.355],
+          [-46.870, -16.360],
+          [-46.900, -16.360],
+          [-46.900, -16.355]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "classe": "Cerrado Denso",
+        "fonte": "SNIF/IBGE",
+        "ano_referencia": 2020
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.880, -16.364],
+          [-46.870, -16.364],
+          [-46.870, -16.370],
+          [-46.880, -16.370],
+          [-46.880, -16.364]
+        ]]
+      }
+    }
+  ]
+}

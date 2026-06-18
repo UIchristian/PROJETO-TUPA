@@ -1,0 +1,121 @@
+{
+  "type": "FeatureCollection",
+  "name": "uso_cobertura_exemplo",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "classe": "Floresta Nativa",
+        "cor_hex": "#15803D",
+        "fonte": "Dynamic World / GEE",
+        "ano": 2025
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.900, -16.345],
+          [-46.893, -16.345],
+          [-46.893, -16.353],
+          [-46.900, -16.353],
+          [-46.900, -16.345]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "classe": "Lavoura",
+        "cor_hex": "#EAB308",
+        "fonte": "Dynamic World / GEE",
+        "ano": 2025
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.893, -16.345],
+          [-46.878, -16.345],
+          [-46.878, -16.360],
+          [-46.893, -16.360],
+          [-46.893, -16.345]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "classe": "Pastagem",
+        "cor_hex": "#86EFAC",
+        "fonte": "Dynamic World / GEE",
+        "ano": 2025
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.878, -16.360],
+          [-46.870, -16.360],
+          [-46.870, -16.370],
+          [-46.878, -16.370],
+          [-46.878, -16.360]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "classe": "Floresta Nativa",
+        "cor_hex": "#15803D",
+        "fonte": "Dynamic World / GEE",
+        "ano": 2025
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.900, -16.353],
+          [-46.893, -16.353],
+          [-46.893, -16.370],
+          [-46.900, -16.370],
+          [-46.900, -16.353]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "classe": "Solo Exposto",
+        "cor_hex": "#B45309",
+        "fonte": "Dynamic World / GEE",
+        "ano": 2025
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.878, -16.345],
+          [-46.870, -16.345],
+          [-46.870, -16.360],
+          [-46.878, -16.360],
+          [-46.878, -16.345]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "classe": "Floresta Nativa",
+        "cor_hex": "#15803D",
+        "fonte": "Dynamic World / GEE",
+        "ano": 2025
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.880, -16.364],
+          [-46.870, -16.364],
+          [-46.870, -16.370],
+          [-46.880, -16.370],
+          [-46.880, -16.364]
+        ]]
+      }
+    }
+  ]
+}

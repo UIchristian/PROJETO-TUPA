@@ -1,0 +1,24 @@
+{
+  "type": "FeatureCollection",
+  "name": "uso_restrito_exemplo",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "tipo": "Topo de Morro",
+        "base_legal": "Art. 11 do Código Florestal (Lei 12.651/2012)"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.876, -16.346],
+          [-46.872, -16.346],
+          [-46.872, -16.350],
+          [-46.876, -16.350],
+          [-46.876, -16.346]
+        ]]
+      }
+    }
+  ]
+}

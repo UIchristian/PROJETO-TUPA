@@ -1,0 +1,27 @@
+{
+  "type": "FeatureCollection",
+  "name": "imovel_exemplo",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "fazenda-sol-nascente",
+        "nome": "Fazenda Sol Nascente",
+        "municipio": "Unaí",
+        "uf": "MG",
+        "numero_car": "BR-MG-3170107-123456-78"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-46.900, -16.345],
+          [-46.870, -16.345],
+          [-46.870, -16.370],
+          [-46.900, -16.370],
+          [-46.900, -16.345]
+        ]]
+      }
+    }
+  ]
+}

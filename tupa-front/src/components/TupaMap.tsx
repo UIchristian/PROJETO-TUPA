@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, Polygon, useMap } from "react-leaflet";
-import { Imovel, LayerGeometries } from "@/mock";
+import type { Imovel, LayerGeometries } from "@/types/imovel";
 import { useEffect } from "react";
 import L from "leaflet";
 

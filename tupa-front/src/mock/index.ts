@@ -1,54 +1,20 @@
-export interface GeoJSONGeometry {
-  type: "Polygon";
-  coordinates: number[][][]; // [longitude, latitude] pairs
-}
+// Types are now defined in @/types/imovel.ts — re-exported here for backward compatibility
+export type {
+  GeoJSONGeometry,
+  Imovel,
+  CoberturaClasse,
+  Divergencia,
+  Diagnostico,
+  CoberturaPoligono,
+  LayerGeometries,
+} from "@/types/imovel";
 
-export interface Imovel {
-  id: string;
-  nome: string;
-  municipio: string;
-  uf: string;
-  areaHectares: number;
-  numeroCAR: string;
-  poligonoDeclarado: GeoJSONGeometry;
-}
-
-export interface CoberturaClasse {
-  classe: string;
-  percentual: number;
-  corHex: string;
-}
-
-export interface Divergencia {
-  id: string;
-  tipo: string;
-  areaHectares: number;
-  severidade: "alta" | "media" | "baixa";
-  textoLinguagemSimples: string;
-  caminhoRetificacao: string;
-  poligonoDivergencia: GeoJSONGeometry;
-}
-
-export interface Diagnostico {
-  imovelId: string;
-  scoreConformidade: number; // 0 to 100
-  coberturaSolo: CoberturaClasse[];
-  divergencias: Divergencia[];
-}
-
-export interface CoberturaPoligono {
-  classe: string;
-  corHex: string;
-  geometry: GeoJSONGeometry;
-}
-
-export interface LayerGeometries {
-  poligonoDeclarado: GeoJSONGeometry;
-  app: GeoJSONGeometry;
-  usoRestrito?: GeoJSONGeometry;
-  divergencias: Divergencia[];
-  coberturaPoligonos: CoberturaPoligono[];
-}
+import type {
+  GeoJSONGeometry,
+  Imovel,
+  Diagnostico,
+  LayerGeometries,
+} from "@/types/imovel";
 
 // Coordinate coordinates centered around Unaí, MG: lat -16.354, lng -46.885
 
@@ -171,6 +137,7 @@ export const MOCK_DIAGNOSTICOS: Record<string, Diagnostico> = {
         severidade: "alta",
         textoLinguagemSimples:
           "Foi identificado cultivo agrícola comercial (soja/milho) ativo na faixa de 30 metros marginal de rio de preservação permanente (APP). O Código Florestal exige vegetação nativa nesta área.",
+        baseLegal: "Art. 4º, inciso I, alínea 'a' da Lei 12.651/2012",
         caminhoRetificacao:
           "Cessar o cultivo comercial na área delimitada de 2.4 ha, isolar os limites da APP para permitir a regeneração natural e submeter um Projeto de Recomposição de Áreas Degradadas e Alteradas (PRADA).",
         poligonoDivergencia: {
@@ -185,6 +152,7 @@ export const MOCK_DIAGNOSTICOS: Record<string, Diagnostico> = {
         severidade: "media",
         textoLinguagemSimples:
           "Diferença detectada entre o histórico florestal e imagens recentes de satélite aponta desmatamento de 5.1 ha de Cerrado sem registro de Autorização de Supressão de Vegetação (ASV) no sistema ambiental estadual.",
+        baseLegal: "Art. 7º e Art. 8º da Lei 12.651/2012",
         caminhoRetificacao:
           "Apresentar a licença/ASV obtida à época junto à Secretaria de Meio Ambiente ou iniciar processo de regularização com reposição florestal equivalente.",
         poligonoDivergencia: {
@@ -221,6 +189,7 @@ export const MOCK_LAYERS: Record<string, LayerGeometries> = {
         severidade: "alta",
         textoLinguagemSimples:
           "Foi identificado cultivo agrícola comercial (soja/milho) ativo na faixa de 30 metros marginal de rio de preservação permanente (APP). O Código Florestal exige vegetação nativa nesta área.",
+        baseLegal: "Art. 4º, inciso I, alínea 'a' da Lei 12.651/2012",
         caminhoRetificacao:
           "Cessar o cultivo comercial na área delimitada de 2.4 ha, isolar os limites da APP para permitir a regeneração natural e submeter um Projeto de Recomposição de Áreas Degradadas e Alteradas (PRADA).",
         poligonoDivergencia: { type: "Polygon", coordinates: imovel1Divergencia1Coords },
@@ -232,6 +201,7 @@ export const MOCK_LAYERS: Record<string, LayerGeometries> = {
         severidade: "media",
         textoLinguagemSimples:
           "Diferença detectada entre o histórico florestal e imagens recentes de satélite aponta desmatamento de 5.1 ha de Cerrado sem registro de Autorização de Supressão de Vegetação (ASV) no sistema ambiental estadual.",
+        baseLegal: "Art. 7º e Art. 8º da Lei 12.651/2012",
         caminhoRetificacao:
           "Apresentar a licença/ASV obtida à época junto à Secretaria de Meio Ambiente ou iniciar processo de regularização com reposição florestal equivalente.",
         poligonoDivergencia: { type: "Polygon", coordinates: imovel1Divergencia2Coords },

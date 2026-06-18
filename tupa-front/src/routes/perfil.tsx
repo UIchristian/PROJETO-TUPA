@@ -17,7 +17,8 @@ import { t, useTranslation } from "@/lib/i18n";
 import { signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
-import { MOCK_IMOVEIS, MOCK_DIAGNOSTICOS } from "@/mock";
+import { getImoveis, getDiagnostico } from "@/api";
+import type { Imovel, Diagnostico } from "@/types/imovel";
 
 export const Route = createFileRoute("/perfil")({
   head: () => {
@@ -95,6 +96,30 @@ function PerfilScreen() {
   const [tempCpf, setTempCpf] = useState("");
   const [tempPhone, setTempPhone] = useState("");
 
+  // Real data state
+  const [imoveis, setImoveis] = useState<Imovel[]>([]);
+  const [diagnosticos, setDiagnosticos] = useState<Record<string, Diagnostico>>({});
+
+  // Fetch properties and diagnostics
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const fetchedImoveis = await getImoveis();
+        setImoveis(fetchedImoveis);
+
+        const diags: Record<string, Diagnostico> = {};
+        for (const imovel of fetchedImoveis) {
+          const d = await getDiagnostico(imovel.id);
+          if (d) diags[imovel.id] = d;
+        }
+        setDiagnosticos(diags);
+      } catch (err) {
+        console.error("Failed to load imoveis in profile", err);
+      }
+    }
+    fetchData();
+  }, []);
+
   // Load Firestore data if logged in
   useEffect(() => {
     const loadProfileData = async (uid: string) => {
@@ -139,41 +164,41 @@ function PerfilScreen() {
   };
 
   const handleSelectProperty = (id: string) => {
-    const mockImovel = MOCK_IMOVEIS.find((im) => im.id === id);
+    const property = imoveis.find((im) => im.id === id);
 
-    if (mockImovel) {
-      const mockPoints = mockImovel.poligonoDeclarado.coordinates[0].map((coords) => ({
+    if (property) {
+      const mockPoints = (property.poligonoDeclarado.coordinates[0] as number[][]).map((coords: number[]) => ({
         lat: coords[1],
         lng: coords[0],
       }));
 
       const nextTerrenos = [
         {
-          id: mockImovel.id,
-          name: mockImovel.nome,
+          id: property.id,
+          name: property.nome,
           points: mockPoints,
-          sizeVal: String(mockImovel.areaHectares),
+          sizeVal: String(property.areaHectares),
           sizeUnit: "ha" as const,
-          hectares: mockImovel.areaHectares,
-          carNumber: mockImovel.numeroCAR,
-          address: `${mockImovel.municipio}, ${mockImovel.uf}`,
+          hectares: property.areaHectares,
+          carNumber: property.numeroCAR,
+          address: `${property.municipio}, ${property.uf}`,
           status: id === "fazenda-sol-nascente" ? ("alert" as const) : ("healthy" as const),
-          selectedCar: mockImovel,
+          selectedCar: property,
         },
       ];
 
       appStore.set({
-        activeTerrenoId: mockImovel.id,
+        activeTerrenoId: property.id,
         status: id === "fazenda-sol-nascente" ? "alert" : "healthy",
         farmer: {
           ...farmer,
           name: farmer.name || "Geraldo Dias",
           cpf: farmer.cpf || "123.456.789-00",
           phone: farmer.phone || "(61) 99999-9999",
-          property: mockImovel.nome,
-          location: `${mockImovel.municipio}, ${mockImovel.uf}`,
-          area: mockImovel.areaHectares,
-          car: mockImovel.numeroCAR,
+          property: property.nome,
+          location: `${property.municipio}, ${property.uf}`,
+          area: property.areaHectares,
+          car: property.numeroCAR,
           areaPolygon: mockPoints,
           terrenos: nextTerrenos,
         },
@@ -186,7 +211,7 @@ function PerfilScreen() {
   };
 
   const getComplianceInfo = (imovelId: string) => {
-    const diag = MOCK_DIAGNOSTICOS[imovelId];
+    const diag = diagnosticos[imovelId];
     const score = diag ? diag.scoreConformidade : 100;
 
     if (score >= 90) {
@@ -495,9 +520,14 @@ function PerfilScreen() {
           </h3>
 
           <div className="flex flex-col gap-3">
-            {MOCK_IMOVEIS.map((imovel) => {
-              const compliance = getComplianceInfo(imovel.id);
-              const isActive = farmer.property === imovel.nome;
+            {imoveis.length === 0 ? (
+              <div className="text-center p-4 text-sm text-muted-foreground flex justify-center">
+                <Loader2 size={24} className="animate-spin text-primary" />
+              </div>
+            ) : (
+              imoveis.map((imovel) => {
+                const compliance = getComplianceInfo(imovel.id);
+                const isActive = farmer.property === imovel.nome;
 
               return (
                 <button
@@ -527,7 +557,8 @@ function PerfilScreen() {
                   </div>
                 </button>
               );
-            })}
+              })
+            )}
           </div>
         </div>
 

@@ -18,11 +18,12 @@ import {
   getImoveis,
   getDiagnostico,
   getLayers,
+} from "@/api";
+import type {
   Imovel,
   Diagnostico,
   LayerGeometries,
-  MOCK_IMOVEIS,
-} from "@/mock";
+} from "@/types/imovel";
 
 const TupaMap = lazy(() => import("@/components/TupaMap"));
 
@@ -107,10 +108,9 @@ function DiagnosticoScreen() {
           setDiagnostico(diag);
 
           let lay = await getLayers(targetId);
-          if (!lay) {
-            // Fallback layout using default Sol Nascente layers
-            const defaultMockImovel = list[0] || MOCK_IMOVEIS[0];
-            lay = await getLayers(defaultMockImovel.id);
+          if (!lay && list.length > 0) {
+            // Fallback layout using the first available property
+            lay = await getLayers(list[0].id);
           }
           setLayers(lay);
 

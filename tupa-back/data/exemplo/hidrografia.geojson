@@ -1,0 +1,28 @@
+{
+  "type": "FeatureCollection",
+  "name": "hidrografia_exemplo",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Córrego da Esperança",
+        "tipo": "curso_dagua",
+        "largura_m": 8
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-46.900, -16.358],
+          [-46.895, -16.357],
+          [-46.890, -16.356],
+          [-46.886, -16.3555],
+          [-46.882, -16.356],
+          [-46.878, -16.357],
+          [-46.874, -16.358],
+          [-46.870, -16.359]
+        ]
+      }
+    }
+  ]
+}

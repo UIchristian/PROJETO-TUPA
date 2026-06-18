@@ -1,2 +1,6 @@
-AREA_IMOVEL/*
-AREA_IMOVEL.zip*
+.env
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
