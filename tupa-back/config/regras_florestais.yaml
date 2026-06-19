@@ -1,0 +1,38 @@
+# Regras do Código Florestal - Configurável por país/região
+# Conjunto Padrão: Brasil (Lei 12.651/2012)
+
+app:
+  cursos_dagua:
+    # Largura do rio em metros : Faixa de APP em metros
+    faixas:
+      - largura_max: 10
+        distancia_app: 30
+      - largura_max: 50
+        distancia_app: 50
+      - largura_max: 200
+        distancia_app: 100
+      - largura_max: 600
+        distancia_app: 200
+      - largura_max: 999999
+        distancia_app: 500
+  nascentes:
+    raio_app: 50 # em metros
+  encostas:
+    declividade_minima_app: 45 # graus
+
+uso_restrito:
+  encostas:
+    declividade_minima: 25 # graus
+    declividade_maxima: 45 # graus
+
+reserva_legal:
+  biomas:
+    amazonia_legal:
+      floresta: 80
+      cerrado: 35
+      campos_gerais: 20
+    demais_regioes:
+      geral: 20
+
+dispensas:
+  pequena_propriedade_modulos_max: 4
