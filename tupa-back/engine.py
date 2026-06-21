@@ -19,10 +19,17 @@ SRID_AREA = 5880
 
 def detect_cultivo_em_app(imovel_id: str, db: Session) -> None:
     """Detecta lavoura dentro das APPs (buffer da hidrografia)."""
-    # A largura da APP baseia-se na largura do rio (usando as regras configuradas)
-    # Por simplicidade neste MVP, usaremos 30 metros como base. O ideal seria fazer 
-    # um CASE WHEN no SQL usando a largura da hidrografia e `regras.app.cursos_dagua`.
     
+    # Constrói a regra de largura do buffer baseado nas configurações do YAML
+    faixas = regras.get("app", {}).get("cursos_dagua", {}).get("faixas", [])
+    if not faixas:
+        case_when_largura = "30"
+    else:
+        case_lines = []
+        for faixa in sorted(faixas, key=lambda x: x.get('largura_max', 999999)):
+            case_lines.append(f"WHEN COALESCE(h.largura, 0) <= {faixa['largura_max']} THEN {faixa['distancia_app']}")
+        case_when_largura = f"(CASE {' '.join(case_lines)} ELSE 30 END)"
+
     query = text(f"""
         INSERT INTO divergencia (id, imovel_id, tipo, severidade, area_hectares, descricao, base_legal, caminho_retificacao, geometria)
         SELECT
@@ -30,17 +37,17 @@ def detect_cultivo_em_app(imovel_id: str, db: Session) -> None:
             i.id,
             'Cultivo Agrícola em APP',
             'alta',
-            ST_Area(ST_Transform(ST_Intersection(ST_Buffer(h.geometria::geography, 30)::geometry, c.geometria), {SRID_AREA})) / 10000.0 AS area_ha,
-            'Foi identificado cultivo agrícola comercial ativo na faixa de 30 metros de APP.',
+            ST_Area(ST_Transform(ST_Intersection(ST_Buffer(h.geometria::geography, {case_when_largura})::geometry, c.geometria), {SRID_AREA})) / 10000.0 AS area_ha,
+            'Foi identificado cultivo agrícola comercial ativo na faixa de ' || {case_when_largura} || ' metros de APP.',
             'Art. 4º, inciso I, alínea a da Lei 12.651/2012',
             'Cessar o cultivo comercial e isolar a área para regeneração.',
-            ST_Multi(ST_Intersection(ST_Buffer(h.geometria::geography, 30)::geometry, c.geometria))
+            ST_Multi(ST_Intersection(ST_Buffer(h.geometria::geography, {case_when_largura})::geometry, c.geometria))
         FROM imovel i
         JOIN cobertura_observada c ON c.imovel_id = i.id
-        JOIN hidrografia h ON ST_Intersects(ST_Buffer(h.geometria::geography, 30)::geometry, c.geometria)
+        JOIN hidrografia h ON ST_Intersects(ST_Buffer(h.geometria::geography, {case_when_largura})::geometry, c.geometria)
         WHERE i.id = :imovel_id
           AND c.classe ILIKE '%Lavoura%'
-          AND ST_Area(ST_Transform(ST_Intersection(ST_Buffer(h.geometria::geography, 30)::geometry, c.geometria), {SRID_AREA})) / 10000.0 > 0.01;
+          AND ST_Area(ST_Transform(ST_Intersection(ST_Buffer(h.geometria::geography, {case_when_largura})::geometry, c.geometria), {SRID_AREA})) / 10000.0 > 0.01;
     """)
     db.execute(query, {"imovel_id": imovel_id})
 
