@@ -1,13 +1,13 @@
 {
-  "name": "safrasense",
+  "name": "tupa",
   "compatibility_date": "2026-06-08",
-  "main": "safrasense-front/dist/server/index.mjs",
+  "main": "tupa-front/dist/server/index.mjs",
   "compatibility_flags": [
     "nodejs_compat"
   ],
   "assets": {
     "binding": "ASSETS",
-    "directory": "safrasense-front/dist/client"
+    "directory": "tupa-front/dist/client"
   },
   "no_bundle": true,
   "rules": [
@@ -20,6 +20,6 @@
     }
   ],
   "build": {
-    "command": "cd safrasense-front && npm install && npm run build"
+    "command": "cd tupa-front && npm install && npm run build"
   }
 }

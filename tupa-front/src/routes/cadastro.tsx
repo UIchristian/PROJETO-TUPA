@@ -12,11 +12,15 @@ import { auth, db } from "../../firebase";
 const FarmMap = lazy(() => import("@/components/FarmMap"));
 
 type CarItem = {
+  // Campos reais do shapefile AREA_IMOVEL do CAR
+  cod_imovel?: string;
+  num_area?: number;
+  cod_estado?: string;
+  municipio?: string;
+  // Aliases alternativos / outros formatos
   codigo_imovel?: string;
   codigo?: string;
   numero?: string;
-  cod_imovel?: string;
-  municipio?: string;
   cidade?: string;
   uf?: string;
   estado?: string;
@@ -115,18 +119,29 @@ async function fetchNdviHistory(polygon: PolygonPoint[], dataFinal: string) {
   return parsed;
 }
 
+// Firestore não suporta arrays aninhados (arrays de arrays).
+// O campo geometry do CAR (GeoJSON) tem coordinates: [[[lng,lat],...]] — precisa ser string.
+function sanitizeCarParaFirestore(car: CarItem | null | undefined): Record<string, any> | null {
+  if (!car) return null;
+  const { geometry, ...rest } = car as any;
+  return {
+    ...rest,
+    ...(geometry !== undefined ? { geometry: JSON.stringify(geometry) } : {}),
+  };
+}
+
 function getCarCode(car: CarItem, fallback: string) {
-  return String(car.codigo_imovel ?? car.codigo ?? car.numero ?? car.cod_imovel ?? fallback);
+  return String(car.cod_imovel ?? car.codigo_imovel ?? car.codigo ?? car.numero ?? fallback);
 }
 
 function getCarLocation(car: CarItem) {
   const municipio = car.municipio ?? car.cidade ?? car.municipio_nome ?? "";
-  const uf = car.uf ?? car.estado ?? "";
+  const uf = car.uf ?? car.estado ?? car.cod_estado ?? "";
   return [municipio, uf].filter(Boolean).join(" - ");
 }
 
 function getCarArea(car: CarItem): number | null {
-  const value = car.area_ha ?? car.area_imovel_ha ?? car.area;
+  const value = car.area_ha ?? car.area_imovel_ha ?? car.area ?? car.num_area;
   if (value === undefined || value === null || Number.isNaN(Number(value))) {
     return null;
   }
@@ -542,6 +557,20 @@ function CadastroScreen() {
   const confirmCadastro = async (shouldSkipNdvi: boolean) => {
     setSaveError("");
     setNdviErrorData(null);
+
+    // Verificar autenticação antes de qualquer processamento
+    const uid = auth.currentUser?.uid || state.farmer.firebaseUid;
+    if (!uid) {
+      setSaveError(
+        language === "es"
+          ? "Sesión no encontrada. Vuelve y regístrate nuevamente."
+          : language === "en"
+            ? "Session not found. Go back and register again."
+            : "Sessão não encontrada. Volte e faça seu cadastro novamente.",
+      );
+      return;
+    }
+
     setSaving(true);
     setSavingProgress(10);
     setSavingStepText(
@@ -677,14 +706,6 @@ function CadastroScreen() {
         status: firstTerreno?.status || "alert",
       });
 
-      const uid = state.farmer.firebaseUid || auth.currentUser?.uid;
-
-      if (!uid) {
-        throw new Error(
-          "Não foi possível identificar o usuário autenticado para concluir o cadastro.",
-        );
-      }
-
       await setDoc(
         doc(db, "usuarios", uid),
         {
@@ -698,12 +719,15 @@ function CadastroScreen() {
           sistema: "",
           hectares: totalHectares,
           numeroCAR: nextFarmer.car || "",
-          carSelecionado: firstTerreno?.selectedCar ?? null,
+          carSelecionado: sanitizeCarParaFirestore(firstTerreno?.selectedCar),
           ndviHistorico12m: firstTerreno?.ndviHistorico12m ?? [],
           ndviRelatorioSemanal: firstTerreno?.ndviRelatorioSemanal ?? [],
           ndviRelatorioMensal: firstTerreno?.ndviRelatorioMensal ?? [],
           ndviDataFinal: firstTerreno?.ndviDataFinal ?? dataFinalNdvi,
-          terrenos: terrenosComNdvi,
+          terrenos: terrenosComNdvi.map((t) => ({
+            ...t,
+            selectedCar: sanitizeCarParaFirestore(t.selectedCar),
+          })),
           atualizadoEm: serverTimestamp(),
         },
         { merge: true },
@@ -711,7 +735,7 @@ function CadastroScreen() {
 
       navigate({ to: "/onboarding" });
     } catch (error: any) {
-      console.error(error);
+      console.error("Erro no cadastro:", error);
       if (error && error.type === "NDVI_FETCH_ERROR") {
         setNdviErrorData({
           polygon: error.polygon,
@@ -719,13 +743,32 @@ function CadastroScreen() {
           terrenos: error.terrenos,
         });
       } else {
-        setSaveError(
+        let msg =
           language === "es"
             ? "No se pudo guardar tu registro. Intenta nuevamente."
             : language === "en"
               ? "Could not save your registration. Please try again."
-              : "Não foi possível salvar seu cadastro. Tente novamente.",
-        );
+              : "Não foi possível salvar seu cadastro. Tente novamente.";
+
+        if (error?.code === "permission-denied") {
+          msg =
+            language === "es"
+              ? "Sin permiso para guardar. Vuelve e inicia sesión nuevamente."
+              : language === "en"
+                ? "Permission denied. Go back and log in again."
+                : "Sem permissão para salvar. Volte e faça login novamente.";
+        } else if (error?.code === "unavailable" || error?.code === "deadline-exceeded") {
+          msg =
+            language === "es"
+              ? "Servidor no disponible. Verifica tu conexión a internet."
+              : language === "en"
+                ? "Server unavailable. Check your internet connection."
+                : "Servidor indisponível. Verifique sua conexão com a internet.";
+        } else if (error?.message && !error.message.includes("autenticado")) {
+          msg = `Erro: ${error.message}`;
+        }
+
+        setSaveError(msg);
       }
     } finally {
       setSaving(false);
