@@ -4,6 +4,7 @@ Tupã — API FastAPI principal.
 Endpoints:
   GET  /imovel/{id}             → dados do imóvel
   GET  /imovel/{id}/diagnostico → diagnóstico completo com divergências e score
+  GET  /imovel/{id}/ndvi        → estatísticas NDVI via satélite Copernicus/Sentinel-2
   GET  /imoveis                 → listagem para analista
   GET  /health                  → healthcheck
 """
@@ -23,6 +24,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db, engine, Base
 from db.models import Imovel, Divergencia, CoberturaObservada
 from engine import calcular_diagnostico_postgis
+from copernicus import calcular_estatisticas_ndvi
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -135,6 +137,48 @@ def get_diagnostico(imovel_id: str, db: Session = Depends(get_db)):
                 "caminho_retificacao": div.caminho_retificacao
             } for div in divergencias
         ]
+    }
+
+
+@app.get("/imovel/{imovel_id}/ndvi")
+def get_ndvi(
+    imovel_id: str,
+    data_inicial: str,
+    data_final: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Retorna estatísticas NDVI do imóvel via satélite Copernicus/Sentinel-2.
+
+    Query params:
+      data_inicial — ex: 2024-01-01
+      data_final   — ex: 2024-03-31
+    """
+    imovel = db.query(Imovel).filter(Imovel.id == imovel_id).first()
+    if not imovel:
+        raise HTTPException(status_code=404, detail=f"Imóvel '{imovel_id}' não encontrado")
+
+    if not imovel.poligono_declarado:
+        raise HTTPException(status_code=422, detail="Imóvel sem polígono declarado cadastrado")
+
+    try:
+        resultado = calcular_estatisticas_ndvi(
+            poligono_frontend=imovel.poligono_declarado,
+            data_inicial=data_inicial,
+            data_final=data_final,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Erro ao consultar NDVI via Copernicus")
+        raise HTTPException(status_code=500, detail=f"Erro interno ao consultar satélite: {exc}")
+
+    return {
+        "imovel_id": imovel_id,
+        "periodo": {"inicio": data_inicial, "fim": data_final},
+        **resultado,
     }
 
 
