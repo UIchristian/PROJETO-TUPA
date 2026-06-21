@@ -60,6 +60,97 @@ function LoginScreen() {
   const [error, setError] = useState("");
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
+
+  const TESTE_EMAIL = "00000000000@tupa.local";
+  const TESTE_SENHA = "teste123";
+
+  // 12 meses de NDVI real (Copernicus/Sentinel-2, região Unaí-MG)
+  const NDVI_DEMO = [
+    { data: "2025-07-01", ndvi: 0.2736, ndviMedio: 0.2736, granularidade: "monthly" as const },
+    { data: "2025-08-01", ndvi: 0.2190, ndviMedio: 0.2190, granularidade: "monthly" as const },
+    { data: "2025-09-01", ndvi: 0.2268, ndviMedio: 0.2268, granularidade: "monthly" as const },
+    { data: "2025-10-01", ndvi: 0.2299, ndviMedio: 0.2299, granularidade: "monthly" as const },
+    { data: "2025-11-01", ndvi: 0.3467, ndviMedio: 0.3467, granularidade: "monthly" as const },
+    { data: "2025-12-01", ndvi: 0.3762, ndviMedio: 0.3762, granularidade: "monthly" as const },
+    { data: "2026-01-01", ndvi: 0.0523, ndviMedio: 0.0523, granularidade: "monthly" as const },
+    { data: "2026-02-01", ndvi: 0.2993, ndviMedio: 0.2993, granularidade: "monthly" as const },
+    { data: "2026-03-01", ndvi: 0.3810, ndviMedio: 0.3810, granularidade: "monthly" as const },
+    { data: "2026-04-01", ndvi: 0.3487, ndviMedio: 0.3487, granularidade: "monthly" as const },
+    { data: "2026-05-01", ndvi: 0.0522, ndviMedio: 0.0522, granularidade: "monthly" as const },
+    { data: "2026-06-01", ndvi: 0.3256, ndviMedio: 0.3256, granularidade: "monthly" as const },
+  ];
+
+  const PONTOS_DEMO = [
+    { lat: -16.35, lng: -46.895 },
+    { lat: -16.35, lng: -46.875 },
+    { lat: -16.36, lng: -46.875 },
+    { lat: -16.36, lng: -46.895 },
+  ];
+
+  const handleTestLogin = async () => {
+    setTestLoading(true);
+    setError("");
+    try {
+      let uid: string;
+      try {
+        const cred = await signInWithEmailAndPassword(auth, TESTE_EMAIL, TESTE_SENHA);
+        uid = cred.user.uid;
+      } catch {
+        const cred = await createUserWithEmailAndPassword(auth, TESTE_EMAIL, TESTE_SENHA);
+        uid = cred.user.uid;
+        await setDoc(doc(db, "usuarios", uid), {
+          nome: "Usuário Teste",
+          cpf: "000.000.000-00",
+          telefone: "(61) 99999-9999",
+          documentoValidado: true,
+          criadoEm: new Date(),
+        });
+      }
+
+      appStore.set({
+        status: "alert",
+        activeTerrenoId: "demo-1",
+        farmer: {
+          name: "Usuário Teste",
+          cpf: "000.000.000-00",
+          phone: "(61) 99999-9999",
+          location: "Unaí, MG",
+          area: 109,
+          crop: "Milho + Soja (Safrinha)",
+          firebaseUid: uid,
+          areaPolygon: PONTOS_DEMO,
+          car: "MG-3170404-E7789F8F21734DF18F718EB880A4678D",
+          terrenos: [
+            {
+              id: "demo-1",
+              name: "Fazenda Demo",
+              points: PONTOS_DEMO,
+              sizeVal: "109",
+              sizeUnit: "ha",
+              hectares: 109,
+              carNumber: "MG-3170404-E7789F8F21734DF18F718EB880A4678D",
+              address: "Unaí, MG",
+              status: "alert",
+              crops: ["Milho", "Soja"],
+              system: "Safrinha",
+              ndviHistorico12m: NDVI_DEMO,
+              ndviRelatorioMensal: NDVI_DEMO,
+              ndviRelatorioSemanal: [],
+              ndviDataFinal: "2026-06-21",
+              ndviFontePoligono: "car",
+            },
+          ],
+        },
+      });
+
+      navigate({ to: "/diagnostico" });
+    } catch (err: any) {
+      setError(`Erro no login de teste: ${err.message}`);
+    } finally {
+      setTestLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -337,6 +428,23 @@ function LoginScreen() {
             className="mt-2 h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-base active:scale-[0.99] transition-transform shadow-soft"
           >
             {isLogin ? t("login.btnEntrar") : t("login.btnRegister")}
+          </button>
+
+          {/* Test User Button */}
+          <button
+            type="button"
+            onClick={handleTestLogin}
+            disabled={testLoading}
+            className="h-11 rounded-2xl border-2 border-dashed border-amber-warn/60 bg-amber-warn/5 text-amber-warn font-bold text-sm hover:bg-amber-warn/10 active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {testLoading ? (
+              <span className="flex items-center gap-2">
+                <span className="block w-4 h-4 rounded-full border-2 border-amber-warn border-t-transparent animate-spin" />
+                Entrando...
+              </span>
+            ) : (
+              "🧪 Entrar como Usuário de Teste"
+            )}
           </button>
 
           {/* Switch flow link text */}
