@@ -2,11 +2,11 @@
 Tupã — API FastAPI principal.
 
 Endpoints:
-  POST /ndvi                    → série histórica NDVI por polígono (usado pelo cadastro)
   GET  /imovel/{id}             → dados do imóvel
   GET  /imovel/{id}/diagnostico → diagnóstico completo com divergências e score
-  GET  /imovel/{id}/ndvi        → estatísticas NDVI via satélite Copernicus/Sentinel-2
-  GET  /imoveis                 → listagem para analista
+  GET  /imoveis                 → listagem para analista, ordenada por conformidade
+  GET  /imovel/{id}/hidrografia → dados de cursos d'água
+  POST /buscar-cars             → busca CAR no banco a partir de um polígono
   GET  /health                  → healthcheck
 """
 from __future__ import annotations
@@ -30,8 +30,7 @@ from sqlalchemy import text
 
 from db.database import get_db, engine, Base
 from db.models import Imovel
-from engine import calcular_diagnostico_postgis
-from copernicus import calcular_estatisticas_ndvi
+from engine import calcular_diagnostico_postgis, calcular_score_conformidade
 from config.settings import regras
 
 from pydantic import BaseModel, field_validator, model_validator
@@ -158,18 +157,24 @@ def get_imovel(imovel_id: str, db: Session = Depends(get_db)):
 
 @app.get("/imoveis")
 def list_imoveis(db: Session = Depends(get_db)):
-    """Lista todos os imóveis da base para a fila do analista."""
+    """Lista todos os imóveis da base para a fila do analista, priorizando os com pior score."""
     imoveis = db.query(Imovel).all()
-    return [
-        {
+    resultado = []
+    for i in imoveis:
+        # Calcula/obtém o score atual do imóvel
+        score = calcular_score_conformidade(i.id, db)
+        resultado.append({
             "id": i.id,
             "nome": i.nome,
             "municipio": i.municipio,
             "uf": i.uf,
-            "numero_car": i.numero_car
-        }
-        for i in imoveis
-    ]
+            "numero_car": i.numero_car,
+            "score": score
+        })
+    
+    # Ordena do pior score (mais baixo) para o melhor
+    resultado.sort(key=lambda x: x["score"])
+    return resultado
 
 
 @app.get("/imovel/{imovel_id}/diagnostico")
@@ -288,98 +293,7 @@ def get_diagnostico(imovel_id: str, db: Session = Depends(get_db)):
     }
 
 
-@app.get("/imovel/{imovel_id}/ndvi")
-def get_ndvi(
-    imovel_id: str,
-    data_inicial: str,
-    data_final: str,
-    db: Session = Depends(get_db),
-):
-    """
-    Retorna estatísticas NDVI do imóvel via satélite Copernicus/Sentinel-2.
 
-    Query params:
-      data_inicial — ex: 2024-01-01
-      data_final   — ex: 2024-03-31
-    """
-    imovel = db.query(Imovel).filter(Imovel.id == imovel_id).first()
-    if not imovel:
-        raise HTTPException(status_code=404, detail=f"Imóvel '{imovel_id}' não encontrado")
-
-    if not imovel.poligono_declarado:
-        raise HTTPException(status_code=422, detail="Imóvel sem polígono declarado cadastrado")
-
-    try:
-        resultado = calcular_estatisticas_ndvi(
-            poligono_frontend=imovel.poligono_declarado,
-            data_inicial=data_inicial,
-            data_final=data_final,
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
-    except Exception as exc:
-        logger.exception("Erro ao consultar NDVI via Copernicus")
-        raise HTTPException(status_code=500, detail=f"Erro interno ao consultar satélite: {exc}")
-
-    return {
-        "imovel_id": imovel_id,
-        "periodo": {"inicio": data_inicial, "fim": data_final},
-        **resultado,
-    }
-
-class NdviPoligonoRequest(BaseModel):
-    poligono: List[Ponto]
-    data_final: str
-
-
-@app.post("/ndvi")
-def ndvi_por_poligono(body: NdviPoligonoRequest):
-    """
-    Gera série histórica de NDVI mensal (12 meses) para um polígono livre.
-    Usado pelo fluxo de cadastro do frontend.
-    """
-    pontos = [{"lat": p.lat, "lng": p.lng} for p in body.poligono]
-
-    try:
-        data_fim = datetime.strptime(body.data_final, "%Y-%m-%d")
-    except ValueError:
-        raise HTTPException(status_code=422, detail="data_final deve estar no formato YYYY-MM-DD")
-
-    resultados_mensais = []
-    for i in range(12):
-        # Calcula início e fim de cada mês retroativamente
-        mes_offset = i
-        ano_fim = data_fim.year
-        mes_fim_num = data_fim.month - mes_offset
-        while mes_fim_num <= 0:
-            mes_fim_num += 12
-            ano_fim -= 1
-        import calendar
-        ultimo_dia = calendar.monthrange(ano_fim, mes_fim_num)[1]
-        fim = datetime(ano_fim, mes_fim_num, ultimo_dia)
-        inicio = datetime(ano_fim, mes_fim_num, 1)
-
-        try:
-            stats = calcular_estatisticas_ndvi(
-                poligono_frontend=pontos,
-                data_inicial=inicio.strftime("%Y-%m-%d"),
-                data_final=fim.strftime("%Y-%m-%d"),
-            )
-            resultados_mensais.append({
-                "data": inicio.strftime("%Y-%m-%d"),
-                "ndvi": round(stats["ndvi_medio"], 4),
-                "ndviMedio": round(stats["ndvi_medio"], 4),
-                "granularidade": "monthly",
-                "data_inicial": inicio.strftime("%Y-%m-%d"),
-                "data_final": fim.strftime("%Y-%m-%d"),
-            })
-        except Exception as exc:
-            logger.warning("NDVI indisponível para %s/%s: %s", mes_fim_num, ano_fim, exc)
-
-    resultados_mensais.reverse()
-    return {"mensal": resultados_mensais}
 
 
 def _faixa_app(largura_m: float | None) -> int:

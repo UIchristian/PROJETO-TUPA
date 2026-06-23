@@ -36,9 +36,8 @@
   "nav": {
     "property": "Propiedad",
     "programs": "Programas",
-    "protection": "Seguros",
-    "profile": "Perfil",
-    "settings": "Configuraciones"
+    "protection": "Protección",
+    "profile": "Perfil"
   },
   "settings": {
     "title": "Configuraciones",
@@ -348,12 +347,6 @@
     "Mandioca": "Mandioca",
     "Algodão": "Algodón",
     "Outro": "Otro"
-  },
-  "nav": {
-    "property": "Propiedad",
-    "programs": "Programas",
-    "protection": "Protección",
-    "profile": "Perfil"
   },
   "comprovar": {
     "title": "Comprobar titularidad de la propiedad",

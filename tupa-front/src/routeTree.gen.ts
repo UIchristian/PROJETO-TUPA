@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RetificacaoRouteImport } from './routes/retificacao'
+import { Route as ProgramasRouteImport } from './routes/programas'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as DiagnosticoRouteImport } from './routes/diagnostico'
@@ -21,6 +22,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const RetificacaoRoute = RetificacaoRouteImport.update({
   id: '/retificacao',
   path: '/retificacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgramasRoute = ProgramasRouteImport.update({
+  id: '/programas',
+  path: '/programas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerfilRoute = PerfilRouteImport.update({
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/diagnostico': typeof DiagnosticoRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
+  '/programas': typeof ProgramasRoute
   '/retificacao': typeof RetificacaoRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/diagnostico': typeof DiagnosticoRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
+  '/programas': typeof ProgramasRoute
   '/retificacao': typeof RetificacaoRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/diagnostico': typeof DiagnosticoRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
+  '/programas': typeof ProgramasRoute
   '/retificacao': typeof RetificacaoRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/diagnostico'
     | '/onboarding'
     | '/perfil'
+    | '/programas'
     | '/retificacao'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/diagnostico'
     | '/onboarding'
     | '/perfil'
+    | '/programas'
     | '/retificacao'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/diagnostico'
     | '/onboarding'
     | '/perfil'
+    | '/programas'
     | '/retificacao'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   DiagnosticoRoute: typeof DiagnosticoRoute
   OnboardingRoute: typeof OnboardingRoute
   PerfilRoute: typeof PerfilRoute
+  ProgramasRoute: typeof ProgramasRoute
   RetificacaoRoute: typeof RetificacaoRoute
 }
 
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/retificacao'
       fullPath: '/retificacao'
       preLoaderRoute: typeof RetificacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/programas': {
+      id: '/programas'
+      path: '/programas'
+      fullPath: '/programas'
+      preLoaderRoute: typeof ProgramasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/perfil': {
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiagnosticoRoute: DiagnosticoRoute,
   OnboardingRoute: OnboardingRoute,
   PerfilRoute: PerfilRoute,
+  ProgramasRoute: ProgramasRoute,
   RetificacaoRoute: RetificacaoRoute,
 }
 export const routeTree = rootRouteImport

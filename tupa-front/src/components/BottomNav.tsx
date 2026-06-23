@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { MapPin, ShieldCheck, RefreshCw, User } from "lucide-react";
+import { MapPin, ShieldCheck, RefreshCw, User, Landmark } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 export function BottomNav() {
@@ -13,6 +13,7 @@ export function BottomNav() {
     captura: { pt: "Captura", es: "Captura", en: "Capture" },
     diagnostico: { pt: "Diagnóstico", es: "Diagnóstico", en: "Diagnostics" },
     retificacao: { pt: "Retificação", es: "Rectificación", en: "Rectify" },
+    programas: { pt: "Programas", es: "Programas", en: "Programs" },
     perfil: { pt: "Perfil", es: "Perfil", en: "Profile" },
   } as const;
 
@@ -23,6 +24,7 @@ export function BottomNav() {
     { to: "/cadastro", label: lbl("captura"), Icon: MapPin },
     { to: "/diagnostico", label: lbl("diagnostico"), Icon: ShieldCheck },
     { to: "/retificacao", label: lbl("retificacao"), Icon: RefreshCw },
+    { to: "/programas", label: lbl("programas"), Icon: Landmark },
     { to: "/perfil", label: lbl("perfil"), Icon: User },
   ];
 
@@ -31,7 +33,7 @@ export function BottomNav() {
       className="sticky bottom-0 left-0 right-0 bg-card border-t border-border shadow-[0_-2px_12px_rgba(0,0,0,0.04)] z-30"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {tabs.map(({ to, label, Icon }) => {
           const active = pathname === to || pathname.startsWith(to + "/");
           return (

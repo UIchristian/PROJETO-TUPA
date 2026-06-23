@@ -14,6 +14,16 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  ReferenceLine,
+} from "recharts";
 import { MobileFrame } from "@/components/MobileFrame";
 import { useAppState, appStore } from "@/lib/app-store";
 import { t, useTranslation } from "@/lib/i18n";
@@ -186,6 +196,19 @@ function DiagnosticoScreen() {
       : score >= 60
         ? t("diagnostico.atencao")
         : t("diagnostico.critico");
+
+  // NDVI chart preparation
+  const ndviData = activeTerreno?.ndviHistorico12m || [];
+  const avgNdvi =
+    ndviData.length > 0
+      ? ndviData.reduce((acc, curr) => acc + curr.ndviMedio, 0) / ndviData.length
+      : 0.4;
+
+  const formatMonth = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return dateStr;
+    return new Intl.DateTimeFormat(language, { month: "short" }).format(d);
+  };
 
   // Empty state: user hasn't registered any property with a CAR yet
   if (!activeTerreno) {
@@ -498,6 +521,82 @@ function DiagnosticoScreen() {
                 </div>
               )}
             </div>
+
+            {/* NDVI Chart Card */}
+            {ndviData.length > 0 && (
+              <div className="rounded-2xl border border-border bg-card p-4 shadow-card flex flex-col gap-3 text-left">
+                <h3 className="font-bold text-base text-foreground flex items-center gap-1.5">
+                  🌱 Saúde da Plantação (NDVI)
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {language === "es"
+                    ? "Historial de 12 meses del vigor vegetativo medido por el satélite Copernicus."
+                    : language === "en"
+                      ? "12-month history of vegetative vigor measured by the Copernicus satellite."
+                      : "Histórico de 12 meses do vigor vegetativo medido pelo satélite Copernicus."}
+                </p>
+
+                <div className="h-[200px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={ndviData}
+                      margin={{ top: 10, right: 0, left: -25, bottom: 0 }}
+                    >
+                      <XAxis
+                        dataKey="data"
+                        tickFormatter={formatMonth}
+                        tick={{ fontSize: 10 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        domain={[0, 1]}
+                        tick={{ fontSize: 10 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{ borderRadius: "8px", fontSize: "12px" }}
+                        labelFormatter={(label) => {
+                          const d = new Date(label as string);
+                          return Number.isNaN(d.getTime())
+                            ? label
+                            : new Intl.DateTimeFormat(language, {
+                                month: "long",
+                                year: "numeric",
+                              }).format(d);
+                        }}
+                        formatter={(value: number) => [value.toFixed(2), "NDVI"]}
+                        cursor={{ fill: "transparent" }}
+                      />
+                      <ReferenceLine y={avgNdvi} stroke="#94a3b8" strokeDasharray="3 3" />
+                      <Bar dataKey="ndvi" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                        {ndviData.map((entry, index) => {
+                          let color = "#22c55e"; // healthy
+                          if (entry.ndvi < avgNdvi - 0.15) color = "#ef4444"; // emergency
+                          else if (entry.ndvi < avgNdvi - 0.05) color = "#eab308"; // alert
+                          return <Cell key={`cell-${index}`} fill={color} />;
+                        })}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex justify-between items-center text-[10px] uppercase font-bold text-muted-foreground mt-2 px-1 border-t border-border/40 pt-2">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#22c55e]" />
+                    {language === "en" ? "Healthy" : language === "es" ? "Saludable" : "Saudável"}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#eab308]" />
+                    {language === "en" ? "Warning" : language === "es" ? "Atención" : "Atenção"}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]" />
+                    {language === "en" ? "Stress" : language === "es" ? "Estrés" : "Estresse"}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Divergences list / CAR Compliance Box */}
             <div className="flex flex-col gap-3 text-left">

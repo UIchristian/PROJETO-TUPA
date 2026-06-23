@@ -36,9 +36,8 @@
   "nav": {
     "property": "Property",
     "programs": "Programs",
-    "protection": "Insurance",
-    "profile": "Profile",
-    "settings": "Settings"
+    "protection": "Protection",
+    "profile": "Profile"
   },
   "settings": {
     "title": "Settings",
@@ -348,12 +347,6 @@
     "Mandioca": "Cassava",
     "Algodão": "Cotton",
     "Outro": "Other"
-  },
-  "nav": {
-    "property": "Property",
-    "programs": "Programs",
-    "protection": "Protection",
-    "profile": "Profile"
   },
   "comprovar": {
     "title": "Verify property ownership",
