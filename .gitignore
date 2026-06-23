@@ -1,3 +1,6 @@
 
 # Ignorar base de dados de 4GB
 BASE DE DADOS CAR/
+
+# Shapefile com 1.1M CARs do Minas Gerais
+tupa-back/AREA_IMOVEL/

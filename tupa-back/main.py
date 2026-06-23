@@ -26,11 +26,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from shapely.geometry import mapping as shapely_mapping
 from shapely.geometry.base import BaseGeometry
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from db.database import get_db, engine, Base
-from db.models import Imovel, Divergencia, CoberturaObservada
+from db.models import Imovel
 from engine import calcular_diagnostico_postgis
 from copernicus import calcular_estatisticas_ndvi
+from config.settings import regras
 
 from pydantic import BaseModel, field_validator, model_validator
 from carsearch import buscar_cars
@@ -38,6 +40,16 @@ from carsearch import buscar_cars
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+MAPBIOMAS_COLORS: dict[str, str] = {
+    "Floresta Nativa": "#15803D",
+    "Formação Savânica": "#22C55E",
+    "Pastagem": "#86EFAC",
+    "Lavoura Temporária": "#EAB308",
+    "Outras Lavouras": "#F59E0B",
+    "Corpos d'Água": "#3B82F6",
+    "Infraestrutura Urbana": "#B45309",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -170,25 +182,109 @@ def get_diagnostico(imovel_id: str, db: Session = Depends(get_db)):
     if not imovel:
         raise HTTPException(status_code=404, detail=f"Imóvel '{imovel_id}' não encontrado")
 
-    # Por segurança, rodamos o diagnóstico (ou pode ser apenas leitura se já pré-computado)
     resultado_motor = calcular_diagnostico_postgis(imovel_id, db)
-    
-    divergencias = db.query(Divergencia).filter(Divergencia.imovel_id == imovel_id).all()
-    
+
+    # ── Divergências com geometria ────────────────────────────────────────────
+    divs_rows = db.execute(
+        text("""
+            SELECT id, tipo, severidade, area_hectares, descricao, base_legal,
+                   caminho_retificacao, ST_AsGeoJSON(geometria) AS geojson
+            FROM divergencia WHERE imovel_id = :iid
+        """),
+        {"iid": imovel_id},
+    ).fetchall()
+
+    divergencias_out = [
+        {
+            "id": r.id,
+            "tipo": r.tipo,
+            "severidade": r.severidade,
+            "area_hectares": r.area_hectares,
+            "descricao": r.descricao,
+            "base_legal": r.base_legal,
+            "caminho_retificacao": r.caminho_retificacao,
+            "texto_linguagem_simples": r.descricao,
+            "poligono_divergencia": json.loads(r.geojson) if r.geojson else None,
+        }
+        for r in divs_rows
+    ]
+
+    # ── Cobertura do solo (percentual por classe) ─────────────────────────────
+    cob_rows = db.execute(
+        text("""
+            SELECT classe,
+                   ST_Area(ST_Transform(ST_Union(geometria), 5880)) / 10000.0 AS area_ha
+            FROM cobertura_observada
+            WHERE imovel_id = :iid
+            GROUP BY classe
+        """),
+        {"iid": imovel_id},
+    ).fetchall()
+
+    total_area = sum(float(r.area_ha or 0) for r in cob_rows) or 1.0
+    cobertura_solo = [
+        {
+            "classe": r.classe,
+            "percentual": round(float(r.area_ha or 0) / total_area * 100, 1),
+            "cor_hex": next(
+                (v for k, v in MAPBIOMAS_COLORS.items() if k in r.classe), "#888888"
+            ),
+        }
+        for r in cob_rows
+    ]
+
+    # ── Camadas geométricas para o mapa ──────────────────────────────────────
+    poligono_row = db.execute(
+        text("SELECT ST_AsGeoJSON(poligono_declarado) FROM imovel WHERE id = :iid"),
+        {"iid": imovel_id},
+    ).scalar()
+    poligono_geojson = json.loads(poligono_row) if poligono_row else None
+
+    app_row = db.execute(
+        text("""
+            SELECT ST_AsGeoJSON(
+                ST_Union(ST_Buffer(h.geometria::geography, 30)::geometry)
+            )
+            FROM hidrografia h
+            JOIN imovel i ON i.id = :iid
+            WHERE ST_Intersects(h.geometria, i.poligono_declarado)
+              AND h.municipio = i.municipio
+        """),
+        {"iid": imovel_id},
+    ).scalar()
+    app_geojson = json.loads(app_row) if app_row else None
+
+    cob_poly_rows = db.execute(
+        text("""
+            SELECT classe, ST_AsGeoJSON(geometria) AS geojson
+            FROM cobertura_observada
+            WHERE imovel_id = :iid
+        """),
+        {"iid": imovel_id},
+    ).fetchall()
+    cobertura_poligonos = [
+        {
+            "classe": r.classe,
+            "cor_hex": next(
+                (v for k, v in MAPBIOMAS_COLORS.items() if k in r.classe), "#888888"
+            ),
+            "geometry": json.loads(r.geojson),
+        }
+        for r in cob_poly_rows
+        if r.geojson
+    ]
+
     return {
         "imovel_id": imovel_id,
         "score_conformidade": resultado_motor["score"],
-        "divergencias": [
-            {
-                "id": div.id,
-                "tipo": div.tipo,
-                "severidade": div.severidade,
-                "area_hectares": div.area_hectares,
-                "descricao": div.descricao,
-                "base_legal": div.base_legal,
-                "caminho_retificacao": div.caminho_retificacao
-            } for div in divergencias
-        ]
+        "cobertura_solo": cobertura_solo,
+        "divergencias": divergencias_out,
+        "camadas": {
+            "poligono_declarado": poligono_geojson,
+            "app": app_geojson,
+            "divergencias": divergencias_out,
+            "cobertura_poligonos": cobertura_poligonos,
+        },
     }
 
 
@@ -284,6 +380,64 @@ def ndvi_por_poligono(body: NdviPoligonoRequest):
 
     resultados_mensais.reverse()
     return {"mensal": resultados_mensais}
+
+
+def _faixa_app(largura_m: float | None) -> int:
+    if largura_m is None:
+        return 30
+    for faixa in sorted(regras.app.cursos_dagua.faixas, key=lambda x: x.largura_max):
+        if largura_m <= faixa.largura_max:
+            return faixa.distancia_app
+    return 500
+
+
+@app.get("/imovel/{imovel_id}/hidrografia")
+def get_hidrografia(imovel_id: str, db: Session = Depends(get_db)):
+    """
+    Retorna os cursos d'água que interceptam o polígono do imóvel,
+    com comprimento interno e faixa de APP exigida pelo Código Florestal.
+    """
+    imovel = db.query(Imovel).filter(Imovel.id == imovel_id).first()
+    if not imovel:
+        raise HTTPException(status_code=404, detail=f"Imóvel '{imovel_id}' não encontrado")
+
+    rows = db.execute(
+        text("""
+            SELECT
+                h.id,
+                h.tipo,
+                h.largura,
+                ROUND(
+                    ST_Length(
+                        ST_Intersection(h.geometria, i.poligono_declarado)::geography
+                    )::numeric, 1
+                ) AS comprimento_interno_m,
+                ROUND(ST_Length(h.geometria::geography)::numeric, 1) AS comprimento_total_m
+            FROM hidrografia h
+            JOIN imovel i ON i.id = :imovel_id
+            WHERE ST_Intersects(h.geometria, i.poligono_declarado)
+              AND h.municipio = i.municipio
+        """),
+        {"imovel_id": imovel_id},
+    ).fetchall()
+
+    cursos = [
+        {
+            "id": r.id,
+            "tipo": r.tipo or "rio",
+            "largura_m": r.largura,
+            "comprimento_interno_m": float(r.comprimento_interno_m or 0),
+            "comprimento_total_m": float(r.comprimento_total_m or 0),
+            "faixa_app_m": _faixa_app(r.largura),
+        }
+        for r in rows
+    ]
+
+    return {
+        "imovel_id": imovel_id,
+        "total_cursos": len(cursos),
+        "cursos": cursos,
+    }
 
 
 @app.post("/buscar-cars", response_model=BuscarCarsResponse)

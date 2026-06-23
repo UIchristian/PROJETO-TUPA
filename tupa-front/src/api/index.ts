@@ -10,15 +10,17 @@
 
 import type {
   Diagnostico,
+  HidrografiaData,
   Imovel,
   LayerGeometries,
 } from "@/types/imovel";
 
 // Re-export types for convenience
-export type { Diagnostico, Imovel, LayerGeometries } from "@/types/imovel";
+export type { Diagnostico, HidrografiaData, Imovel, LayerGeometries } from "@/types/imovel";
 export type {
   CoberturaClasse,
   CoberturaPoligono,
+  CursoDAguaInfo,
   Divergencia,
   GeoJSONGeometry,
 } from "@/types/imovel";
@@ -37,6 +39,7 @@ import {
   getImovelApi,
   getDiagnosticoApi,
   getLayersApi,
+  getHidrografiaApi,
 } from "@/api/client";
 
 const useMock = import.meta.env.VITE_USE_MOCK === "true";
@@ -60,3 +63,7 @@ export const getLayers: (
 ) => Promise<LayerGeometries | null> = useMock
   ? mockGetLayers
   : getLayersApi;
+
+export const getHidrografia: (
+  imovelId: string,
+) => Promise<HidrografiaData | null> = getHidrografiaApi;

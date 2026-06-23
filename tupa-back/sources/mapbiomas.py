@@ -1,9 +1,8 @@
 import logging
 from pathlib import Path
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 from geoalchemy2.shape import to_shape
-from shapely.geometry import shape
+from shapely.geometry import shape, MultiPolygon
 import rasterio
 import rasterio.mask
 import rasterio.features
@@ -71,7 +70,9 @@ class MapBiomasSourceAdapter(BaseSourceAdapter):
                             
                         nome_classe = MAPBIOMAS_CLASSES.get(valor_classe, f"Outros ({valor_classe})")
                         poly_shapely = shape(geom)
-                        
+                        if poly_shapely.geom_type == "Polygon":
+                            poly_shapely = MultiPolygon([poly_shapely])
+
                         # Inserir a nova cobertura no banco
                         nova_cobertura = CoberturaObservada(
                             imovel_id=imovel.id,

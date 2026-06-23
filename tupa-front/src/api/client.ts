@@ -6,9 +6,11 @@
 import type {
   CoberturaClasse,
   CoberturaPoligono,
+  CursoDAguaInfo,
   Diagnostico,
   Divergencia,
   GeoJSONGeometry,
+  HidrografiaData,
   Imovel,
   LayerGeometries,
 } from "@/types/imovel";
@@ -76,6 +78,35 @@ function mapCoberturaPoligono(c: any): CoberturaPoligono {
 // ---------------------------------------------------------------------------
 // Public API functions
 // ---------------------------------------------------------------------------
+
+function mapCursoDAguaInfo(c: any): CursoDAguaInfo {
+  return {
+    id: c.id,
+    tipo: c.tipo,
+    larguraM: c.largura_m ?? null,
+    comprimentoInternoM: c.comprimento_interno_m,
+    comprimentoTotalM: c.comprimento_total_m,
+    faixaAppM: c.faixa_app_m,
+  };
+}
+
+export async function getHidrografiaApi(
+  imovelId: string,
+): Promise<HidrografiaData | null> {
+  try {
+    const raw = await fetchJson<any>(
+      `/imovel/${encodeURIComponent(imovelId)}/hidrografia`,
+    );
+    return {
+      imovelId: raw.imovel_id,
+      totalCursos: raw.total_cursos,
+      cursos: (raw.cursos ?? []).map(mapCursoDAguaInfo),
+    };
+  } catch (err: any) {
+    if (err.message?.includes("404")) return null;
+    throw err;
+  }
+}
 
 export async function getImoveisApi(): Promise<Imovel[]> {
   const raw = await fetchJson<any[]>("/imoveis");

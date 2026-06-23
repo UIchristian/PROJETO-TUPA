@@ -93,8 +93,8 @@ const imovel2AppCoords: number[][][] = [
 // Mock Fixtures Database
 export const MOCK_IMOVEIS: Imovel[] = [
   {
-    id: "fazenda-sol-nascente",
-    nome: "Fazenda Sol Nascente",
+    id: "propriedade-1",
+    nome: "Propriedade 1",
     municipio: "Unaí",
     uf: "MG",
     areaHectares: 345,
@@ -105,8 +105,8 @@ export const MOCK_IMOVEIS: Imovel[] = [
     },
   },
   {
-    id: "sitio-primavera",
-    nome: "Sítio Primavera",
+    id: "propriedade-2",
+    nome: "Propriedade 2",
     municipio: "Unaí",
     uf: "MG",
     areaHectares: 52,

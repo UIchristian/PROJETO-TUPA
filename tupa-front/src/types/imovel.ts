@@ -50,6 +50,21 @@ export interface CoberturaPoligono {
   geometry: GeoJSONGeometry;
 }
 
+export interface CursoDAguaInfo {
+  id: number;
+  tipo: string;
+  larguraM: number | null;
+  comprimentoInternoM: number;
+  comprimentoTotalM: number;
+  faixaAppM: number;
+}
+
+export interface HidrografiaData {
+  imovelId: string;
+  totalCursos: number;
+  cursos: CursoDAguaInfo[];
+}
+
 export interface LayerGeometries {
   poligonoDeclarado: GeoJSONGeometry;
   app: GeoJSONGeometry;

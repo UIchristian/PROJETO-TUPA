@@ -13,7 +13,7 @@ class Imovel(Base):
     numero_car = Column(String, unique=True, index=True)
     
     # Using SRID 4326 for storage, will reproject to 5880 for area calculations
-    poligono_declarado = Column(Geometry(geometry_type='POLYGON', srid=4326))
+    poligono_declarado = Column(Geometry(geometry_type='MULTIPOLYGON', srid=4326))
 
     # Relationships
     divergencias = relationship("Divergencia", back_populates="imovel", cascade="all, delete-orphan")

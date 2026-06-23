@@ -13,10 +13,20 @@ interface TupaMapProps {
   showDivergencias: boolean;
 }
 
-// Helper to convert GeoJSON coords [lng, lat] to Leaflet positions [lat, lng]
-const convertGeoJSONCoords = (coords: number[][][]): [number, number][] => {
-  if (!coords || coords.length === 0) return [];
-  return coords[0].map(([lng, lat]) => [lat, lng] as [number, number]);
+import type { GeoJSONGeometry } from "@/types/imovel";
+
+// Converts any GeoJSON geometry (Polygon or MultiPolygon) to an array of
+// Leaflet position rings so each ring can be rendered as a <Polygon>.
+const geomToRings = (geometry: GeoJSONGeometry | undefined): [number, number][][] => {
+  if (!geometry?.coordinates?.length) return [];
+  if (geometry.type === "MultiPolygon") {
+    return (geometry.coordinates as number[][][][]).map((poly) =>
+      poly[0].map(([lng, lat]) => [lat, lng] as [number, number]),
+    );
+  }
+  // Polygon — take outer ring only
+  const outer = (geometry.coordinates as number[][][])[0];
+  return outer ? [outer.map(([lng, lat]) => [lat, lng] as [number, number])] : [];
 };
 
 // Component to dynamically fit map view to the current declared boundary
@@ -40,22 +50,18 @@ export default function TupaMap({
   showUsoCobertura,
   showDivergencias,
 }: TupaMapProps) {
-  const declaredPositions = convertGeoJSONCoords(layers.poligonoDeclarado.coordinates);
-  const appPositions = convertGeoJSONCoords(layers.app.coordinates);
-  const restritoPositions = layers.usoRestrito
-    ? convertGeoJSONCoords(layers.usoRestrito.coordinates)
-    : [];
+  const declaredRings = geomToRings(layers.poligonoDeclarado);
+  const appRings = geomToRings(layers.app);
+  const restritoRings = layers.usoRestrito ? geomToRings(layers.usoRestrito) : [];
+  const allDeclaredPositions = declaredRings.flat();
 
   return (
     <div className="relative w-full h-full select-none rounded-2xl overflow-hidden border border-border bg-muted">
       <MapContainer
         center={[-16.354, -46.885]}
         zoom={14}
-        zoomControl={false} // Clean custom UI
-        style={{
-          width: "100%",
-          height: "100%",
-        }}
+        zoomControl={false}
+        style={{ width: "100%", height: "100%" }}
       >
         {/* Esri World Imagery Base Satellite Layer */}
         <TileLayer
@@ -63,86 +69,62 @@ export default function TupaMap({
           attribution="Tiles &copy; Esri &mdash; Source: Esri, USDA, USGS, and the GIS User Community"
         />
 
-        {/* Dynamic center & fit bounds */}
-        <FitBounds positions={declaredPositions} />
+        {/* Fit map to property bounds */}
+        <FitBounds positions={allDeclaredPositions} />
 
-        {/* 1. Actual Land Use / Cover Thematic Layer (rendered as sub-polygons) */}
+        {/* 1. Land Use / Cover */}
         {showUsoCobertura &&
-          layers.coberturaPoligonos &&
-          layers.coberturaPoligonos.map((poly, idx) => {
-            const positions = convertGeoJSONCoords(poly.geometry.coordinates);
-            return (
+          layers.coberturaPoligonos?.map((poly, idx) =>
+            geomToRings(poly.geometry).map((positions, ri) => (
               <Polygon
-                key={`cover-${idx}-${imovel.id}`}
+                key={`cover-${idx}-${ri}-${imovel.id}`}
                 positions={positions}
-                pathOptions={{
-                  color: "transparent",
-                  fillColor: poly.corHex,
-                  fillOpacity: 0.45,
-                  weight: 0,
-                }}
+                pathOptions={{ color: "transparent", fillColor: poly.corHex, fillOpacity: 0.45, weight: 0 }}
               />
-            );
-          })}
+            )),
+          )}
 
-        {/* 2. APP (Permanent Preservation Area) Layer */}
-        {showApp && appPositions.length > 0 && (
-          <Polygon
-            positions={appPositions}
-            pathOptions={{
-              color: "#3b82f6", // cyan/blue
-              fillColor: "#3b82f6",
-              fillOpacity: 0.2,
-              weight: 2.5,
-              dashArray: "6, 6",
-            }}
-          />
-        )}
+        {/* 2. APP */}
+        {showApp &&
+          appRings.map((positions, i) => (
+            <Polygon
+              key={`app-${i}`}
+              positions={positions}
+              pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.2, weight: 2.5, dashArray: "6, 6" }}
+            />
+          ))}
 
-        {/* 3. Uso Restrito (Restricted Use) Layer */}
-        {showRestrito && restritoPositions.length > 0 && (
-          <Polygon
-            positions={restritoPositions}
-            pathOptions={{
-              color: "#c68a35", // earthy gold
-              fillColor: "#c68a35",
-              fillOpacity: 0.15,
-              weight: 2,
-              dashArray: "4, 4",
-            }}
-          />
-        )}
+        {/* 3. Uso Restrito */}
+        {showRestrito &&
+          restritoRings.map((positions, i) => (
+            <Polygon
+              key={`restrito-${i}`}
+              positions={positions}
+              pathOptions={{ color: "#c68a35", fillColor: "#c68a35", fillOpacity: 0.15, weight: 2, dashArray: "4, 4" }}
+            />
+          ))}
 
-        {/* 4. Divergencias Layer (Highlighted in red) */}
+        {/* 4. Divergências */}
         {showDivergencias &&
-          layers.divergencias &&
-          layers.divergencias.map((div) => {
-            const positions = convertGeoJSONCoords(div.poligonoDivergencia.coordinates);
-            return (
+          layers.divergencias?.map((div) =>
+            geomToRings(div.poligonoDivergencia).map((positions, ri) => (
               <Polygon
-                key={div.id}
+                key={`${div.id}-${ri}`}
                 positions={positions}
-                pathOptions={{
-                  color: "#ef4444", // strong red
-                  fillColor: "#ef4444",
-                  fillOpacity: 0.35,
-                  weight: 3,
-                }}
+                pathOptions={{ color: "#ef4444", fillColor: "#ef4444", fillOpacity: 0.35, weight: 3 }}
               />
-            );
-          })}
+            )),
+          )}
 
-        {/* 5. Declared Boundary (CAR) Layer (Drawn on top as reference outline) */}
-        {showDeclared && declaredPositions.length > 0 && (
-          <Polygon
-            positions={declaredPositions}
-            pathOptions={{
-              color: "var(--primary)", // Deep Forest Green
-              fillColor: "transparent",
-              weight: 3,
-            }}
-          />
-        )}
+        {/* 5. Limite declarado CAR */}
+        {showDeclared &&
+          declaredRings.map((positions, i) => (
+            <Polygon
+              key={`declared-${i}`}
+              positions={positions}
+              pathOptions={{ color: "var(--primary)", fillColor: "transparent", weight: 3 }}
+            />
+          ))}
       </MapContainer>
     </div>
   );

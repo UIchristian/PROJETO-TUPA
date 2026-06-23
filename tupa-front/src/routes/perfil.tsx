@@ -17,8 +17,7 @@ import { t, useTranslation } from "@/lib/i18n";
 import { signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
-import { getImoveis, getDiagnostico } from "@/api";
-import type { Imovel, Diagnostico } from "@/types/imovel";
+import type { Terreno } from "@/lib/app-store";
 
 export const Route = createFileRoute("/perfil")({
   head: () => {
@@ -96,29 +95,8 @@ function PerfilScreen() {
   const [tempCpf, setTempCpf] = useState("");
   const [tempPhone, setTempPhone] = useState("");
 
-  // Real data state
-  const [imoveis, setImoveis] = useState<Imovel[]>([]);
-  const [diagnosticos, setDiagnosticos] = useState<Record<string, Diagnostico>>({});
-
-  // Fetch properties and diagnostics
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const fetchedImoveis = await getImoveis();
-        setImoveis(fetchedImoveis);
-
-        const diags: Record<string, Diagnostico> = {};
-        for (const imovel of fetchedImoveis) {
-          const d = await getDiagnostico(imovel.id);
-          if (d) diags[imovel.id] = d;
-        }
-        setDiagnosticos(diags);
-      } catch (err) {
-        console.error("Failed to load imoveis in profile", err);
-      }
-    }
-    fetchData();
-  }, []);
+  // User's registered properties (only those with a CAR number)
+  const userTerrenos: Terreno[] = (farmer.terrenos ?? []).filter((t) => t.carNumber);
 
   // Load Firestore data if logged in
   useEffect(() => {
@@ -163,76 +141,9 @@ function PerfilScreen() {
     navigate({ to: "/" });
   };
 
-  const handleSelectProperty = (id: string) => {
-    const property = imoveis.find((im) => im.id === id);
-
-    if (property) {
-      const mockPoints = (property.poligonoDeclarado.coordinates[0] as number[][]).map((coords: number[]) => ({
-        lat: coords[1],
-        lng: coords[0],
-      }));
-
-      const nextTerrenos = [
-        {
-          id: property.id,
-          name: property.nome,
-          points: mockPoints,
-          sizeVal: String(property.areaHectares),
-          sizeUnit: "ha" as const,
-          hectares: property.areaHectares,
-          carNumber: property.numeroCAR,
-          address: `${property.municipio}, ${property.uf}`,
-          status: id === "fazenda-sol-nascente" ? ("alert" as const) : ("healthy" as const),
-          selectedCar: property,
-        },
-      ];
-
-      appStore.set({
-        activeTerrenoId: property.id,
-        status: id === "fazenda-sol-nascente" ? "alert" : "healthy",
-        farmer: {
-          ...farmer,
-          name: farmer.name || "Geraldo Dias",
-          cpf: farmer.cpf || "123.456.789-00",
-          phone: farmer.phone || "(61) 99999-9999",
-          property: property.nome,
-          location: `${property.municipio}, ${property.uf}`,
-          area: property.areaHectares,
-          car: property.numeroCAR,
-          areaPolygon: mockPoints,
-          terrenos: nextTerrenos,
-        },
-      });
-    } else {
-      appStore.setActiveTerreno(id);
-    }
-
+  const handleSelectTerreno = (id: string) => {
+    appStore.setActiveTerreno(id);
     navigate({ to: "/diagnostico" });
-  };
-
-  const getComplianceInfo = (imovelId: string) => {
-    const diag = diagnosticos[imovelId];
-    const score = diag ? diag.scoreConformidade : 100;
-
-    if (score >= 90) {
-      return {
-        score,
-        label: language === "es" ? "Regular" : language === "en" ? "Compliant" : "Regular",
-        colorClass: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-      };
-    } else if (score >= 60) {
-      return {
-        score,
-        label: language === "es" ? "Atención" : language === "en" ? "Warning" : "Atenção",
-        colorClass: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-      };
-    } else {
-      return {
-        score,
-        label: language === "es" ? "Crítico" : language === "en" ? "Critical" : "Crítico",
-        colorClass: "bg-rose-500/10 text-rose-500 border-rose-500/20",
-      };
-    }
   };
 
   const handlePhotoClick = () => {
@@ -520,43 +431,51 @@ function PerfilScreen() {
           </h3>
 
           <div className="flex flex-col gap-3">
-            {imoveis.length === 0 ? (
-              <div className="text-center p-4 text-sm text-muted-foreground flex justify-center">
-                <Loader2 size={24} className="animate-spin text-primary" />
+            {userTerrenos.length === 0 ? (
+              <div className="rounded-2xl border border-border/60 bg-card p-5 text-center flex flex-col gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {language === "es"
+                    ? "Ninguna propiedad registrada."
+                    : language === "en"
+                      ? "No registered properties."
+                      : "Nenhuma propriedade cadastrada."}
+                </p>
+                <button
+                  onClick={() => navigate({ to: "/cadastro" })}
+                  className="px-4 py-2 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:opacity-90 transition-all cursor-pointer"
+                >
+                  {language === "es" ? "Ir al Catastro" : language === "en" ? "Go to Register" : "Ir para Cadastro"}
+                </button>
               </div>
             ) : (
-              imoveis.map((imovel) => {
-                const compliance = getComplianceInfo(imovel.id);
-                const isActive = farmer.property === imovel.nome;
-
-              return (
-                <button
-                  key={imovel.id}
-                  onClick={() => handleSelectProperty(imovel.id)}
-                  className={`w-full text-left p-4 bg-card rounded-2xl border-2 transition-all flex items-center justify-between gap-4 cursor-pointer active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary outline-none ${
-                    isActive ? "border-primary" : "border-border/60 hover:border-border"
-                  }`}
-                >
-                  <div className="flex-1 min-w-0 flex flex-col gap-1">
-                    <span className="font-bold text-foreground text-base truncate">
-                      {imovel.nome}
-                    </span>
-                    <span className="text-sm text-muted-foreground font-medium flex items-center gap-1">
-                      <MapPin size={13} className="text-primary shrink-0" />
-                      {imovel.municipio} - {imovel.uf} · {imovel.areaHectares} ha
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${compliance.colorClass}`}
-                    >
-                      {compliance.label} ({compliance.score}%)
+              userTerrenos.map((terreno) => {
+                const isActive = terreno.id === appStore.get().activeTerrenoId;
+                return (
+                  <button
+                    key={terreno.id}
+                    onClick={() => handleSelectTerreno(terreno.id)}
+                    className={`w-full text-left p-4 bg-card rounded-2xl border-2 transition-all flex items-center justify-between gap-4 cursor-pointer active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-primary outline-none ${
+                      isActive ? "border-primary" : "border-border/60 hover:border-border"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                      <span className="font-bold text-foreground text-base truncate">
+                        {terreno.carNumber}
+                      </span>
+                      <span className="text-sm text-muted-foreground font-medium flex items-center gap-1">
+                        <MapPin size={13} className="text-primary shrink-0" />
+                        {terreno.address} · {terreno.hectares} ha
+                      </span>
                     </div>
-                    <ChevronRight size={18} className="text-muted-foreground" />
-                  </div>
-                </button>
-              );
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="px-2.5 py-1 rounded-lg text-xs font-bold border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                        {language === "es" ? "Regular (100%)" : language === "en" ? "Regular (100%)" : "Regular (100%)"}
+                      </div>
+                      <ChevronRight size={18} className="text-muted-foreground" />
+                    </div>
+                  </button>
+                );
               })
             )}
           </div>

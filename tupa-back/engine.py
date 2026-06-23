@@ -21,13 +21,13 @@ def detect_cultivo_em_app(imovel_id: str, db: Session) -> None:
     """Detecta lavoura dentro das APPs (buffer da hidrografia)."""
     
     # Constrói a regra de largura do buffer baseado nas configurações do YAML
-    faixas = regras.get("app", {}).get("cursos_dagua", {}).get("faixas", [])
+    faixas = regras.app.cursos_dagua.faixas
     if not faixas:
         case_when_largura = "30"
     else:
         case_lines = []
-        for faixa in sorted(faixas, key=lambda x: x.get('largura_max', 999999)):
-            case_lines.append(f"WHEN COALESCE(h.largura, 0) <= {faixa['largura_max']} THEN {faixa['distancia_app']}")
+        for faixa in sorted(faixas, key=lambda x: x.largura_max):
+            case_lines.append(f"WHEN COALESCE(h.largura, 0) <= {faixa.largura_max} THEN {faixa.distancia_app}")
         case_when_largura = f"(CASE {' '.join(case_lines)} ELSE 30 END)"
 
     query = text(f"""

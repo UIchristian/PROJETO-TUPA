@@ -25,11 +25,12 @@ def pre_computar(municipio: str):
     
     with SessionLocal() as db:
         # 2. Executa carga de dados através dos adaptadores
-        SentinelSourceAdapter().load_data(municipio, db)
+        # Declarado deve ser o primeiro: carrega os imóveis que os outros adapters precisam
+        DeclaradoSourceAdapter().load_data(municipio, db)
         MapBiomasSourceAdapter().load_data(municipio, db)
         HidrografiaSourceAdapter().load_data(municipio, db)
         ElevacaoSourceAdapter().load_data(municipio, db)
-        DeclaradoSourceAdapter().load_data(municipio, db)
+        SentinelSourceAdapter().load_data(municipio, db)
         
         # 3. Busca todos os imóveis do município e roda o motor
         from db.models import Imovel

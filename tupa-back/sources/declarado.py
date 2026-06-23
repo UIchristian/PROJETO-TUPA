@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 import geopandas as gpd
+from shapely.geometry import MultiPolygon
 from sqlalchemy.orm import Session
 from . import BaseSourceAdapter
 from db.models import Imovel
@@ -44,7 +45,10 @@ class DeclaradoSourceAdapter(BaseSourceAdapter):
             # Verifica se já existe
             existente = db_session.query(Imovel).filter(Imovel.id == imovel_id).first()
             
-            wkt_geom = row.geometry.wkt if row.geometry else None
+            geom = row.geometry
+            if geom and geom.geom_type == "Polygon":
+                geom = MultiPolygon([geom])
+            wkt_geom = geom.wkt if geom else None
             
             if existente:
                 existente.poligono_declarado = f"SRID=4326;{wkt_geom}"
