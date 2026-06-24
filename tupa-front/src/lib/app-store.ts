@@ -27,7 +27,23 @@ export interface Terreno {
   ndviFontePoligono?: "car" | "demarcacao";
 }
 
+export interface LogEntry {
+  id: string;
+  imovelId: string;
+  imovelNome: string;
+  acao: string;
+  data: string;
+  detalhes: string;
+}
+
 export interface AppState {
+  logs: LogEntry[];
+  backofficeUser: {
+    nome: string;
+    cargo: string;
+    email: string;
+    avatarId: string | null;
+  };
   status: CropStatus;
   protected: boolean;
   payout: PayoutStatus;
@@ -58,6 +74,12 @@ export interface AppState {
 
 const defaultInitial: AppState = {
   status: "healthy",
+  backofficeUser: {
+    nome: "Luana S.",
+    cargo: "Analista Ambiental",
+    email: "luana.s@sema.gov.br",
+    avatarId: null,
+  },
   protected: false,
   payout: "pending",
   language: "es", // Espanhol como padrão
@@ -80,6 +102,7 @@ const defaultInitial: AppState = {
     car: "",
     terrenos: [],
   },
+  logs: [],
 };
 
 const getStoredState = (): AppState => {
@@ -147,6 +170,16 @@ export const appStore = {
     if (!found) return;
     appStore.set({
       activeTerrenoId: id,
+    });
+  },
+  addLog: (log: Omit<LogEntry, "id" | "data">) => {
+    const newLog: LogEntry = {
+      ...log,
+      id: Math.random().toString(36).substring(2, 9),
+      data: new Date().toISOString(),
+    };
+    appStore.set({
+      logs: [newLog, ...(state.logs || [])]
     });
   },
   cycleStatus: () => {

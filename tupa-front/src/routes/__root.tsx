@@ -4,35 +4,35 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { onAuthStateChanged } from "firebase/auth";
-import { useEffect, useState } from "react";
 
-import { useAppState } from "@/lib/app-store";
-import { auth } from "../../firebase";
 import appCss from "../styles.css?url";
+import { ShieldCheck, LogOut, Menu, UserCircle, Headset, Laptop, TreePine, Sailboat, Tent, Wheat, Map as MapIcon } from "lucide-react";
+import { useAppState } from "@/lib/app-store";
 
-// Rotas publicas (acessiveis sem login). Tudo o que nao estiver aqui exige autenticacao.
-const PUBLIC_PATHS = new Set<string>(["/", "/backoffice"]);
+const PRESET_AVATARS = [
+  { id: "headset", icon: Headset, bg: "bg-blue-500/20", color: "text-blue-500" },
+  { id: "computador", icon: Laptop, bg: "bg-indigo-500/20", color: "text-indigo-500" },
+  { id: "arvore", icon: TreePine, bg: "bg-emerald-500/20", color: "text-emerald-500" },
+  { id: "barco", icon: Sailboat, bg: "bg-cyan-500/20", color: "text-cyan-500" },
+  { id: "oca", icon: Tent, bg: "bg-amber-500/20", color: "text-amber-500" },
+  { id: "plantacao", icon: Wheat, bg: "bg-lime-500/20", color: "text-lime-500" },
+];
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Voltar ao Início
           </Link>
         </div>
       </div>
@@ -48,10 +48,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Erro ao carregar a página
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Tente atualizar a página ou voltar para o início.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -61,13 +61,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Tentar novamente
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Voltar ao Início
           </a>
         </div>
       </div>
@@ -80,35 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Tupã: Gabarito Vivo do CAR" },
-      {
-        name: "description",
-        content:
-          "Comparação do uso e cobertura do solo declarados no Cadastro Ambiental Rural com a realidade vista por satélite, apontando divergências e guiando a retificação.",
-      },
-      { name: "theme-color", content: "#154c30" },
-      { property: "og:title", content: "Tupã: Gabarito Vivo do CAR" },
-      {
-        property: "og:description",
-        content:
-          "Comparação do uso e cobertura do solo declarados no Cadastro Ambiental Rural com a realidade vista por satélite, apontando divergências e guiando a retificação.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:title", content: "Tupã: Gabarito Vivo do CAR" },
-      {
-        name: "twitter:description",
-        content:
-          "Comparação do uso e cobertura do solo declarados no Cadastro Ambiental Rural com a realidade vista por satélite, apontando divergências e guiando a retificação.",
-      },
-      {
-        property: "og:image",
-        content: "/logo.png",
-      },
-      {
-        name: "twitter:image",
-        content: "/logo.png",
-      },
-      { name: "twitter:card", content: "summary_large_image" },
+      { title: "Tupã Backoffice" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -127,39 +99,55 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
-  const state = useAppState();
-  const langCode = state.language === "es" ? "es" : state.language === "en" ? "en" : "pt-BR";
+  const { backofficeUser } = useAppState();
+  const activeAvatar = PRESET_AVATARS.find(a => a.id === backofficeUser.avatarId);
+
   return (
-    <html lang={langCode}>
+    <html lang="pt-BR" className="dark">
       <head>
         <HeadContent />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-            try {
-              const theme = localStorage.getItem('accessibility-theme');
-              const size = localStorage.getItem('accessibility-size');
-              const contrast = localStorage.getItem('accessibility-contrast');
-              
-              if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-              }
-              if (size === 'large') {
-                document.documentElement.classList.add('accessibility-large');
-              }
-              if (size === 'xlarge') {
-                document.documentElement.classList.add('accessibility-xlarge');
-              }
-              if (contrast === '1') {
-                document.documentElement.classList.add('accessibility-high-contrast');
-              }
-            } catch (e) {}
-          `,
-          }}
-        />
       </head>
-      <body>
-        {children}
+      <body className="bg-background text-foreground min-h-screen flex flex-col font-sans">
+        {/* Navbar */}
+        <header className="sticky top-0 z-50 w-full border-b border-border bg-card shadow-soft">
+          <div className="flex h-16 items-center px-6">
+            <Link to="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30">
+                <ShieldCheck className="text-primary w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight leading-none text-foreground">Tupã</h1>
+                <span className="text-xs font-semibold text-primary/80 uppercase tracking-wider">Backoffice CAR</span>
+              </div>
+            </Link>
+            
+            <div className="flex flex-1 items-center justify-end space-x-4">
+              <div className="flex items-center gap-6 text-sm font-semibold text-muted-foreground">
+                <Link to="/" className="hover:text-primary transition-colors [&.active]:text-primary">Fila de Imóveis</Link>
+                <Link to="/configuracoes" className="hover:text-primary transition-colors [&.active]:text-primary">Configurações</Link>
+              </div>
+              <Link to="/perfil" className="flex items-center gap-3 pl-6 border-l border-border hover:opacity-80 transition-opacity cursor-pointer group">
+                <div className="flex flex-col text-right">
+                  <span className="text-sm font-bold leading-none">{backofficeUser.nome}</span>
+                  <span className="text-xs text-muted-foreground mt-1">{backofficeUser.cargo}</span>
+                </div>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${activeAvatar ? `${activeAvatar.bg} border-transparent group-hover:border-primary/50` : 'bg-secondary/20 border-secondary/30 text-secondary-foreground group-hover:bg-secondary/30'}`}>
+                  {activeAvatar ? (
+                    <activeAvatar.icon className={`w-5 h-5 ${activeAvatar.color}`} />
+                  ) : (
+                    <UserCircle size={24} />
+                  )}
+                </div>
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {children}
+        </main>
+        
         <Scripts />
       </body>
     </html>
@@ -168,53 +156,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthGate>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </AuthGate>
+      <Outlet />
     </QueryClientProvider>
   );
-}
-
-function AuthGate({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [authReady, setAuthReady] = useState(false);
-  const [isAuthed, setIsAuthed] = useState<boolean>(() => !!auth.currentUser);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthed(!!user);
-      setAuthReady(true);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const isPublic = PUBLIC_PATHS.has(pathname);
-
-  useEffect(() => {
-    if (!authReady) return;
-    if (!isAuthed && !isPublic) {
-      router.navigate({ to: "/" });
-    }
-  }, [authReady, isAuthed, isPublic, pathname, router]);
-
-  // Enquanto resolvemos o estado do Firebase Auth nao renderizamos rotas protegidas
-  // para evitar flash de conteudo privado.
-  if (!authReady && !isPublic) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#E2D9CD] text-navy text-sm">
-        Carregando...
-      </div>
-    );
-  }
-
-  if (authReady && !isAuthed && !isPublic) {
-    return null;
-  }
-
-  return <>{children}</>;
 }

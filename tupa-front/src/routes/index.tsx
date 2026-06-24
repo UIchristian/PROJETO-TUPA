@@ -1,704 +1,319 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { X } from "lucide-react";
-import { useAppState, appStore } from "@/lib/app-store";
-import { t, useTranslation } from "@/lib/i18n";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-
-import { auth, db } from "../../firebase";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Loader2, Search, ShieldAlert, CheckCircle2, ChevronRight, AlertTriangle, FileText, History } from "lucide-react";
+import { getImoveis, getDiagnostico } from "@/api";
+import type { Imovel, Diagnostico } from "@/types/imovel";
+import { useAppState } from "@/lib/app-store";
 
 export const Route = createFileRoute("/")({
-  head: () => {
-    const lang = appStore.get().language || "es";
-    return {
-      meta: [
-        { title: t("login.title", lang) },
-        { name: "description", content: t("login.description", lang) },
-      ],
-    };
-  },
-  component: LoginScreen,
+  component: FilaScreen,
 });
 
-function maskCpfCnpj(v: string) {
-  const clean = v.replace(/\D/g, "");
-  if (clean.length <= 11) {
-    return clean
-      .slice(0, 11)
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-  } else {
-    return clean
-      .slice(0, 14)
-      .replace(/^(\d{2})(\d)/, "$1.$2")
-      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-      .replace(/\.(\d{3})(\d)/, ".$1/$2")
-      .replace(/(\d{4})(\d)/, "$1-$2");
-  }
+interface FilaItem extends Imovel {
+  diagnostico?: Diagnostico;
+  isLoading: boolean;
+  status: "Pendente" | "Validado" | "Retificar";
 }
 
-function maskPhone(v: string) {
-  const d = v.replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").trim();
-  return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").trim();
-}
+function FilaScreen() {
+  const { logs } = useAppState();
+  const [activeTab, setActiveTab] = useState<"fila" | "logs">("fila");
 
-function LoginScreen() {
-  const navigate = useNavigate();
-  const state = useAppState();
-  const { t, language, setLanguage } = useTranslation();
+  const [fila, setFila] = useState<FilaItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterUf, setFilterUf] = useState("");
+  const [filterScore, setFilterScore] = useState("");
+  const [filterSeveridade, setFilterSeveridade] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
-  // false = Cadastro (Registration), true = Login (Acesse sua conta)
-  const [isLogin, setIsLogin] = useState(false);
-
-  const [fullName, setFullName] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [consentAccepted, setConsentAccepted] = useState(false);
-  const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
-  const [testLoading, setTestLoading] = useState(false);
-
-  const TESTE_EMAIL = "00000000000@tupa.local";
-  const TESTE_SENHA = "teste123";
-
-  // 12 meses de NDVI real (Copernicus/Sentinel-2, região Unaí-MG)
-  const NDVI_DEMO = [
-    { data: "2025-07-01", ndvi: 0.2736, ndviMedio: 0.2736, granularidade: "monthly" as const },
-    { data: "2025-08-01", ndvi: 0.2190, ndviMedio: 0.2190, granularidade: "monthly" as const },
-    { data: "2025-09-01", ndvi: 0.2268, ndviMedio: 0.2268, granularidade: "monthly" as const },
-    { data: "2025-10-01", ndvi: 0.2299, ndviMedio: 0.2299, granularidade: "monthly" as const },
-    { data: "2025-11-01", ndvi: 0.3467, ndviMedio: 0.3467, granularidade: "monthly" as const },
-    { data: "2025-12-01", ndvi: 0.3762, ndviMedio: 0.3762, granularidade: "monthly" as const },
-    { data: "2026-01-01", ndvi: 0.0523, ndviMedio: 0.0523, granularidade: "monthly" as const },
-    { data: "2026-02-01", ndvi: 0.2993, ndviMedio: 0.2993, granularidade: "monthly" as const },
-    { data: "2026-03-01", ndvi: 0.3810, ndviMedio: 0.3810, granularidade: "monthly" as const },
-    { data: "2026-04-01", ndvi: 0.3487, ndviMedio: 0.3487, granularidade: "monthly" as const },
-    { data: "2026-05-01", ndvi: 0.0522, ndviMedio: 0.0522, granularidade: "monthly" as const },
-    { data: "2026-06-01", ndvi: 0.3256, ndviMedio: 0.3256, granularidade: "monthly" as const },
-  ];
-
-  const PONTOS_DEMO = [
-    { lat: -16.35, lng: -46.895 },
-    { lat: -16.35, lng: -46.875 },
-    { lat: -16.36, lng: -46.875 },
-    { lat: -16.36, lng: -46.895 },
-  ];
-
-  const handleTestLogin = async () => {
-    setTestLoading(true);
-    setError("");
-    try {
-      let uid: string;
+  useEffect(() => {
+    async function load() {
       try {
-        const cred = await signInWithEmailAndPassword(auth, TESTE_EMAIL, TESTE_SENHA);
-        uid = cred.user.uid;
-      } catch {
-        const cred = await createUserWithEmailAndPassword(auth, TESTE_EMAIL, TESTE_SENHA);
-        uid = cred.user.uid;
-        await setDoc(doc(db, "usuarios", uid), {
-          nome: "Usuário Teste",
-          cpf: "000.000.000-00",
-          telefone: "(61) 99999-9999",
-          documentoValidado: true,
-          criadoEm: new Date(),
+        setLoading(true);
+        const imoveis = await getImoveis();
+        
+        // Match with local logs to determine status
+        const initialFila: FilaItem[] = imoveis.map(im => {
+          const log = logs.find(l => l.imovelId === im.id);
+          let status: FilaItem["status"] = "Pendente";
+          if (log) {
+            status = log.acao === "Validado" ? "Validado" : "Retificar";
+          }
+          return { ...im, isLoading: true, status };
         });
-      }
+        
+        setFila(initialFila);
 
-      appStore.set({
-        status: "alert",
-        activeTerrenoId: "demo-1",
-        farmer: {
-          name: "Usuário Teste",
-          cpf: "000.000.000-00",
-          phone: "(61) 99999-9999",
-          location: "Unaí, MG",
-          area: 109,
-          crop: "Milho + Soja (Safrinha)",
-          firebaseUid: uid,
-          areaPolygon: PONTOS_DEMO,
-          car: "MG-3170404-E7789F8F21734DF18F718EB880A4678D",
-          terrenos: [
-            {
-              id: "demo-1",
-              name: "Fazenda Demo",
-              points: PONTOS_DEMO,
-              sizeVal: "109",
-              sizeUnit: "ha",
-              hectares: 109,
-              carNumber: "MG-3170404-E7789F8F21734DF18F718EB880A4678D",
-              address: "Unaí, MG",
-              status: "alert",
-              crops: ["Milho", "Soja"],
-              system: "Safrinha",
-              ndviHistorico12m: NDVI_DEMO,
-              ndviRelatorioMensal: NDVI_DEMO,
-              ndviRelatorioSemanal: [],
-              ndviDataFinal: "2026-06-21",
-              ndviFontePoligono: "car",
-            },
-          ],
-        },
-      });
-
-      navigate({ to: "/diagnostico" });
-    } catch (err: any) {
-      setError(`Erro no login de teste: ${err.message}`);
-    } finally {
-      setTestLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    const cleanCpf = cpf.replace(/\D/g, "");
-
-    if (isLogin) {
-      if (cleanCpf.length !== 11 && cleanCpf.length !== 14) {
-        setError(t("login.errorIdentifier"));
-        return;
-      }
-
-      if (!password.trim()) {
-        setError(t("login.errorPassword"));
-        return;
-      }
-
-      try {
-        const email = `${cleanCpf}@tupa.local`;
-
-        const credential = await signInWithEmailAndPassword(auth, email, password.trim());
-
-        console.log("Login efetuado:", credential.user.uid);
-
-        appStore.set({
-          farmer: {
-            ...state.farmer,
-            cpf,
-          },
+        imoveis.forEach(async (im) => {
+          try {
+            const diag = await getDiagnostico(im.id);
+            setFila(prev => prev.map(p => p.id === im.id ? { ...p, diagnostico: diag || undefined, isLoading: false } : p));
+          } catch (e) {
+            setFila(prev => prev.map(p => p.id === im.id ? { ...p, isLoading: false } : p));
+          }
         });
 
-        navigate({ to: "/diagnostico" });
-      } catch (err: any) {
+      } catch (err) {
         console.error(err);
-
-        switch (err.code) {
-          case "auth/invalid-credential":
-          case "auth/user-not-found":
-          case "auth/wrong-password":
-            setError("CPF/CNPJ ou senha inválidos.");
-            break;
-
-          default:
-            setError(err.message);
-        }
-      }
-
-      return;
-    } else {
-      // REGISTRATION VALIDATIONS
-      if (!fullName.trim()) {
-        setError(t("login.errorFullName"));
-        return;
-      }
-
-      if (cleanCpf.length !== 11 && cleanCpf.length !== 14) {
-        setError(t("login.errorIdentifier"));
-        return;
-      }
-
-      if (!phone.trim() || phone.replace(/\D/g, "").length < 10) {
-        setError(t("login.errorPhone"));
-        return;
-      }
-
-      if (!password.trim()) {
-        setError(t("login.errorPassword"));
-        return;
-      }
-
-      if (!consentAccepted) {
-        setError(t("login.consentError"));
-        return;
-      }
-
-      try {
-        const email = `${cleanCpf}@tupa.local`;
-
-        const credential = await createUserWithEmailAndPassword(auth, email, password.trim());
-        await setDoc(doc(db, "usuarios", credential.user.uid), {
-          nome: fullName,
-          cpf,
-          telefone: phone,
-          documentoValidado: false,
-          criadoEm: new Date(),
-        });
-        console.log("Usuário criado:", credential.user.uid);
-
-        appStore.set({
-          status: "alert",
-          activeTerrenoId: "1",
-          farmer: {
-            ...state.farmer,
-            name: fullName,
-            cpf,
-            phone,
-            firebaseUid: credential.user.uid,
-            car: cleanCpf.length === 14 ? "BR-MG-3170107-999999-99" : "BR-MG-3170107-123456-78",
-            terrenos: [
-              {
-                id: "1",
-                name: "Terreno 1",
-                points: [],
-                sizeVal: "12",
-                sizeUnit: "ha",
-                hectares: 12,
-                carNumber: "",
-                address: "Unaí, MG",
-                status: "alert",
-                selectedCar: null,
-                crops: ["Milho"],
-                system: "Safrinha",
-              },
-            ],
-          },
-        });
-
-        navigate({ to: "/cadastro" });
-      } catch (err: any) {
-        console.error(err);
-
-        switch (err.code) {
-          case "auth/email-already-in-use":
-            setError("Este CPF/CNPJ já está cadastrado.");
-            break;
-
-          case "auth/weak-password":
-            setError("A senha deve ter pelo menos 6 caracteres.");
-            break;
-
-          default:
-            setError(err.message);
-        }
+      } finally {
+        setLoading(false);
       }
     }
-  };
+    load();
+  }, [logs]);
+
+  const filteredFila = fila
+    .filter(item => {
+      // Texto (Nome ou CAR)
+      if (searchTerm && !item.nome.toLowerCase().includes(searchTerm.toLowerCase()) && !item.numeroCAR.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      // UF
+      if (filterUf && item.uf !== filterUf) return false;
+      // Status
+      if (filterStatus && item.status !== filterStatus) return false;
+      
+      const score = item.diagnostico?.scoreConformidade ?? 100;
+      // Faixa de Score
+      if (filterScore === "critico" && score >= 70) return false;
+      if (filterScore === "atencao" && (score < 70 || score >= 90)) return false;
+      if (filterScore === "regular" && score < 90) return false;
+
+      // Severidade
+      if (filterSeveridade) {
+        const hasSev = item.diagnostico?.divergencias?.some(d => d.severidade.toLowerCase() === filterSeveridade.toLowerCase());
+        if (!hasSev && filterSeveridade !== "Nenhuma") return false;
+        if (filterSeveridade === "Nenhuma" && item.diagnostico?.divergencias && item.diagnostico.divergencias.length > 0) return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      const scoreA = a.diagnostico?.scoreConformidade ?? 100;
+      const scoreB = b.diagnostico?.scoreConformidade ?? 100;
+      return scoreA - scoreB;
+    });
 
   return (
-    <div className="min-h-screen w-full flex justify-center bg-secondary">
-      <div className="relative w-full max-w-[390px] min-h-screen field-bg flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.06)]">
-        {/* Logo block */}
-        <div className="flex-1 flex flex-col items-center justify-end px-6 pb-6 pt-12">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-soft animate-pop bg-card p-1">
-              <img
-                src="/logo.png"
-                alt="Tupã Logo"
-                className="w-full h-full object-cover rounded-xl"
-              />
-            </div>
-            <div className="flex items-center gap-2 text-primary mt-1">
-              <h1 className="text-3xl font-extrabold tracking-tight text-primary">Tupã</h1>
-            </div>
+    <div className="flex-1 flex flex-col p-8 bg-muted/30">
+      <div className="max-w-7xl w-full mx-auto space-y-6">
+        
+        <div className="flex justify-between items-end border-b border-border pb-4">
+          <div>
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Painel de Auditoria</h2>
+            <p className="text-muted-foreground mt-1">Gerencie as inspeções e o histórico do CAR.</p>
           </div>
-          <p className="mt-3 text-sm text-navy/80 text-center max-w-[280px]">
-            {t("login.subtitle")}
-          </p>
+          
+          <div className="flex gap-2 p-1 bg-card border border-border rounded-xl">
+            <button 
+              onClick={() => setActiveTab("fila")}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "fila" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              Fila de Análise
+            </button>
+            <button 
+              onClick={() => setActiveTab("logs")}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === "logs" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              <History className="w-4 h-4" /> Histórico ({logs.length})
+            </button>
+          </div>
         </div>
 
-        {/* Form Container */}
-        <form
-          onSubmit={handleSubmit}
-          className="px-6 pb-8 flex flex-col gap-3 bg-card/85 backdrop-blur-md rounded-t-3xl pt-7 shadow-[0_-8px_24px_rgba(0,0,0,0.05)]"
-        >
-          <h2 className="text-lg font-bold text-navy mb-1">
-            {isLogin ? t("login.loginTitle") : t("login.registerTitle")}
-          </h2>
+        {activeTab === "fila" && (
+          <div className="space-y-4">
+            {/* Barra de Filtros Completa */}
+            <div className="bg-card border border-border rounded-2xl shadow-soft p-4 flex flex-wrap gap-4 items-center">
+              <div className="relative flex-1 min-w-[250px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input 
+                  type="text" 
+                  placeholder="Buscar por CAR ou nome..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="pl-9 pr-4 py-2.5 w-full rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:border-primary"
+                />
+              </div>
+              
+              <select value={filterUf} onChange={e => setFilterUf(e.target.value)} className="py-2.5 px-3 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:border-primary">
+                <option value="">Todos os Estados</option>
+                <option value="MT">Mato Grosso</option>
+                <option value="PA">Pará</option>
+                <option value="SP">São Paulo</option>
+              </select>
 
-          {error && (
-            <div className="text-sm text-destructive font-semibold bg-destructive/5 border border-destructive/20 rounded-xl p-2.5 text-center animate-in fade-in duration-200">
-              ⚠️ {error}
+              <select value={filterScore} onChange={e => setFilterScore(e.target.value)} className="py-2.5 px-3 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:border-primary">
+                <option value="">Qualquer Score</option>
+                <option value="critico">Crítico (0 - 69)</option>
+                <option value="atencao">Atenção (70 - 89)</option>
+                <option value="regular">Regular (90 - 100)</option>
+              </select>
+
+              <select value={filterSeveridade} onChange={e => setFilterSeveridade(e.target.value)} className="py-2.5 px-3 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:border-primary">
+                <option value="">Qualquer Severidade</option>
+                <option value="ALTA">Alta</option>
+                <option value="MÉDIA">Média</option>
+                <option value="BAIXA">Baixa</option>
+                <option value="Nenhuma">Sem Divergência</option>
+              </select>
+
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="py-2.5 px-3 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:border-primary">
+                <option value="">Todos os Status</option>
+                <option value="Pendente">Aguardando Análise</option>
+                <option value="Validado">Validado</option>
+                <option value="Retificar">Retificação Solicitada</option>
+              </select>
             </div>
-          )}
 
-          {/* Registration specific field: Full Name */}
-          {!isLogin && (
-            <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
-              <label htmlFor="full-name" className="text-sm font-semibold text-foreground/90">
-                {t("login.fullName")}
-              </label>
-              <input
-                id="full-name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder={t("login.fullNamePlaceholder")}
-                className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base"
-              />
+            <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center p-20 text-muted-foreground">
+                  <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
+                  <p>Carregando fila de imóveis...</p>
+                </div>
+              ) : (
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider text-xs font-bold">
+                    <tr>
+                      <th className="px-6 py-4">Imóvel / CAR</th>
+                      <th className="px-6 py-4">Localização</th>
+                      <th className="px-6 py-4 text-center">Score</th>
+                      <th className="px-6 py-4">Divergências</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4 text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredFila.map(item => {
+                      const score = item.diagnostico?.scoreConformidade ?? 100;
+                      const isCritico = score < 70;
+                      const isAtencao = score >= 70 && score < 90;
+                      
+                      return (
+                        <tr key={item.id} className="hover:bg-muted/30 transition-colors group">
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-foreground">{item.nome}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{item.numeroCAR}</div>
+                          </td>
+                          <td className="px-6 py-4 font-medium">{item.municipio} - {item.uf}</td>
+                          <td className="px-6 py-4 text-center">
+                            {item.isLoading ? (
+                              <Loader2 className="w-4 h-4 animate-spin mx-auto text-muted-foreground" />
+                            ) : (
+                              <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full font-bold border-2 ${
+                                isCritico ? "border-destructive/20 text-destructive bg-destructive/10" : 
+                                isAtencao ? "border-amber-warn/20 text-amber-warn bg-amber-warn/10" : 
+                                "border-primary/20 text-primary bg-primary/10"
+                              }`}>
+                                {score}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            {item.isLoading ? (
+                              <span className="text-muted-foreground">...</span>
+                            ) : item.diagnostico?.divergencias && item.diagnostico.divergencias.length > 0 ? (
+                              <div className="flex items-center gap-1.5 text-destructive font-bold">
+                                <AlertTriangle className="w-4 h-4" />
+                                {item.diagnostico.divergencias.length} detectadas
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1.5 text-primary font-bold">
+                                <CheckCircle2 className="w-4 h-4" />
+                                Regular
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wider ${
+                              item.status === "Validado" ? "bg-primary/20 text-primary" :
+                              item.status === "Retificar" ? "bg-amber-warn/20 text-amber-warn" :
+                              "bg-muted text-muted-foreground"
+                            }`}>
+                              {item.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <Link 
+                              to={`/diagnostico`}
+                              search={{ imovelId: item.id }}
+                              className="inline-flex items-center justify-center px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground font-bold rounded-lg transition-colors cursor-pointer"
+                            >
+                              Inspecionar <ChevronRight className="w-4 h-4 ml-1" />
+                            </Link>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {filteredFila.length === 0 && !loading && (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground">
+                          Nenhum imóvel corresponde aos filtros.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
-          )}
-
-          {/* Shared field: CPF / CNPJ */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="cpf-input" className="text-sm font-semibold text-foreground/90">
-              {t("login.cpf")}
-            </label>
-            <input
-              id="cpf-input"
-              value={cpf}
-              onChange={(e) => setCpf(maskCpfCnpj(e.target.value))}
-              inputMode="numeric"
-              placeholder="000.000.000-00 / 00.000.000/0000-00"
-              className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base"
-            />
           </div>
+        )}
 
-          {/* Registration specific field: Phone */}
-          {!isLogin && (
-            <div className="flex flex-col gap-1.5 animate-in fade-in duration-200">
-              <label htmlFor="phone-input" className="text-sm font-semibold text-foreground/90">
-                {t("login.phone")}
-              </label>
-              <input
-                id="phone-input"
-                value={phone}
-                onChange={(e) => setPhone(maskPhone(e.target.value))}
-                inputMode="numeric"
-                placeholder="(00) 00000-0000"
-                className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base"
-              />
-            </div>
-          )}
-
-          {/* Shared field: Password */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="password-input" className="text-sm font-semibold text-foreground/90">
-              {t("login.password")}
-            </label>
-            <input
-              id="password-input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={
-                isLogin
-                  ? t("login.passwordPlaceholder").replace("Crie", "Digite")
-                  : t("login.passwordPlaceholder")
-              }
-              className="h-12 px-4 rounded-xl bg-soft border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-base"
-            />
-          </div>
-
-          {/* Registration specific: LGPD Consent Checkbox */}
-          {!isLogin && (
-            <div className="flex items-start gap-3 mt-1.5 px-0.5 select-none animate-in fade-in duration-200">
-              <input
-                type="checkbox"
-                id="consent"
-                checked={consentAccepted}
-                onChange={(e) => setConsentAccepted(e.target.checked)}
-                className="mt-0.5 w-5.5 h-5.5 rounded border-border text-primary focus:ring-primary/20 accent-primary cursor-pointer shrink-0"
-              />
-              <label
-                htmlFor="consent"
-                className="text-sm leading-snug text-foreground/90 cursor-pointer"
-              >
-                {t("login.consent")}{" "}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setPrivacyModalOpen(true);
-                  }}
-                  className="text-primary font-semibold hover:underline focus:outline-none"
-                >
-                  {t("login.consentLearnMore")}
-                </button>
-              </label>
-            </div>
-          )}
-
-          {/* Main Action Button */}
-          <button
-            type="submit"
-            className="mt-2 h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-base active:scale-[0.99] transition-transform shadow-soft"
-          >
-            {isLogin ? t("login.btnEntrar") : t("login.btnRegister")}
-          </button>
-
-          {/* Test User Button */}
-          <button
-            type="button"
-            onClick={handleTestLogin}
-            disabled={testLoading}
-            className="h-11 rounded-2xl border-2 border-dashed border-amber-warn/60 bg-amber-warn/5 text-amber-warn font-bold text-sm hover:bg-amber-warn/10 active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {testLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="block w-4 h-4 rounded-full border-2 border-amber-warn border-t-transparent animate-spin" />
-                Entrando...
-              </span>
+        {activeTab === "logs" && (
+          <div className="space-y-4">
+            {logs.length === 0 ? (
+              <div className="bg-card rounded-2xl border border-border shadow-soft p-12 flex flex-col items-center justify-center text-center">
+                <FileText className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+                <h3 className="text-lg font-bold text-foreground">Nenhuma atividade recente</h3>
+                <p className="text-muted-foreground mt-1">Os laudos e pareceres que você elaborar aparecerão aqui.</p>
+              </div>
             ) : (
-              "🧪 Entrar como Usuário de Teste"
-            )}
-          </button>
-
-          {/* Switch flow link text */}
-          <div className="text-center text-sm text-muted-foreground mt-2.5">
-            {isLogin ? (
-              <>
-                {t("login.noAccount")}{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(false);
-                    setError("");
-                  }}
-                  className="text-primary font-bold hover:underline"
-                >
-                  {t("login.cadastrar")}
-                </button>
-              </>
-            ) : (
-              <>
-                {t("login.hasAccount")}{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(true);
-                    setError("");
-                  }}
-                  className="text-primary font-bold hover:underline"
-                >
-                  {t("login.fazerLogin")}
-                </button>
-              </>
+              <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden p-6">
+                <h3 className="text-lg font-bold text-foreground mb-6">Histórico de Validações e Retificações</h3>
+                <div className="space-y-6">
+                  {logs.map((log) => (
+                    <div key={log.id} className="flex gap-4 border-b border-border pb-6 last:border-0 last:pb-0">
+                      <div className="flex flex-col items-center gap-2 mt-1">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                          log.acao === "Validado" ? "border-primary bg-primary/10 text-primary" : "border-amber-warn bg-amber-warn/10 text-amber-warn"
+                        }`}>
+                          {log.acao === "Validado" ? <CheckCircle2 className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
+                        </div>
+                        <div className="w-0.5 h-full bg-border flex-1" />
+                      </div>
+                      
+                      <div className="flex-1 pt-1.5">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-bold text-foreground text-base">
+                            {log.imovelNome} <span className="text-muted-foreground font-medium ml-2 text-sm">#{log.imovelId}</span>
+                          </h4>
+                          <time className="text-xs font-semibold text-muted-foreground bg-muted px-2 py-1 rounded">
+                            {new Date(log.data).toLocaleString("pt-BR")}
+                          </time>
+                        </div>
+                        
+                        <div className="mb-3">
+                          <span className={`text-xs font-black uppercase px-2 py-1 rounded-md ${
+                            log.acao === "Validado" ? "bg-primary text-primary-foreground" : "bg-amber-warn text-amber-warn-foreground"
+                          }`}>
+                            {log.acao}
+                          </span>
+                        </div>
+                        
+                        <div className="bg-muted/40 border border-border rounded-xl p-4 text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                          {log.detalhes}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
+        )}
 
-          <p className="text-center text-sm text-muted-foreground/90 mt-1">
-            {t("login.freeRegistration")}
-          </p>
-
-          {/* Language Selector */}
-          <div className="flex justify-center gap-4 mt-2 border-t border-border/40 pt-4 shrink-0">
-            {(["es", "pt", "en"] as const).map((lang) => (
-              <button
-                key={lang}
-                type="button"
-                onClick={() => setLanguage(lang)}
-                className={`px-3.5 py-1.5 rounded-lg text-sm font-extrabold tracking-wider transition-all duration-200 ${
-                  language === lang
-                    ? "bg-primary text-primary-foreground shadow-soft scale-105"
-                    : "bg-soft text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
-              >
-                {lang.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </form>
       </div>
-
-      {/* Privacy Policy Modal */}
-      {privacyModalOpen && (
-        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200">
-          <div className="bg-card w-full max-w-[390px] rounded-t-3xl shadow-2xl border border-border/80 flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 duration-300">
-            {/* Header */}
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between shrink-0">
-              <h2 className="text-base font-bold text-foreground">{t("login.privacyTitle")}</h2>
-              <button
-                type="button"
-                onClick={() => setPrivacyModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-secondary text-muted-foreground cursor-pointer"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-5 text-sm text-foreground/90 leading-relaxed">
-              {/* Last updated */}
-              <p className="text-xs text-muted-foreground">
-                {language === "es"
-                  ? "Última actualización: junio de 2025"
-                  : language === "en"
-                    ? "Last updated: June 2025"
-                    : "Última atualização: junho de 2025"}
-              </p>
-
-              {/* Section 1 */}
-              <section className="flex flex-col gap-1.5">
-                <h3 className="font-bold text-foreground">
-                  {language === "es"
-                    ? "1. Quiénes somos"
-                    : language === "en"
-                      ? "1. Who We Are"
-                      : "1. Quem somos"}
-                </h3>
-                <p>
-                  {language === "es"
-                    ? "SafraSense es una plataforma de monitoreo agrícola que conecta productores rurales con datos satelitales, seguros paramétricos y programas gubernamentales de apoyo al campo."
-                    : language === "en"
-                      ? "SafraSense is an agricultural monitoring platform that connects rural producers with satellite data, parametric insurance, and government programs supporting the agricultural sector."
-                      : "O SafraSense é uma plataforma de monitoramento agrícola que conecta produtores rurais com dados de satélite, seguros paramétricos e programas governamentais de apoio ao campo."}
-                </p>
-              </section>
-
-              {/* Section 2 */}
-              <section className="flex flex-col gap-1.5">
-                <h3 className="font-bold text-foreground">
-                  {language === "es"
-                    ? "2. Datos que recopilamos"
-                    : language === "en"
-                      ? "2. Data We Collect"
-                      : "2. Dados que coletamos"}
-                </h3>
-                <p>
-                  {language === "es"
-                    ? "Recopilamos los siguientes datos para la prestación del servicio:"
-                    : language === "en"
-                      ? "We collect the following data to provide the service:"
-                      : "Coletamos os seguintes dados para a prestação do serviço:"}
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-foreground/80 pl-1">
-                  {language === "es" ? (
-                    <>
-                      <li>Nombre completo, CPF/CNPJ y teléfono</li>
-                      <li>Ubicación y delimitación de la propiedad rural</li>
-                      <li>Número del CAR y documentos adjuntos</li>
-                      <li>Datos de cultivos y producción</li>
-                      <li>Imágenes satelitales del área demarcada</li>
-                    </>
-                  ) : language === "en" ? (
-                    <>
-                      <li>Full name, CPF/CNPJ, and phone number</li>
-                      <li>Location and boundary of rural property</li>
-                      <li>CAR registration number and attached documents</li>
-                      <li>Crop and production data</li>
-                      <li>Satellite imagery of the demarcated area</li>
-                    </>
-                  ) : (
-                    <>
-                      <li>Nome completo, CPF/CNPJ e telefone</li>
-                      <li>Localização e delimitação da propriedade rural</li>
-                      <li>Número do CAR e documentos anexados</li>
-                      <li>Dados de cultivo e produção</li>
-                      <li>Imagens de satélite da área demarcada</li>
-                    </>
-                  )}
-                </ul>
-              </section>
-
-              {/* Section 3 */}
-              <section className="flex flex-col gap-1.5">
-                <h3 className="font-bold text-foreground">
-                  {language === "es"
-                    ? "3. Finalidad del tratamiento"
-                    : language === "en"
-                      ? "3. Purpose of Processing"
-                      : "3. Finalidade do tratamento"}
-                </h3>
-                <p>
-                  {language === "es"
-                    ? "Sus datos se utilizan exclusivamente para: proveer análisis satelitales de su propiedad, conectarlo con seguros paramétricos y programas gubernamentales, validar la titularidad rural y generar informes técnicos."
-                    : language === "en"
-                      ? "Your data is used exclusively to: provide satellite analysis of your property, connect you with parametric insurance and government programs, validate rural ownership, and generate technical reports."
-                      : "Seus dados são utilizados exclusivamente para: prover análises de satélite da sua propriedade, conectá-lo a seguros paramétricos e programas de governo, validar a titularidade rural e gerar laudos técnicos."}
-                </p>
-              </section>
-
-              {/* Section 4 */}
-              <section className="flex flex-col gap-1.5">
-                <h3 className="font-bold text-foreground">
-                  {language === "es"
-                    ? "4. Compartición de datos"
-                    : language === "en"
-                      ? "4. Data Sharing"
-                      : "4. Compartilhamento de dados"}
-                </h3>
-                <p>
-                  {language === "es"
-                    ? "Compartimos sus datos únicamente con operadoras de seguros y órganos gubernamentales cuando sea necesario para la prestación del servicio y siempre con su consentimiento previo. No vendemos datos a terceros."
-                    : language === "en"
-                      ? "We share your data only with insurance operators and government agencies when necessary for service delivery and always with your prior consent. We do not sell data to third parties."
-                      : "Compartilhamos seus dados somente com operadoras de seguro e órgãos governamentais quando necessário para a prestação do serviço e sempre com seu consentimento prévio. Não vendemos dados a terceiros."}
-                </p>
-              </section>
-
-              {/* Section 5 */}
-              <section className="flex flex-col gap-1.5">
-                <h3 className="font-bold text-foreground">
-                  {language === "es"
-                    ? "5. Almacenamiento y seguridad"
-                    : language === "en"
-                      ? "5. Storage & Security"
-                      : "5. Armazenamento e segurança"}
-                </h3>
-                <p>
-                  {language === "es"
-                    ? "Sus datos se almacenan en infraestructura segura de Google Firebase / Google Cloud, con cifrado en tránsito y en reposo. Adoptamos medidas técnicas y organizativas para prevenir accesos no autorizados."
-                    : language === "en"
-                      ? "Your data is stored on secure Google Firebase / Google Cloud infrastructure, with encryption in transit and at rest. We adopt technical and organizational measures to prevent unauthorized access."
-                      : "Seus dados são armazenados em infraestrutura segura do Google Firebase / Google Cloud, com criptografia em trânsito e em repouso. Adotamos medidas técnicas e organizacionais para prevenir acessos não autorizados."}
-                </p>
-              </section>
-
-              {/* Section 6 */}
-              <section className="flex flex-col gap-1.5">
-                <h3 className="font-bold text-foreground">
-                  {language === "es"
-                    ? "6. Sus derechos (LGPD)"
-                    : language === "en"
-                      ? "6. Your Rights (LGPD)"
-                      : "6. Seus direitos (LGPD)"}
-                </h3>
-                <p>
-                  {language === "es"
-                    ? "De acuerdo con la Ley General de Protección de Datos (LGPD), usted tiene derecho a: acceder a sus datos, corregirlos, solicitar su eliminación, revocar el consentimiento y obtener información sobre el tratamiento realizado."
-                    : language === "en"
-                      ? "Under the Brazilian General Data Protection Law (LGPD), you have the right to: access your data, correct it, request its deletion, revoke consent, and obtain information about the processing performed."
-                      : "Conforme a Lei Geral de Proteção de Dados (LGPD), você tem direito a: acessar seus dados, corrigi-los, solicitar sua exclusão, revogar o consentimento e obter informações sobre o tratamento realizado."}
-                </p>
-              </section>
-
-              {/* Section 7 */}
-              <section className="flex flex-col gap-1.5">
-                <h3 className="font-bold text-foreground">
-                  {language === "es"
-                    ? "7. Contacto"
-                    : language === "en"
-                      ? "7. Contact"
-                      : "7. Contato"}
-                </h3>
-                <p>
-                  {language === "es"
-                    ? "Para ejercer sus derechos o aclarar dudas, contáctenos:"
-                    : language === "en"
-                      ? "To exercise your rights or clarify questions, contact us:"
-                      : "Para exercer seus direitos ou esclarecer dúvidas, entre em contato:"}
-                </p>
-                <p className="font-semibold text-primary">contato@safrasense.com.br</p>
-              </section>
-            </div>
-
-            {/* Footer close button */}
-            <div className="p-4 border-t border-border bg-soft shrink-0">
-              <button
-                type="button"
-                onClick={() => setPrivacyModalOpen(false)}
-                className="h-12 w-full bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 transition-all cursor-pointer"
-              >
-                {t("login.privacyClose")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

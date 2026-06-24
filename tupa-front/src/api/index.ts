@@ -44,26 +44,51 @@ import {
 
 const useMock = import.meta.env.VITE_USE_MOCK === "true";
 
-export const getImoveis: () => Promise<Imovel[]> = useMock
-  ? mockGetImoveis
-  : getImoveisApi;
+export const getImoveis = async (): Promise<Imovel[]> => {
+  if (useMock) return mockGetImoveis();
+  try {
+    return await getImoveisApi();
+  } catch (err) {
+    console.warn("Tupã Auto-Fallback: Backend real falhou (getImoveis), retornando mock...", err);
+    return mockGetImoveis();
+  }
+};
 
-export const getImovel: (id: string) => Promise<Imovel | null> = useMock
-  ? mockGetImovel
-  : getImovelApi;
+export const getImovel = async (id: string): Promise<Imovel | null> => {
+  if (useMock) return mockGetImovel(id);
+  try {
+    return await getImovelApi(id);
+  } catch (err) {
+    console.warn(`Tupã Auto-Fallback: Backend real falhou (getImovel ${id}), retornando mock...`, err);
+    return mockGetImovel(id);
+  }
+};
 
-export const getDiagnostico: (
-  imovelId: string,
-) => Promise<Diagnostico | null> = useMock
-  ? mockGetDiagnostico
-  : getDiagnosticoApi;
+export const getDiagnostico = async (imovelId: string): Promise<Diagnostico | null> => {
+  if (useMock) return mockGetDiagnostico(imovelId);
+  try {
+    return await getDiagnosticoApi(imovelId);
+  } catch (err) {
+    console.warn(`Tupã Auto-Fallback: Backend real falhou (getDiagnostico ${imovelId}), retornando mock...`, err);
+    return mockGetDiagnostico(imovelId);
+  }
+};
 
-export const getLayers: (
-  imovelId: string,
-) => Promise<LayerGeometries | null> = useMock
-  ? mockGetLayers
-  : getLayersApi;
+export const getLayers = async (imovelId: string): Promise<LayerGeometries | null> => {
+  if (useMock) return mockGetLayers(imovelId);
+  try {
+    return await getLayersApi(imovelId);
+  } catch (err) {
+    console.warn(`Tupã Auto-Fallback: Backend real falhou (getLayers ${imovelId}), retornando mock...`, err);
+    return mockGetLayers(imovelId);
+  }
+};
 
-export const getHidrografia: (
-  imovelId: string,
-) => Promise<HidrografiaData | null> = getHidrografiaApi;
+export const getHidrografia = async (imovelId: string): Promise<HidrografiaData | null> => {
+  try {
+    return await getHidrografiaApi(imovelId);
+  } catch (err) {
+    console.warn(`Tupã Auto-Fallback: Backend real falhou (getHidrografia ${imovelId}), retornando null...`, err);
+    return null;
+  }
+};

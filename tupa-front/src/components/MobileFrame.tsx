@@ -16,7 +16,7 @@ export function MobileFrame({
   return (
     <div className="min-h-screen w-full flex justify-center bg-[#E2D9CD] dark:bg-[#0f0d0a]">
       <div
-        className={`relative w-full max-w-[390px] min-h-screen ${bg} flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.06)]`}
+        className={`relative w-full max-w-[390px] min-h-screen ${bg} bg-dynamic-mesh flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.12)]`}
       >
         <div className="flex-1 flex flex-col">{children}</div>
         {withNav && <BottomNav />}

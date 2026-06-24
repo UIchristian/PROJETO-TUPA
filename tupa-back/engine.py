@@ -76,6 +76,67 @@ def detect_uso_incompativel_restrito(imovel_id: str, db: Session) -> None:
     db.execute(query, {"imovel_id": imovel_id})
 
 
+def detect_supressao_vegetacao(imovel_id: str, db: Session) -> None:
+    """Detecta supressão de vegetação nativa em APPs."""
+    faixas = regras.app.cursos_dagua.faixas
+    if not faixas:
+        case_when_largura = "30"
+    else:
+        case_lines = []
+        for faixa in sorted(faixas, key=lambda x: x.largura_max):
+            case_lines.append(f"WHEN COALESCE(h.largura, 0) <= {faixa.largura_max} THEN {faixa.distancia_app}")
+        case_when_largura = f"(CASE {' '.join(case_lines)} ELSE 30 END)"
+
+    query = text(f"""
+        INSERT INTO divergencia (id, imovel_id, tipo, severidade, area_hectares, descricao, base_legal, caminho_retificacao, geometria)
+        SELECT
+            'div-sup-' || md5(random()::text) || '-' || i.id,
+            i.id,
+            'Supressão de Vegetação em APP',
+            'alta',
+            ST_Area(ST_Transform(ST_Intersection(ST_Buffer(h.geometria::geography, {case_when_largura})::geometry, c.geometria), {SRID_AREA})) / 10000.0 AS area_ha,
+            'Foi identificada supressão de vegetação (uso antropizado) na faixa de APP.',
+            'Art. 4º da Lei 12.651/2012',
+            'Cessar a supressão e iniciar a recomposição da vegetação nativa.',
+            ST_Multi(ST_Intersection(ST_Buffer(h.geometria::geography, {case_when_largura})::geometry, c.geometria))
+        FROM imovel i
+        JOIN cobertura_observada c ON c.imovel_id = i.id
+        JOIN hidrografia h ON ST_Intersects(ST_Buffer(h.geometria::geography, {case_when_largura})::geometry, c.geometria)
+        WHERE i.id = :imovel_id
+          AND c.classe SIMILAR TO '%(Pastagem|Solo Exposto|Lavoura)%'
+          AND ST_Area(ST_Transform(ST_Intersection(ST_Buffer(h.geometria::geography, {case_when_largura})::geometry, c.geometria), {SRID_AREA})) / 10000.0 > 0.01;
+    """)
+    db.execute(query, {"imovel_id": imovel_id})
+
+
+def detect_deficit_reserva_legal(imovel_id: str, db: Session) -> None:
+    """Detecta déficit de reserva legal comparando área de floresta nativa com 20% do imóvel."""
+    query = text(f"""
+        INSERT INTO divergencia (id, imovel_id, tipo, severidade, area_hectares, descricao, base_legal, caminho_retificacao, geometria)
+        SELECT
+            'div-rl-' || md5(random()::text) || '-' || i.id,
+            i.id,
+            'Déficit de Reserva Legal',
+            'media',
+            (ST_Area(ST_Transform(i.poligono_declarado, {SRID_AREA})) / 10000.0) * 0.20 - COALESCE(floresta.area_floresta, 0),
+            'Imóvel não possui o mínimo de 20% de área de vegetação nativa.',
+            'Art. 12 da Lei 12.651/2012',
+            'Promover a recomposição, regeneração ou compensação da Reserva Legal.',
+            ST_Multi(i.poligono_declarado)
+        FROM imovel i
+        LEFT JOIN (
+            SELECT c.imovel_id, SUM(ST_Area(ST_Transform(ST_Intersection(c.geometria, i2.poligono_declarado), {SRID_AREA})) / 10000.0) as area_floresta
+            FROM cobertura_observada c
+            JOIN imovel i2 ON i2.id = c.imovel_id
+            WHERE c.classe = 'Floresta Nativa' AND c.imovel_id = :imovel_id
+            GROUP BY c.imovel_id
+        ) floresta ON floresta.imovel_id = i.id
+        WHERE i.id = :imovel_id
+          AND COALESCE(floresta.area_floresta, 0) < (ST_Area(ST_Transform(i.poligono_declarado, {SRID_AREA})) / 10000.0) * 0.20;
+    """)
+    db.execute(query, {"imovel_id": imovel_id})
+
+
 def calcular_score_conformidade(imovel_id: str, db: Session) -> float:
     """Calcula o score do imóvel com base nas divergências persistidas."""
     divergencias = db.query(Divergencia).filter(Divergencia.imovel_id == imovel_id).all()
@@ -106,7 +167,8 @@ def calcular_diagnostico_postgis(imovel_id: str, db: Session):
     # 2. Executa motores SQL
     detect_cultivo_em_app(imovel_id, db)
     detect_uso_incompativel_restrito(imovel_id, db)
-    # detect_supressao_vegetacao(imovel_id, db)  # Omitido para brevidade
+    detect_supressao_vegetacao(imovel_id, db)
+    detect_deficit_reserva_legal(imovel_id, db)
     
     db.commit()
     
