@@ -50,91 +50,98 @@ function SatelliteDashboard({ imovel, diag, onClose }: { imovel: Imovel, diag: D
   const usoAntropico = diag?.coberturaSolo.find(c => c.classe.includes("Lavoura") || c.classe.includes("Pastagem"));
 
   return (
-    <div className="absolute top-0 right-0 h-full w-[420px] bg-card border-l border-border flex flex-col z-[500] shadow-2xl overflow-hidden animate-in slide-in-from-right">
-      <div className="p-6 border-b border-border bg-muted/10 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">✕</button>
-        <h2 className="text-xl font-bold tracking-tight mb-1">{imovel.nome}</h2>
-        <p className="text-sm text-muted-foreground mb-4">{imovel.numeroCAR}</p>
-        <div className="flex gap-2">
-          <span className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs font-bold border border-primary/20">
-            {imovel.areaHectares} Hectares
+    <div className="absolute top-4 right-4 bottom-4 w-[420px] glass-card flex flex-col z-[500] shadow-premium overflow-hidden animate-in slide-in-from-right">
+      <div className="p-6 border-b border-border relative">
+        <button onClick={onClose} className="absolute top-4 right-4 font-mono text-xs font-bold text-muted-foreground hover:text-primary transition-colors">[X]</button>
+        <h2 className="text-xl font-mono font-extrabold text-primary uppercase tracking-wide mb-1">{imovel.nome}</h2>
+        <p className="text-[10px] font-mono text-muted-foreground tracking-widest mb-4">{imovel.numeroCAR}</p>
+        <div className="flex gap-2 font-mono text-[10px] font-bold uppercase tracking-widest">
+          <span className="px-2 py-1 bg-muted/50 border border-border text-primary">
+            {imovel.areaHectares} HA
           </span>
           {diag && (
-            <span className={`px-2 py-1 rounded-md text-xs font-bold border ${diag.scoreConformidade >= 80 ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>
-              Score: {diag.scoreConformidade}/100
+            <span className={`px-2 py-1 border ${diag.scoreConformidade >= 80 ? 'bg-primary/10 text-primary border-primary ' : 'bg-destructive/10 text-destructive border-destructive '}`}>
+              SCORE: [{diag.scoreConformidade.toString().padStart(3, '0')}]
             </span>
           )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar bg-background">
-        <div className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2">
-          <Layers className="w-4 h-4" /> Cruzamento de Dados do Satélite
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar bg-background/50">
+        <div className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-primary mb-2 flex items-center gap-2">
+          <Layers className="w-4 h-4" /> CRUZAMENTO_DADOS_SATELITE
         </div>
 
         <div className="space-y-4">
           {/* Bloco 1: Mata Protegida */}
-          <div className="p-4 rounded-xl border border-border bg-muted/5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-bl-full -mr-4 -mt-4" />
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-green-500/20 rounded-lg text-green-500">
+          <div className="mb-8 p-4 border border-border bg-muted/20">
+            <div className="text-[10px] text-muted-foreground tracking-[0.2em] mb-1">SCORE_CONFORMIDADE_SYS</div>
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-mono tracking-widest text-primary">NOMINAL - TODOS OS SISTEMAS OK</div>
+              <div className="text-3xl font-black text-primary tracking-widest">[{diag?.scoreConformidade}]</div>
+            </div>
+          </div>
+          <div className="p-4 border border-primary/30 bg-primary/5 relative overflow-hidden ">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 -mr-4 -mt-4 rotate-45" />
+            <div className="flex items-center gap-3 mb-3 relative z-10">
+              <div className="text-primary">
                 <TreePine className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-foreground">Mata Protegida (APP/RL)</h3>
+              <h3 className="font-mono font-bold text-[10px] text-primary uppercase tracking-widest">MATA PROTEGIDA (APP/RL)</h3>
             </div>
-            <p className="text-sm text-muted-foreground mb-2">Cobertura de vegetação nativa detectada no polígono.</p>
-            <div className="text-2xl font-black text-foreground">
-              {floresta ? floresta.percentual : 0}% <span className="text-base font-normal text-muted-foreground">do total</span>
+            <p className="text-[10px] font-mono text-muted-foreground mb-2 uppercase">Cobertura de vegetação nativa detectada no polígono.</p>
+            <div className="text-2xl font-mono font-black text-primary">
+              [{floresta ? floresta.percentual : 0}%] <span className="text-[10px] font-normal text-muted-foreground uppercase tracking-widest">DO TOTAL</span>
             </div>
           </div>
 
           {/* Bloco 2: Uso do Solo */}
-          <div className="p-4 rounded-xl border border-border bg-muted/5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-bl-full -mr-4 -mt-4" />
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-amber-500/20 rounded-lg text-amber-500">
+          <div className="p-4 border border-amber-warn/30 bg-amber-warn/5 relative overflow-hidden ">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-amber-warn/10 -mr-4 -mt-4 rotate-45" />
+            <div className="flex items-center gap-3 mb-3 relative z-10">
+              <div className="text-amber-warn">
                 <Pickaxe className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-foreground">Uso Antrópico do Solo</h3>
+              <h3 className="font-mono font-bold text-[10px] text-amber-warn uppercase tracking-widest">USO ANTRÓPICO DO SOLO</h3>
             </div>
-            <p className="text-sm text-muted-foreground mb-2">Lavouras, pastagens ou solo exposto detectados.</p>
-            <div className="text-2xl font-black text-foreground">
-              {usoAntropico ? usoAntropico.percentual : 0}% <span className="text-base font-normal text-muted-foreground">do total</span>
+            <p className="text-[10px] font-mono text-muted-foreground mb-2 uppercase">Lavouras, pastagens ou solo exposto detectados.</p>
+            <div className="text-2xl font-mono font-black text-amber-warn">
+              [{usoAntropico ? usoAntropico.percentual : 0}%] <span className="text-[10px] font-normal text-muted-foreground uppercase tracking-widest">DO TOTAL</span>
             </div>
           </div>
 
           {/* Bloco 3: Rios e Hidrografia */}
-          <div className="p-4 rounded-xl border border-border bg-muted/5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full -mr-4 -mt-4" />
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg text-blue-500">
+          <div className="p-4 border border-secondary/30 bg-secondary/5 relative overflow-hidden ">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-secondary/10 -mr-4 -mt-4 rotate-45" />
+            <div className="flex items-center gap-3 mb-3 relative z-10">
+              <div className="text-secondary">
                 <Droplets className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-foreground">Hidrografia (Rios)</h3>
+              <h3 className="font-mono font-bold text-[10px] text-secondary uppercase tracking-widest">HIDROGRAFIA (RIOS)</h3>
             </div>
-            <p className="text-sm text-muted-foreground mb-2">Cursos d'água cruzando o polígono declarado.</p>
-            <div className="text-2xl font-black text-foreground">
-              Detectado
+            <p className="text-[10px] font-mono text-muted-foreground mb-2 uppercase">Cursos d'água cruzando o polígono declarado.</p>
+            <div className="text-sm font-mono font-black text-secondary uppercase tracking-widest">
+              [ DETECTADO_ATIVO ]
             </div>
           </div>
 
-          {/* Bloco 4: Alertas (Terras Indígenas / Embargos) */}
-          <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-destructive/10 rounded-bl-full -mr-4 -mt-4" />
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-destructive/20 rounded-lg text-destructive">
-                <AlertTriangle className="w-5 h-5" />
+          {/* Bloco 4: Alertas */}
+          <div className="p-4 border border-destructive/50 bg-destructive/10 relative overflow-hidden ">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-destructive/20 -mr-4 -mt-4 rotate-45" />
+            <div className="flex items-center gap-3 mb-3 relative z-10">
+              <div className="text-destructive">
+                <AlertTriangle className="w-5 h-5 animate-pulse" />
               </div>
-              <h3 className="font-bold text-foreground">Alertas de Sobreposição</h3>
+              <h3 className="font-mono font-bold text-[10px] text-destructive uppercase tracking-widest">ALERTAS DE SOBREPOSIÇÃO</h3>
             </div>
-            <p className="text-sm text-muted-foreground mb-2">Cruzamento com terras indígenas, quilombolas ou embargos do IBAMA.</p>
+            <p className="text-[10px] font-mono text-foreground mb-2 uppercase">Cruzamento com terras indígenas, quilombolas ou embargos.</p>
             {diag?.divergencias && diag.divergencias.length > 0 ? (
-              <div className="text-destructive font-bold text-lg">
-                {diag.divergencias.length} Divergência(s) Encontrada(s)
+              <div className="text-destructive font-mono font-bold text-sm uppercase tracking-widest">
+                [{diag.divergencias.length} AMEAÇAS ENCONTRADAS]
               </div>
             ) : (
-              <div className="text-green-500 font-bold text-lg">
-                Nenhuma sobreposição
+              <div className="text-primary font-mono font-bold text-sm uppercase tracking-widest">
+                [NENHUMA SOBREPOSIÇÃO]
               </div>
             )}
           </div>
@@ -163,6 +170,12 @@ function DiagnosticoScreen() {
   const [showRestrito, setShowRestrito] = useState(true);
   const [showUsoCobertura, setShowUsoCobertura] = useState(true);
   const [showDivergencias, setShowDivergencias] = useState(true);
+  
+  // Novas camadas sugeridas
+  const [showHidrografia, setShowHidrografia] = useState(false);
+  const [showTerraIndigena, setShowTerraIndigena] = useState(false);
+  const [showMineracao, setShowMineracao] = useState(false);
+  const [showUC, setShowUC] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -224,145 +237,15 @@ function DiagnosticoScreen() {
   }
 
   return (
-    <div className="flex-1 flex overflow-hidden bg-muted/30">
+    <div className="flex-1 relative overflow-hidden bg-background">
       
-      {/* Esquerda: Detalhes e Painel (1/3) - Oculto se isFullscreen */}
-      {!isFullscreen && (
-        <div className="w-[450px] bg-card border-r border-border flex flex-col overflow-y-auto no-scrollbar shadow-soft z-10 transition-all duration-300">
-          
-          {/* Header Painel */}
-          <div className="p-6 border-b border-border space-y-4">
-            <button 
-              onClick={() => navigate({ to: "/" })}
-              className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" /> Voltar para a Fila
-            </button>
-            
-            <div>
-              <h2 className="text-2xl font-extrabold text-foreground">{imovel.nome}</h2>
-              <p className="text-muted-foreground font-medium">{imovel.numeroCAR}</p>
-            </div>
-            
-            <div className="flex items-center gap-4 text-sm font-medium">
-              <span className="px-3 py-1 bg-muted rounded-lg border border-border">{imovel.municipio} - {imovel.uf}</span>
-              <span className="px-3 py-1 bg-muted rounded-lg border border-border">{imovel.areaHectares} ha</span>
-            </div>
-
-            <div className={`p-4 rounded-xl border flex items-center justify-between ${
-              isCritico ? "bg-destructive/10 border-destructive/20 text-destructive" : 
-              isAtencao ? "bg-amber-warn/10 border-amber-warn/20 text-amber-warn" : 
-              "bg-primary/10 border-primary/20 text-primary"
-            }`}>
-              <div>
-                <p className="text-sm font-bold uppercase tracking-wider opacity-80">Score de Conformidade</p>
-                <p className="font-semibold">{isCritico ? "Crítico - Ação Necessária" : isAtencao ? "Atenção" : "Regular"}</p>
-              </div>
-              <div className="text-3xl font-black">{score}</div>
-            </div>
-          </div>
-
-          {/* Camadas Control */}
-          <div className="p-6 border-b border-border">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-              <Layers className="w-4 h-4" /> Controle de Camadas
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer select-none">
-                <input type="checkbox" checked={showDeclared} onChange={() => setShowDeclared(!showDeclared)} className="rounded accent-primary w-4 h-4 shrink-0" />
-                <span className="w-4 h-1.5 bg-primary rounded-sm shrink-0" />
-                <span>Limite CAR</span>
-                <InfoTip text="Polígono declarado pelo produtor no Cadastro Ambiental Rural (SICAR). Representa o perímetro oficial da propriedade registrado." />
-              </label>
-              <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer select-none">
-                <input type="checkbox" checked={showApp} onChange={() => setShowApp(!showApp)} className="rounded accent-primary w-4 h-4 shrink-0" />
-                <span className="w-4 h-1.5 border border-dashed border-[#3b82f6] bg-[#3b82f6]/20 rounded-sm shrink-0" />
-                <span>APP</span>
-                <InfoTip text="Área de Preservação Permanente (Lei 12.651/2012). Faixas marginais de rios, nascentes, topos de morro e encostas. Vegetação nativa obrigatória." />
-              </label>
-              {layers?.usoRestrito && (
-                <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer select-none">
-                  <input type="checkbox" checked={showRestrito} onChange={() => setShowRestrito(!showRestrito)} className="rounded accent-primary w-4 h-4 shrink-0" />
-                  <span className="w-4 h-1.5 border border-dashed border-[#c68a35] bg-[#c68a35]/20 rounded-sm shrink-0" />
-                  <span>Restrito</span>
-                  <InfoTip text="Uso Restrito: áreas de inclinação entre 25° e 45° e pantanais. Permitem atividades com restrições específicas previstas no Código Florestal." />
-                </label>
-              )}
-              <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer select-none">
-                <input type="checkbox" checked={showUsoCobertura} onChange={() => setShowUsoCobertura(!showUsoCobertura)} className="rounded accent-primary w-4 h-4 shrink-0" />
-                <span className="w-4 h-1.5 bg-[#EAB308]/60 rounded-sm shrink-0" />
-                <span>Cobertura</span>
-                <InfoTip text="Uso e cobertura do solo detectado pelo satélite Sentinel-2 (Dynamic World / MapBiomas). Classifica: floresta nativa, lavoura, pastagem, solo exposto e corpos d'água." />
-              </label>
-              <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer select-none">
-                <input type="checkbox" checked={showDivergencias} onChange={() => setShowDivergencias(!showDivergencias)} className="rounded accent-primary w-4 h-4 shrink-0" />
-                <span className="w-4 h-1.5 bg-[#ef4444] rounded-sm shrink-0" />
-                <span>Divergências</span>
-                <InfoTip text="Áreas onde o uso do solo observado pelo satélite conflita com as obrigações do CAR (ex.: cultivo em APP, desmatamento sem autorização). Requerem ação do produtor." />
-              </label>
-            </div>
-            
-            <button 
-              onClick={() => setIsFullscreen(true)}
-              className="mt-6 w-full flex items-center justify-center gap-2 py-3 bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-bold rounded-xl shadow-sm transition-all"
-            >
-              <Satellite className="w-5 h-5" /> Abrir Satélite Copernicus
-            </button>
-          </div>
-
-          {/* Divergências */}
-          <div className="p-6 flex-1 flex flex-col gap-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" /> Divergências Encontradas
-            </h3>
-            
-            {diagnostico?.divergencias && diagnostico.divergencias.length > 0 ? (
-              <div className="space-y-4">
-                {diagnostico.divergencias.map(div => (
-                  <div key={div.id} className="bg-card border border-destructive/20 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-destructive" />
-                    
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-foreground text-sm leading-tight pr-2">{div.tipo}</h4>
-                      <span className="bg-destructive/10 text-destructive text-[10px] font-black uppercase px-2 py-1 rounded">
-                        {div.severidade}
-                      </span>
-                    </div>
-                    
-                    <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded-lg mb-3">
-                      {div.textoLinguagemSimples}
-                    </p>
-                    
-                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-border">
-                      <span className="text-sm font-bold">Área: {div.areaHectares} ha</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-primary/20 rounded-xl bg-primary/5">
-                <CheckCircle2 className="w-10 h-10 text-primary mb-3" />
-                <p className="font-bold text-foreground">Nenhuma divergência</p>
-                <p className="text-sm text-muted-foreground">O uso do solo está de acordo com as delimitações.</p>
-              </div>
-            )}
-            
-            <button 
-              onClick={() => navigate({ to: "/retificacao", search: { imovelId: imovel.id } })}
-              className="mt-4 w-full flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground font-bold rounded-xl shadow-premium hover:bg-primary/90 transition-all"
-            >
-              <Wrench className="w-4 h-4" /> Elaborar Parecer e Ação
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Direita: Mapa (2/3 ou Full Screen) */}
-      <div className={`flex-1 relative transition-all duration-300 ${isFullscreen ? 'w-full h-full' : ''}`}>
+      {/* MAPA FULLSCREEN (Z-0) */}
+      <div className="absolute inset-0 z-0">
         <Suspense fallback={
-          <div className="w-full h-full flex flex-col items-center justify-center bg-muted">
-            <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
-            <span className="font-semibold text-muted-foreground">Carregando mapa espacial...</span>
+          <div className="flex flex-col items-center gap-4 animate-pulse">
+            <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <span className="font-mono text-xs uppercase tracking-widest text-primary">INICIALIZANDO FEED DO SATÉLITE...</span>
+            <span className="font-mono text-xs text-muted-foreground uppercase tracking-widest">ESTABELECENDO CONEXÃO SEGURA</span>
           </div>
         }>
           {!import.meta.env.SSR && layers && (
@@ -374,30 +257,182 @@ function DiagnosticoScreen() {
               showRestrito={showRestrito}
               showUsoCobertura={showUsoCobertura}
               showDivergencias={showDivergencias}
+              showHidrografia={showHidrografia}
+              showTerraIndigena={showTerraIndigena}
+              showMineracao={showMineracao}
+              showUC={showUC}
             />
           )}
         </Suspense>
-        
-        {isFullscreen && (
-          <SatelliteDashboard 
-            imovel={imovel} 
-            diag={diagnostico} 
-            onClose={() => setIsFullscreen(false)} 
-          />
-        )}
-        
-        {/* Helper overlay on map */}
-        {!isFullscreen && (
-          <div className="absolute top-4 right-4 z-[400] bg-card/90 backdrop-blur border border-border p-3 rounded-xl shadow-premium max-w-[250px] animate-in fade-in">
-            <div className="flex items-start gap-2 text-sm">
-              <Info className="w-5 h-5 text-primary shrink-0" />
-              <p className="text-muted-foreground font-medium leading-tight">
-                Aproxime do polígono para inspecionar os cruzamentos espaciais entre o limite declarado e a cobertura observada pelo Sentinel-2.
-              </p>
+      </div>
+
+      {/* Esquerda: HUD Painel (Z-10) */}
+      {!isFullscreen && (
+        <div className="absolute top-4 left-4 bottom-4 w-[420px] glass-card flex flex-col overflow-y-auto no-scrollbar z-10 transition-all duration-300 animate-in slide-in-from-left">
+          
+          {/* Header Painel */}
+          <div className="p-6 border-b border-border space-y-4">
+            <button 
+              onClick={() => navigate({ to: "/" })}
+              className="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" /> [ ABORTAR INSPEÇÃO ]
+            </button>
+            
+            <div>
+              <h2 className="text-xl font-mono font-extrabold text-primary uppercase tracking-wide">{imovel.nome}</h2>
+              <p className="text-[10px] font-mono text-muted-foreground tracking-widest">{imovel.numeroCAR}</p>
+            </div>
+            
+            <div className="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest">
+              <span className="px-2 py-1 bg-muted/50 border border-border text-primary">{imovel.municipio} - {imovel.uf}</span>
+              <span className="px-2 py-1 bg-muted/50 border border-border text-primary">{imovel.areaHectares} HA</span>
+            </div>
+
+            <div className={`p-4 border flex items-center justify-between ${
+              isCritico ? "bg-destructive/10 border-destructive text-destructive " : 
+              isAtencao ? "bg-amber-warn/10 border-amber-warn text-amber-warn " : 
+              "bg-primary/10 border-primary text-primary "
+            }`}>
+              <div>
+                <p className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-80">SYS_CONFORMITY_SCORE</p>
+                <p className="font-mono text-xs mt-1">{isCritico ? "CRITICAL BREACH DETECTED" : isAtencao ? "WARNING: REVIEW NEEDED" : "NOMINAL - ALL SYSTEMS GO"}</p>
+              </div>
+              <div className="text-4xl font-mono font-black tracking-tighter">[{score.toString().padStart(3, '0')}]</div>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Camadas Control */}
+          <div className="mb-6 px-6">
+            <div className="text-[10px] text-muted-foreground tracking-[0.2em] mb-4 flex items-center gap-2">
+              <Layers className="w-3 h-3" /> CONTROLES_DE_CAMADA
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="flex items-center gap-2 font-mono font-bold text-[9px] uppercase tracking-wider cursor-pointer select-none text-foreground hover:text-primary transition-colors">
+                <input type="checkbox" checked={showDeclared} onChange={() => setShowDeclared(!showDeclared)} className="appearance-none border border-primary w-3 h-3 checked:bg-primary transition-colors shrink-0" />
+                <span className="w-3 h-1.5 bg-primary shrink-0" />
+                <span className="truncate">LIMITE_CAR</span>
+              </label>
+              <label className="flex items-center gap-2 font-mono font-bold text-[9px] uppercase tracking-wider cursor-pointer select-none text-foreground hover:text-primary transition-colors">
+                <input type="checkbox" checked={showApp} onChange={() => setShowApp(!showApp)} className="appearance-none border border-primary w-3 h-3 checked:bg-primary transition-colors shrink-0" />
+                <span className="w-3 h-1.5 border border-[#3b82f6] bg-[#3b82f6]/20 shrink-0" />
+                <span className="truncate">APP_CODE</span>
+              </label>
+              {layers?.usoRestrito && (
+                <label className="flex items-center gap-2 font-mono font-bold text-[9px] uppercase tracking-wider cursor-pointer select-none text-foreground hover:text-primary transition-colors">
+                  <input type="checkbox" checked={showRestrito} onChange={() => setShowRestrito(!showRestrito)} className="appearance-none border border-primary w-3 h-3 checked:bg-primary transition-colors shrink-0" />
+                  <span className="w-3 h-1.5 border border-[#c68a35] bg-[#c68a35]/20 shrink-0" />
+                  <span className="truncate">RESTRITO</span>
+                </label>
+              )}
+              <label className="flex items-center gap-2 font-mono font-bold text-[9px] uppercase tracking-wider cursor-pointer select-none text-foreground hover:text-primary transition-colors">
+                <input type="checkbox" checked={showUsoCobertura} onChange={() => setShowUsoCobertura(!showUsoCobertura)} className="appearance-none border border-primary w-3 h-3 checked:bg-primary transition-colors shrink-0" />
+                <span className="w-3 h-1.5 bg-[#EAB308]/60 shrink-0" />
+                <span className="truncate">COBERTURA</span>
+              </label>
+              <label className="flex items-center gap-2 font-mono font-bold text-[9px] uppercase tracking-wider cursor-pointer select-none text-foreground hover:text-primary transition-colors">
+                <input type="checkbox" checked={showDivergencias} onChange={() => setShowDivergencias(!showDivergencias)} className="appearance-none border border-primary w-3 h-3 checked:bg-primary transition-colors shrink-0" />
+                <span className="w-3 h-1.5 bg-[#ef4444] shrink-0" />
+                <span className="truncate">ALERTAS</span>
+              </label>
+              <label className="flex items-center gap-2 font-mono font-bold text-[9px] uppercase tracking-wider cursor-pointer select-none text-foreground hover:text-primary transition-colors">
+                <input type="checkbox" checked={showHidrografia} onChange={() => setShowHidrografia(!showHidrografia)} className="appearance-none border border-primary w-3 h-3 checked:bg-primary transition-colors shrink-0" />
+                <span className="w-3 h-1.5 bg-[#0ea5e9] shrink-0" />
+                <span className="truncate">HIDRO_ANA</span>
+              </label>
+              <label className="flex items-center gap-2 font-mono font-bold text-[9px] uppercase tracking-wider cursor-pointer select-none text-foreground hover:text-primary transition-colors">
+                <input type="checkbox" checked={showTerraIndigena} onChange={() => setShowTerraIndigena(!showTerraIndigena)} className="appearance-none border border-primary w-3 h-3 checked:bg-primary transition-colors shrink-0" />
+                <span className="w-3 h-1.5 bg-[#f97316] shrink-0" />
+                <span className="truncate">INDIGENA_TI</span>
+              </label>
+              <label className="flex items-center gap-2 font-mono font-bold text-[9px] uppercase tracking-wider cursor-pointer select-none text-foreground hover:text-primary transition-colors">
+                <input type="checkbox" checked={showUC} onChange={() => setShowUC(!showUC)} className="appearance-none border border-primary w-3 h-3 checked:bg-primary transition-colors shrink-0" />
+                <span className="w-3 h-1.5 bg-[#10b981] shrink-0" />
+                <span className="truncate">CONSERV_UC</span>
+              </label>
+              <label className="flex items-center gap-2 font-mono font-bold text-[9px] uppercase tracking-wider cursor-pointer select-none text-foreground hover:text-primary transition-colors">
+                <input type="checkbox" checked={showMineracao} onChange={() => setShowMineracao(!showMineracao)} className="appearance-none border border-primary w-3 h-3 checked:bg-primary transition-colors shrink-0" />
+                <span className="w-3 h-1.5 bg-[#78716c] shrink-0" />
+                <span className="truncate">MINING_ANM</span>
+              </label>
+            </div>
+            
+            <button 
+              onClick={() => setIsFullscreen(true)}
+              className="mt-6 w-full flex items-center justify-center gap-2 py-3 border border-primary text-primary hover:bg-primary hover:text-black font-mono font-bold text-xs tracking-widest transition-all "
+            >
+              <Satellite className="w-4 h-4" /> [ INICIAR VARREDURA ]
+            </button>
+          </div>
+
+          {/* Divergências */}
+          <div className="mb-6 px-6">
+            <div className="text-[10px] text-destructive tracking-[0.2em] mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-3 h-3" /> ANALISE_DE_AMEACAS
+            </div>
+            
+            {diagnostico?.divergencias && diagnostico.divergencias.length > 0 ? (
+              <div className="space-y-4">
+                {diagnostico.divergencias.map(div => (
+                  <div key={div.id} className="bg-destructive/10 border border-destructive p-3 relative overflow-hidden ">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-destructive" />
+                    
+                    <div className="flex justify-between items-start mb-2 pl-2">
+                      <h4 className="font-mono font-bold text-destructive text-[10px] uppercase tracking-widest">{div.tipo}</h4>
+                      <span className="bg-destructive text-black text-[9px] font-black uppercase px-1.5 py-0.5">
+                        LVL: {div.severidade}
+                      </span>
+                    </div>
+                    
+                    <p className="text-[10px] text-foreground font-mono bg-black/40 p-2 border border-destructive/30 mb-2 uppercase">
+                      {div.textoLinguagemSimples}
+                    </p>
+                    
+                    <div className="flex items-center justify-between pt-2 border-t border-destructive/30 pl-2">
+                      <span className="text-[10px] font-mono font-bold text-destructive uppercase">AREA: {div.areaHectares} HA</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-6 text-center border border-primary bg-primary/5">
+                <CheckCircle2 className="w-8 h-8 text-primary mb-2 opacity-80" />
+                <div className="text-primary text-[10px] font-bold tracking-widest mt-2 uppercase">ZERO_AMEAÇAS</div>
+                <div className="text-muted-foreground text-[8px] tracking-widest uppercase">SETOR LIMPO E SEGURO</div>
+              </div>
+            )}
+            
+            <button 
+              onClick={() => navigate({ to: "/retificacao", search: { imovelId: imovel.id } })}
+              className="mt-4 w-full flex items-center justify-center gap-2 py-3 bg-primary text-black font-mono font-bold text-xs uppercase tracking-widest transition-all  hover:bg-white"
+            >
+              <Wrench className="w-4 h-4" /> [ GERAR_PARECER ]
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Helper overlay on map (Floating Top Right) */}
+      {!isFullscreen && (
+        <div className="absolute top-4 right-4 z-[400] glass-card p-3 max-w-[250px] animate-in slide-in-from-right">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <p className="text-[10px] font-mono text-primary uppercase tracking-widest leading-relaxed">
+              &gt; SENSOR ARRAY ACTIVE.<br/>
+              &gt; APROXIME PARA RENDERIZAR POLÍGONOS DE CRUZAMENTO.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Satellite Dashboard */}
+      {isFullscreen && (
+        <SatelliteDashboard 
+          imovel={imovel} 
+          diag={diagnostico} 
+          onClose={() => setIsFullscreen(false)} 
+        />
+      )}
       
     </div>
   );

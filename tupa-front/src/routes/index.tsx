@@ -105,16 +105,16 @@ function FilaScreen() {
             <p className="text-muted-foreground mt-1">Gerencie as inspeções e o histórico do CAR.</p>
           </div>
           
-          <div className="flex gap-2 p-1 bg-card border border-border rounded-xl">
+          <div className="flex gap-2 p-1 bg-card border border-border rounded-none shadow-premium">
             <button 
               onClick={() => setActiveTab("fila")}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "fila" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-muted"}`}
+              className={`px-6 py-2 rounded-none text-xs font-mono uppercase tracking-wider font-bold transition-all ${activeTab === "fila" ? "bg-primary text-primary-foreground " : "text-muted-foreground hover:bg-muted"}`}
             >
-              Fila de Análise
+              [ Fila de Análise ]
             </button>
             <button 
               onClick={() => setActiveTab("logs")}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === "logs" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-muted"}`}
+              className={`px-6 py-2 rounded-none text-xs font-mono uppercase tracking-wider font-bold transition-all flex items-center gap-2 ${activeTab === "logs" ? "bg-primary text-primary-foreground " : "text-muted-foreground hover:bg-muted"}`}
             >
               <History className="w-4 h-4" /> Histórico ({logs.length})
             </button>
@@ -124,20 +124,21 @@ function FilaScreen() {
         {activeTab === "fila" && (
           <div className="space-y-4">
             {/* Barra de Filtros Completa */}
-            <div className="bg-card border border-border rounded-2xl shadow-soft p-4 flex flex-wrap gap-4 items-center">
+            <div className="bg-card border border-border rounded-none shadow-premium p-4 flex flex-wrap gap-4 items-center relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
               <div className="relative flex-1 min-w-[250px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                 <input 
                   type="text" 
-                  placeholder="Buscar por CAR ou nome..." 
+                  placeholder="BUSCAR POR CAR OU NOME..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2.5 w-full rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:border-primary"
+                  className="pl-9 pr-4 py-2 w-full rounded-none border border-border bg-background text-xs font-mono uppercase tracking-wider focus:outline-none focus:border-primary focus: transition-all"
                 />
               </div>
               
-              <select value={filterUf} onChange={e => setFilterUf(e.target.value)} className="py-2.5 px-3 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:border-primary">
-                <option value="">Todos os Estados</option>
+              <select value={filterUf} onChange={e => setFilterUf(e.target.value)} className="py-2 px-3 rounded-none border border-border bg-background text-xs font-mono uppercase tracking-wider focus:outline-none focus:border-primary focus: transition-all">
+                <option value="">TODOS OS ESTADOS</option>
                 <option value="AC">Acre</option>
                 <option value="AL">Alagoas</option>
                 <option value="AP">Amapá</option>
@@ -167,30 +168,30 @@ function FilaScreen() {
                 <option value="TO">Tocantins</option>
               </select>
 
-              <select value={filterScore} onChange={e => setFilterScore(e.target.value)} className="py-2.5 px-3 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:border-primary">
-                <option value="">Qualquer Score</option>
-                <option value="critico">Crítico (0 - 69)</option>
-                <option value="atencao">Atenção (70 - 89)</option>
-                <option value="regular">Regular (90 - 100)</option>
+              <select value={filterScore} onChange={e => setFilterScore(e.target.value)} className="py-2 px-3 rounded-none border border-border bg-background text-xs font-mono uppercase tracking-wider focus:outline-none focus:border-primary focus: transition-all">
+                <option value="">QUALQUER SCORE</option>
+                <option value="critico">CRÍTICO (0 - 69)</option>
+                <option value="atencao">ATENÇÃO (70 - 89)</option>
+                <option value="regular">REGULAR (90 - 100)</option>
               </select>
 
-              <select value={filterSeveridade} onChange={e => setFilterSeveridade(e.target.value)} className="py-2.5 px-3 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:border-primary">
-                <option value="">Qualquer Severidade</option>
-                <option value="ALTA">Alta</option>
-                <option value="MÉDIA">Média</option>
-                <option value="BAIXA">Baixa</option>
-                <option value="Nenhuma">Sem Divergência</option>
+              <select value={filterSeveridade} onChange={e => setFilterSeveridade(e.target.value)} className="py-2 px-3 rounded-none border border-border bg-background text-xs font-mono uppercase tracking-wider focus:outline-none focus:border-primary focus: transition-all">
+                <option value="">QUALQUER SEVERIDADE</option>
+                <option value="ALTA">ALTA</option>
+                <option value="MÉDIA">MÉDIA</option>
+                <option value="BAIXA">BAIXA</option>
+                <option value="Nenhuma">SEM DIVERGÊNCIA</option>
               </select>
 
-              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="py-2.5 px-3 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:border-primary">
-                <option value="">Todos os Status</option>
-                <option value="Pendente">Aguardando Análise</option>
-                <option value="Validado">Validado</option>
-                <option value="Retificar">Retificação Solicitada</option>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="py-2 px-3 rounded-none border border-border bg-background text-xs font-mono uppercase tracking-wider focus:outline-none focus:border-primary focus: transition-all">
+                <option value="">TODOS OS STATUS</option>
+                <option value="Pendente">AGUARDANDO ANÁLISE</option>
+                <option value="Validado">VALIDADO</option>
+                <option value="Retificar">RETIFICAR</option>
               </select>
             </div>
 
-            <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
+            <div className="bg-card rounded-none border border-border shadow-premium overflow-hidden">
               {loading ? (
                 <div className="flex flex-col items-center justify-center p-20 text-muted-foreground">
                   <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
@@ -198,62 +199,65 @@ function FilaScreen() {
                 </div>
               ) : (
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-muted/50 text-muted-foreground uppercase tracking-wider text-xs font-bold">
+                  <thead className="bg-muted text-primary font-mono uppercase tracking-[0.2em] text-[10px] font-bold border-b border-border">
                     <tr>
-                      <th className="px-6 py-4">Imóvel / CAR</th>
-                      <th className="px-6 py-4">Localização</th>
-                      <th className="px-6 py-4 text-center">Score</th>
-                      <th className="px-6 py-4">Divergências</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4 text-right">Ação</th>
+                      <th className="px-6 py-4">ID_IMÓVEL // CAR</th>
+                      <th className="px-6 py-4">COORD_LOC</th>
+                      <th className="px-6 py-4 text-center">CONF_SCORE</th>
+                      <th className="px-6 py-4">DIVERG_DETECT</th>
+                      <th className="px-6 py-4">SYS_STATUS</th>
+                      <th className="px-6 py-4 text-right">CMD_EXEC</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {filteredFila.map(item => {
+                    {filteredFila.map((item, idx) => {
                       const score = item.diagnostico?.scoreConformidade ?? 100;
                       const isCritico = score < 70;
                       const isAtencao = score >= 70 && score < 90;
                       
+                      // Calculate stagger class dynamically 1 to 5
+                      const staggerClass = `animate-stagger-${(idx % 5) + 1}`;
+                      
                       return (
-                        <tr key={item.id} className="hover:bg-muted/30 transition-colors group">
+                        <tr key={item.id} className={`hover:bg-muted/50 transition-colors group ${staggerClass}`}>
                           <td className="px-6 py-4">
-                            <div className="font-bold text-foreground">{item.nome}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">{item.numeroCAR}</div>
+                            <div className="font-bold text-foreground font-mono uppercase text-sm tracking-wide">{item.nome}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5 font-mono tracking-widest">{item.numeroCAR}</div>
                           </td>
-                          <td className="px-6 py-4 font-medium">{item.municipio} - {item.uf}</td>
+                          <td className="px-6 py-4 font-mono text-xs text-muted-foreground uppercase tracking-widest">{item.municipio} - {item.uf}</td>
                           <td className="px-6 py-4 text-center">
                             {item.isLoading ? (
-                              <Loader2 className="w-4 h-4 animate-spin mx-auto text-muted-foreground" />
+                              <Loader2 className="w-4 h-4 animate-spin mx-auto text-primary" />
                             ) : (
-                              <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full font-bold border-2 ${
-                                isCritico ? "border-destructive/20 text-destructive bg-destructive/10" : 
-                                isAtencao ? "border-amber-warn/20 text-amber-warn bg-amber-warn/10" : 
-                                "border-primary/20 text-primary bg-primary/10"
+                              <div className={`inline-flex items-center justify-center px-3 py-1 font-mono font-bold border ${
+                                isCritico ? "border-destructive text-destructive bg-destructive/10 " : 
+                                isAtencao ? "border-amber-warn text-amber-warn bg-amber-warn/10 " : 
+                                "border-primary text-primary bg-primary/10 "
                               }`}>
-                                {score}
+                                [{score.toString().padStart(3, '0')}]
                               </div>
                             )}
                           </td>
                           <td className="px-6 py-4">
                             {item.isLoading ? (
-                              <span className="text-muted-foreground">...</span>
+                              <span className="text-muted-foreground font-mono text-xs">SCANNING...</span>
                             ) : item.diagnostico?.divergencias && item.diagnostico.divergencias.length > 0 ? (
-                              <div className="flex items-center gap-1.5 text-destructive font-bold">
+                              <div className="flex items-center gap-1.5 text-destructive font-bold font-mono text-xs uppercase tracking-wider">
                                 <AlertTriangle className="w-4 h-4" />
-                                {item.diagnostico.divergencias.length} detectadas
+                                {item.diagnostico.divergencias.length} CONFLITOS
                               </div>
                             ) : (
-                              <div className="flex items-center gap-1.5 text-primary font-bold">
+                              <div className="flex items-center gap-1.5 text-primary font-bold font-mono text-xs uppercase tracking-wider">
                                 <CheckCircle2 className="w-4 h-4" />
-                                Regular
+                                LIMPO
                               </div>
                             )}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wider ${
-                              item.status === "Validado" ? "bg-primary/20 text-primary" :
-                              item.status === "Retificar" ? "bg-amber-warn/20 text-amber-warn" :
-                              "bg-muted text-muted-foreground"
+                            <span className={`px-2 py-1 border text-[10px] font-mono font-black uppercase tracking-widest ${
+                              item.status === "Validado" ? "border-primary bg-primary/10 text-primary" :
+                              item.status === "Retificar" ? "border-amber-warn bg-amber-warn/10 text-amber-warn" :
+                              "border-muted-foreground bg-muted text-muted-foreground"
                             }`}>
                               {item.status}
                             </span>
@@ -262,9 +266,9 @@ function FilaScreen() {
                             <Link 
                               to={`/diagnostico`}
                               search={{ imovelId: item.id }}
-                              className="inline-flex items-center justify-center px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground font-bold rounded-lg transition-colors cursor-pointer"
+                              className="inline-flex items-center justify-center px-4 py-1.5 border border-primary text-primary hover:bg-primary hover:text-black font-mono text-xs font-bold transition-all cursor-pointer hover:"
                             >
-                              Inspecionar <ChevronRight className="w-4 h-4 ml-1" />
+                              [INSPECIONAR] <ChevronRight className="w-4 h-4 ml-1" />
                             </Link>
                           </td>
                         </tr>

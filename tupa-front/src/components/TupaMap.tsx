@@ -11,6 +11,10 @@ interface TupaMapProps {
   showRestrito: boolean;
   showUsoCobertura: boolean;
   showDivergencias: boolean;
+  showHidrografia?: boolean;
+  showTerraIndigena?: boolean;
+  showMineracao?: boolean;
+  showUC?: boolean;
 }
 
 import type { GeoJSONGeometry } from "@/types/imovel";
@@ -49,6 +53,10 @@ export default function TupaMap({
   showRestrito,
   showUsoCobertura,
   showDivergencias,
+  showHidrografia,
+  showTerraIndigena,
+  showMineracao,
+  showUC,
 }: TupaMapProps) {
   const declaredRings = geomToRings(layers.poligonoDeclarado);
   const appRings = geomToRings(layers.app);
@@ -56,7 +64,7 @@ export default function TupaMap({
   const allDeclaredPositions = declaredRings.flat();
 
   return (
-    <div className="relative w-full h-full select-none rounded-2xl overflow-hidden border border-border bg-muted">
+    <div className="relative w-full h-full select-none bg-black">
       <MapContainer
         center={[-16.354, -46.885]}
         zoom={14}
