@@ -17,6 +17,18 @@ import {
   Droplets
 } from "lucide-react";
 
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="relative group shrink-0 cursor-default" onClick={e => e.preventDefault()}>
+      <Info className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-primary transition-colors" />
+      <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 bg-popover text-popover-foreground border border-border text-xs font-normal rounded-lg px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-[600] leading-relaxed">
+        {text}
+        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-border" />
+      </span>
+    </span>
+  );
+}
+
 import { getImovel, getDiagnostico, getLayers } from "@/api";
 import type {
   Imovel,
@@ -155,8 +167,8 @@ function DiagnosticoScreen() {
   useEffect(() => {
     async function loadData() {
       if (!imovelId) {
-        // Fallback to Fazenda Sol Nascente if no param
-        navigate({ search: { imovelId: "fazenda-sol-nascente" } });
+        setError(true);
+        setLoading(false);
         return;
       }
       try {
@@ -256,32 +268,37 @@ function DiagnosticoScreen() {
               <Layers className="w-4 h-4" /> Controle de Camadas
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center gap-3 font-semibold text-sm cursor-pointer select-none">
-                <input type="checkbox" checked={showDeclared} onChange={() => setShowDeclared(!showDeclared)} className="rounded accent-primary w-4 h-4" />
+              <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer select-none">
+                <input type="checkbox" checked={showDeclared} onChange={() => setShowDeclared(!showDeclared)} className="rounded accent-primary w-4 h-4 shrink-0" />
                 <span className="w-4 h-1.5 bg-primary rounded-sm shrink-0" />
-                Limite CAR
+                <span>Limite CAR</span>
+                <InfoTip text="Polígono declarado pelo produtor no Cadastro Ambiental Rural (SICAR). Representa o perímetro oficial da propriedade registrado." />
               </label>
-              <label className="flex items-center gap-3 font-semibold text-sm cursor-pointer select-none">
-                <input type="checkbox" checked={showApp} onChange={() => setShowApp(!showApp)} className="rounded accent-primary w-4 h-4" />
+              <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer select-none">
+                <input type="checkbox" checked={showApp} onChange={() => setShowApp(!showApp)} className="rounded accent-primary w-4 h-4 shrink-0" />
                 <span className="w-4 h-1.5 border border-dashed border-[#3b82f6] bg-[#3b82f6]/20 rounded-sm shrink-0" />
-                APP
+                <span>APP</span>
+                <InfoTip text="Área de Preservação Permanente (Lei 12.651/2012). Faixas marginais de rios, nascentes, topos de morro e encostas. Vegetação nativa obrigatória." />
               </label>
               {layers?.usoRestrito && (
-                <label className="flex items-center gap-3 font-semibold text-sm cursor-pointer select-none">
-                  <input type="checkbox" checked={showRestrito} onChange={() => setShowRestrito(!showRestrito)} className="rounded accent-primary w-4 h-4" />
+                <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer select-none">
+                  <input type="checkbox" checked={showRestrito} onChange={() => setShowRestrito(!showRestrito)} className="rounded accent-primary w-4 h-4 shrink-0" />
                   <span className="w-4 h-1.5 border border-dashed border-[#c68a35] bg-[#c68a35]/20 rounded-sm shrink-0" />
-                  Restrito
+                  <span>Restrito</span>
+                  <InfoTip text="Uso Restrito: áreas de inclinação entre 25° e 45° e pantanais. Permitem atividades com restrições específicas previstas no Código Florestal." />
                 </label>
               )}
-              <label className="flex items-center gap-3 font-semibold text-sm cursor-pointer select-none">
-                <input type="checkbox" checked={showUsoCobertura} onChange={() => setShowUsoCobertura(!showUsoCobertura)} className="rounded accent-primary w-4 h-4" />
+              <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer select-none">
+                <input type="checkbox" checked={showUsoCobertura} onChange={() => setShowUsoCobertura(!showUsoCobertura)} className="rounded accent-primary w-4 h-4 shrink-0" />
                 <span className="w-4 h-1.5 bg-[#EAB308]/60 rounded-sm shrink-0" />
-                Cobertura
+                <span>Cobertura</span>
+                <InfoTip text="Uso e cobertura do solo detectado pelo satélite Sentinel-2 (Dynamic World / MapBiomas). Classifica: floresta nativa, lavoura, pastagem, solo exposto e corpos d'água." />
               </label>
-              <label className="flex items-center gap-3 font-semibold text-sm cursor-pointer select-none">
-                <input type="checkbox" checked={showDivergencias} onChange={() => setShowDivergencias(!showDivergencias)} className="rounded accent-primary w-4 h-4" />
+              <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer select-none">
+                <input type="checkbox" checked={showDivergencias} onChange={() => setShowDivergencias(!showDivergencias)} className="rounded accent-primary w-4 h-4 shrink-0" />
                 <span className="w-4 h-1.5 bg-[#ef4444] rounded-sm shrink-0" />
-                Divergências
+                <span>Divergências</span>
+                <InfoTip text="Áreas onde o uso do solo observado pelo satélite conflita com as obrigações do CAR (ex.: cultivo em APP, desmatamento sem autorização). Requerem ação do produtor." />
               </label>
             </div>
             

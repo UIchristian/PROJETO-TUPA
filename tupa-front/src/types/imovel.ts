@@ -67,7 +67,7 @@ export interface HidrografiaData {
 
 export interface LayerGeometries {
   poligonoDeclarado: GeoJSONGeometry;
-  app: GeoJSONGeometry;
+  app?: GeoJSONGeometry;
   usoRestrito?: GeoJSONGeometry;
   gabarito?: GeoJSONGeometry;
   divergencias: Divergencia[];

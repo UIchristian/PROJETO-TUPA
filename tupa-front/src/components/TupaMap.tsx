@@ -20,7 +20,7 @@ import type { GeoJSONGeometry } from "@/types/imovel";
 const geomToRings = (geometry: GeoJSONGeometry | undefined): [number, number][][] => {
   if (!geometry?.coordinates?.length) return [];
   if (geometry.type === "MultiPolygon") {
-    return (geometry.coordinates as number[][][][]).map((poly) =>
+    return (geometry.coordinates as unknown as number[][][][]).map((poly) =>
       poly[0].map(([lng, lat]) => [lat, lng] as [number, number]),
     );
   }

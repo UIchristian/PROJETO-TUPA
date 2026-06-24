@@ -243,8 +243,8 @@ function BackofficeAnalistaScreen() {
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-                      <span className="flex items-center gap-1"><MapPin w="12" h="12"/> {imovel.municipio}</span>
-                      <span className="flex items-center gap-1"><FileText w="12" h="12"/> {imovel.areaHectares} ha</span>
+                      <span className="flex items-center gap-1"><MapPin size={12}/> {imovel.municipio}</span>
+                      <span className="flex items-center gap-1"><FileText size={12}/> {imovel.areaHectares} ha</span>
                     </div>
                   </button>
                 );
