@@ -28,7 +28,7 @@ from shapely.geometry.base import BaseGeometry
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from db.database import get_db, engine, Base
+from db.database import get_db, engine, Base, ensure_schema_upgrades
 from db.models import Imovel
 from engine import calcular_diagnostico_postgis, calcular_score_conformidade
 from config.settings import regras
@@ -98,6 +98,7 @@ async def lifespan(app: FastAPI):
     # Cria as tabelas se não existirem
     try:
         Base.metadata.create_all(bind=engine)
+        ensure_schema_upgrades()
         logger.info("Tupã API iniciada — Banco PostGIS conectado.")
     except Exception as e:
         logger.warning(f"Não foi possível conectar ao banco PostGIS (PostgreSQL): {e}")
