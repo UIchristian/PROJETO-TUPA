@@ -3,7 +3,7 @@
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Backend
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\tupa-back'; python main.py"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\tupa-back'; .\venv\Scripts\activate; python main.py"
 
 # Frontend
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$root\tupa-front'; npm run dev"

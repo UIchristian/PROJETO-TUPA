@@ -13,6 +13,7 @@ import { Route as RetificacaoRouteImport } from './routes/retificacao'
 import { Route as ProgramasRouteImport } from './routes/programas'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as DiagnosticoRouteImport } from './routes/diagnostico'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
@@ -37,6 +38,11 @@ const PerfilRoute = PerfilRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapaRoute = MapaRouteImport.update({
+  id: '/mapa',
+  path: '/mapa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiagnosticoRoute = DiagnosticoRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/diagnostico': typeof DiagnosticoRoute
+  '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
   '/programas': typeof ProgramasRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/diagnostico': typeof DiagnosticoRoute
+  '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
   '/programas': typeof ProgramasRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/diagnostico': typeof DiagnosticoRoute
+  '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
   '/programas': typeof ProgramasRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/configuracoes'
     | '/diagnostico'
+    | '/mapa'
     | '/onboarding'
     | '/perfil'
     | '/programas'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/configuracoes'
     | '/diagnostico'
+    | '/mapa'
     | '/onboarding'
     | '/perfil'
     | '/programas'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/configuracoes'
     | '/diagnostico'
+    | '/mapa'
     | '/onboarding'
     | '/perfil'
     | '/programas'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   CadastroRoute: typeof CadastroRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DiagnosticoRoute: typeof DiagnosticoRoute
+  MapaRoute: typeof MapaRoute
   OnboardingRoute: typeof OnboardingRoute
   PerfilRoute: typeof PerfilRoute
   ProgramasRoute: typeof ProgramasRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mapa': {
+      id: '/mapa'
+      path: '/mapa'
+      fullPath: '/mapa'
+      preLoaderRoute: typeof MapaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/diagnostico': {
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroRoute: CadastroRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   DiagnosticoRoute: DiagnosticoRoute,
+  MapaRoute: MapaRoute,
   OnboardingRoute: OnboardingRoute,
   PerfilRoute: PerfilRoute,
   ProgramasRoute: ProgramasRoute,
