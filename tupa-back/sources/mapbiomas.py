@@ -45,8 +45,13 @@ class MapBiomasSourceAdapter(BaseSourceAdapter):
         with rasterio.open(raster_path) as src:
             for imovel in imoveis:
                 try:
-                    # Deletar coberturas antigas deste imóvel
-                    db_session.query(CoberturaObservada).filter(CoberturaObservada.imovel_id == imovel.id).delete()
+                    # Deletar coberturas antigas deste imóvel — apenas as desta fonte,
+                    # para não apagar a camada recente do Sentinel (que coexiste).
+                    db_session.query(CoberturaObservada).filter(
+                        CoberturaObservada.imovel_id == imovel.id,
+                        (CoberturaObservada.fonte == "mapbiomas")
+                        | (CoberturaObservada.fonte.is_(None)),
+                    ).delete(synchronize_session=False)
                     
                     # Extrair a geometria do imóvel do PostGIS (em WKB -> Shapely)
                     geom_shapely = to_shape(imovel.poligono_declarado)
@@ -77,9 +82,10 @@ class MapBiomasSourceAdapter(BaseSourceAdapter):
                         nova_cobertura = CoberturaObservada(
                             imovel_id=imovel.id,
                             classe=nome_classe,
-                            # A área real precisaria do ST_Area no SRID correto, 
+                            # A área real precisaria do ST_Area no SRID correto,
                             # mas podemos deixar nulo ou estimar para preenchimento via DB trigger
-                            area_hectares=0.0, 
+                            area_hectares=0.0,
+                            fonte="mapbiomas",
                             geometria=f"SRID=4326;{poly_shapely.wkt}"
                         )
                         db_session.add(nova_cobertura)

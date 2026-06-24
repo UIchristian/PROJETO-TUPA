@@ -28,6 +28,9 @@ class CoberturaObservada(Base):
     imovel_id = Column(String, ForeignKey("imovel.id"))
     classe = Column(String) # Ex: "Floresta Nativa", "Lavoura"
     area_hectares = Column(Float)
+    # Origem da observação: "mapbiomas" (base histórica) ou "sentinel" (camada recente).
+    # Permite que as duas fontes coexistam sem uma sobrescrever a outra.
+    fonte = Column(String, server_default="mapbiomas", index=True)
     geometria = Column(Geometry(geometry_type='MULTIPOLYGON', srid=4326))
 
     imovel = relationship("Imovel", back_populates="coberturas")

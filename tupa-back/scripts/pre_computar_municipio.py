@@ -5,7 +5,7 @@ from pathlib import Path
 # Adiciona tupa-back ao PYTHONPATH
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from db.database import SessionLocal, Base, engine
+from db.database import SessionLocal, Base, engine, ensure_schema_upgrades
 from sources.sentinel import SentinelSourceAdapter
 from sources.mapbiomas import MapBiomasSourceAdapter
 from sources.hidrografia import HidrografiaSourceAdapter
@@ -22,6 +22,7 @@ def pre_computar(municipio: str):
     
     # 1. Cria tabelas se não existirem
     Base.metadata.create_all(bind=engine)
+    ensure_schema_upgrades()
     
     with SessionLocal() as db:
         # 2. Executa carga de dados através dos adaptadores
