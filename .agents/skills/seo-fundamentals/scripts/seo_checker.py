@@ -34,7 +34,8 @@ except:
 SKIP_DIRS = {
     'node_modules', '.next', 'dist', 'build', '.git', '.github',
     '__pycache__', '.vscode', '.idea', 'coverage', 'test', 'tests',
-    '__tests__', 'spec', 'docs', 'documentation', 'examples'
+    '__tests__', 'spec', 'docs', 'documentation', 'examples',
+    'venv', '.venv', 'env'
 }
 
 # Files to skip (not pages)
@@ -106,12 +107,12 @@ def check_page(file_path: Path) -> dict:
     is_layout = '<Head' in content or '<head>' in content.lower() or '<head ' in content.lower()
     
     # 1. Title tag
-    has_title = '<title' in content.lower() or 'title=' in content or 'Head>' in content
+    has_title = '<title' in content.lower() or 'title=' in content or 'Head>' in content or 'HeadContent' in content or re.search(r'title\s*[:=]', content) is not None
     if not has_title and is_layout:
         issues.append("Missing <title> tag")
     
     # 2. Meta description
-    has_description = 'name="description"' in content.lower() or 'name=\'description\'' in content.lower()
+    has_description = re.search(r'name\s*[:=]\s*[\'"]description[\'"]', content, re.I) is not None
     if not has_description and is_layout:
         issues.append("Missing meta description")
     

@@ -25,8 +25,8 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
+        <h2 className="text-7xl font-bold text-foreground">404</h2>
+        <h3 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h3>
         <div className="mt-6">
           <Link
             to="/"
@@ -47,9 +47,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+        <h2 className="text-xl font-semibold tracking-tight text-foreground">
           Erro ao carregar a página
-        </h1>
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Tente atualizar a página ou voltar para o início.
         </p>
@@ -81,6 +81,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Tupã Backoffice" },
+      { name: "description", content: "Tupã Backoffice - Sistema de análise de Cadastro Ambiental Rural (CAR)" },
+      { property: "og:title", content: "Tupã Backoffice" },
+      { property: "og:description", content: "Tupã Backoffice - Sistema de análise de Cadastro Ambiental Rural (CAR)" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -116,7 +120,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
                 <ShieldCheck className="text-primary w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight leading-none text-foreground">Tupã</h1>
+                <span className="block text-xl font-bold tracking-tight leading-none text-foreground">Tupã</span>
                 <span className="text-xs font-semibold text-primary/80 uppercase tracking-wider">Backoffice CAR</span>
               </div>
             </Link>
