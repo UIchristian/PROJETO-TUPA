@@ -1,9 +1,9 @@
-# Regras do Código Florestal - Configurável por país/região
-# Conjunto Padrão: Brasil (Lei 12.651/2012)
+# Regras do Código Florestal - Brasil (Lei 12.651/2012)
+# Todos os parâmetros conferidos na lei.
 
 app:
   cursos_dagua:
-    # Largura do rio em metros : Faixa de APP em metros
+    # Largura do rio em metros : Faixa de APP em metros (Art. 4, I)
     faixas:
       - largura_max: 10
         distancia_app: 30
@@ -15,24 +15,49 @@ app:
         distancia_app: 200
       - largura_max: 999999
         distancia_app: 500
+
   nascentes:
-    raio_app: 50 # em metros
+    raio_app: 50 # metros (Art. 4, IV)
+
+  lagos_lagoas_naturais: # Art. 4, II
+    rural_padrao: 100       # corpo d'agua > 20ha em zona rural
+    rural_ate_20ha: 50      # corpo d'agua <= 20ha em zona rural
+    urbano: 30              # zona urbana
+    limiar_area_reduzida_ha: 20
+    dispensa_inferior_ha: 1 # acumulações < 1ha dispensadas (Art. 4, §4)
+
+  veredas:
+    faixa_marginal: 50 # metros a partir do espaço permanentemente brejoso (Art. 4, XI)
+
+  reservatorios_artificiais: # Art. 4, §2
+    rural_ate_20ha_minimo: 15 # metros
+    exige_barramento_curso_natural: true
+
   encostas:
-    declividade_minima_app: 45 # graus
+    declividade_minima_app: 45 # graus (Art. 4, V)
+
+  topo_morro: # Art. 4, IX
+    altura_minima_m: 100
+    inclinacao_media_minima_graus: 25
+
+  altitude: # Art. 4, X
+    altitude_minima_m: 1800
 
 uso_restrito:
   encostas:
-    declividade_minima: 25 # graus
-    declividade_maxima: 45 # graus
+    declividade_minima: 25 # graus (Art. 11)
+    declividade_maxima: 45
 
 reserva_legal:
   biomas:
     amazonia_legal:
-      floresta: 80
-      cerrado: 35
-      campos_gerais: 20
+      floresta: 80   # Art. 12, I, a
+      cerrado: 35    # Art. 12, I, b
+      campos_gerais: 20 # Art. 12, I, c
     demais_regioes:
-      geral: 20
+      geral: 20      # Art. 12, II
+  art_67_modulos_fiscais_max: 4    # propriedade <= 4 MF consolidada em 22/07/2008
+  art_68_apenas_documental: true   # nunca aplicar Art. 68 automaticamente
 
 dispensas:
   pequena_propriedade_modulos_max: 4
