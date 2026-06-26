@@ -5,3 +5,7 @@ __pycache__/
 dist/
 build/
 data/
+hidrografia.geojson
+*.geojson
+brazil_coverage_2024.tif
+*_coverage_*.tif

@@ -12,7 +12,9 @@ import type {
   GeoJSONGeometry,
   HidrografiaData,
   Imovel,
+  ImovelResumo,
   LayerGeometries,
+  MunicipioStats,
 } from "@/types/imovel";
 
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -47,7 +49,7 @@ function mapDivergencia(d: any): Divergencia {
   };
 }
 
-function mapImovel(raw: any): Imovel {
+function mapImovel(raw: any): Imovel & { score: number; nDivergencias: number; maxSeveridade: string | null } {
   return {
     id: raw.id,
     nome: raw.nome,
@@ -56,6 +58,9 @@ function mapImovel(raw: any): Imovel {
     areaHectares: raw.area_hectares,
     numeroCAR: raw.numero_car,
     poligonoDeclarado: mapGeometry(raw.poligono_declarado),
+    score: raw.score ?? 100,
+    nDivergencias: raw.n_divergencias ?? 0,
+    maxSeveridade: raw.max_severidade ?? null,
   };
 }
 
@@ -88,6 +93,44 @@ function mapCursoDAguaInfo(c: any): CursoDAguaInfo {
     comprimentoTotalM: c.comprimento_total_m,
     faixaAppM: c.faixa_app_m,
   };
+}
+
+export async function getMunicipioStatsApi(municipio: string): Promise<MunicipioStats> {
+  const raw = await fetchJson<any>(`/municipio/${encodeURIComponent(municipio)}/stats`);
+  return {
+    municipio: raw.municipio,
+    totalImoveis: raw.total_imoveis,
+    mediaScore: raw.media_score,
+    percConformidade: raw.perc_conformidade,
+    totalAppHa: raw.total_app_ha,
+    totalRlHa: raw.total_rl_ha,
+    totalUsoRestritoHa: raw.total_uso_restrito_ha,
+  };
+}
+
+export async function getMunicipioMapaApi(municipio: string): Promise<any> {
+  return fetchJson<any>(`/municipio/${encodeURIComponent(municipio)}/mapa`);
+}
+
+export async function getMunicipioCamadasApi(municipio: string, tipo: string): Promise<any> {
+  return fetchJson<any>(`/municipio/${encodeURIComponent(municipio)}/camadas/${encodeURIComponent(tipo)}`);
+}
+
+export async function getImovelResumoApi(imovelId: string): Promise<ImovelResumo | null> {
+  try {
+    const raw = await fetchJson<any>(`/imovel/${encodeURIComponent(imovelId)}/resumo`);
+    return {
+      imovelId: raw.imovel_id,
+      nome: raw.nome,
+      numeroCar: raw.numero_car,
+      scoreConformidade: raw.score_conformidade,
+      divergencias: (raw.divergencias ?? []).map(mapDivergencia),
+      coberturaSolo: (raw.cobertura_solo ?? []).map(mapCoberturaClasse),
+    };
+  } catch (err: any) {
+    if (err.message?.includes("404")) return null;
+    throw err;
+  }
 }
 
 export async function getHidrografiaApi(

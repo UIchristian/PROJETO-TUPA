@@ -128,6 +128,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
             <div className="flex flex-1 items-center justify-end space-x-4">
               <div className="flex items-center gap-6 text-sm font-semibold text-muted-foreground">
                 <Link to="/" className="hover:text-primary transition-colors [&.active]:text-primary">Fila de Imóveis</Link>
+                <Link to="/mapa" className="flex items-center gap-1.5 hover:text-primary transition-colors [&.active]:text-primary">
+                  <MapIcon className="w-4 h-4" /> Mapa
+                </Link>
                 <Link to="/configuracoes" className="hover:text-primary transition-colors [&.active]:text-primary">Configurações</Link>
               </div>
               <Link to="/perfil" className="flex items-center gap-3 pl-6 border-l border-border hover:opacity-80 transition-opacity cursor-pointer group">

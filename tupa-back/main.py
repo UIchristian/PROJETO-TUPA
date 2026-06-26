@@ -18,11 +18,14 @@ from datetime import datetime, timedelta
 from typing import List
 
 import json
+import time
 
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.responses import Response as RawResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import ORJSONResponse
 from shapely.geometry import mapping as shapely_mapping
 from shapely.geometry.base import BaseGeometry
 from sqlalchemy.orm import Session
@@ -30,7 +33,7 @@ from sqlalchemy import text
 
 from db.database import get_db, engine, Base
 from db.models import Imovel
-from engine import calcular_diagnostico_postgis, calcular_score_conformidade
+from engine import calcular_diagnostico_postgis
 from config.settings import regras
 
 from pydantic import BaseModel, field_validator, model_validator
@@ -110,6 +113,7 @@ app = FastAPI(
     description="Motor de divergências ambientais do CAR via PostGIS.",
     version="2.0.0",
     lifespan=lifespan,
+    default_response_class=ORJSONResponse,
 )
 
 # CORS — dev + configurável via env
@@ -124,6 +128,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# In-memory cache  (key → (expires_at, raw_json_bytes))
+# ---------------------------------------------------------------------------
+
+_cache: dict[str, tuple[float, bytes]] = {}
+
+
+def _cached(key: str, ttl: float, builder) -> RawResponse:
+    entry = _cache.get(key)
+    if entry and time.monotonic() < entry[0]:
+        return RawResponse(content=entry[1], media_type="application/json")
+    raw: str = builder()
+    _cache[key] = (time.monotonic() + ttl, raw.encode())
+    return RawResponse(content=raw, media_type="application/json")
 
 
 # ---------------------------------------------------------------------------
@@ -157,37 +177,76 @@ def get_imovel(imovel_id: str, db: Session = Depends(get_db)):
 
 @app.get("/imoveis")
 def list_imoveis(db: Session = Depends(get_db)):
-    """Lista todos os imóveis da base para a fila do analista, priorizando os com pior score."""
-    imoveis = db.query(Imovel).all()
-    resultado = []
-    for i in imoveis:
-        # Calcula/obtém o score atual do imóvel
-        score = calcular_score_conformidade(i.id, db)
-        resultado.append({
-            "id": i.id,
-            "nome": i.nome,
-            "municipio": i.municipio,
-            "uf": i.uf,
-            "numero_car": i.numero_car,
-            "score": score
-        })
-    
-    # Ordena do pior score (mais baixo) para o melhor
-    resultado.sort(key=lambda x: x["score"])
-    return resultado
+    """Lista imóveis — JSON montado pelo Postgres via json_agg (zero serialização Python)."""
+    def build():
+        return db.execute(
+            text("""
+                WITH scored AS (
+                    SELECT d.imovel_id,
+                           GREATEST(0, 100 - SUM(
+                               CASE d.severidade WHEN 'alta' THEN 15 WHEN 'media' THEN 8 ELSE 3 END
+                           )) AS score,
+                           COUNT(*) AS n_div,
+                           CASE
+                               WHEN BOOL_OR(d.severidade = 'alta')  THEN 'alta'
+                               WHEN BOOL_OR(d.severidade = 'media') THEN 'media'
+                               WHEN COUNT(*) > 0                    THEN 'baixa'
+                               ELSE NULL
+                           END AS max_sev
+                    FROM divergencia d
+                    GROUP BY d.imovel_id
+                )
+                SELECT COALESCE(
+                    json_agg(
+                        json_build_object(
+                            'id',            i.id,
+                            'nome',          i.nome,
+                            'municipio',     i.municipio,
+                            'uf',            i.uf,
+                            'numero_car',    i.numero_car,
+                            'score',         ROUND(COALESCE(s.score, 100)::numeric, 1),
+                            'n_divergencias', COALESCE(s.n_div, 0),
+                            'max_severidade', s.max_sev
+                        )
+                        ORDER BY COALESCE(s.score, 100) ASC
+                    )::text,
+                    '[]'
+                ) AS json
+                FROM imovel i
+                LEFT JOIN scored s ON s.imovel_id = i.id
+            """)
+        ).scalar()
+    return _cached("imoveis", 300.0, build)
 
 
 @app.get("/imovel/{imovel_id}/diagnostico")
-def get_diagnostico(imovel_id: str, db: Session = Depends(get_db)):
+def get_diagnostico(imovel_id: str, recalcular: bool = False, db: Session = Depends(get_db)):
     """
-    Diagnóstico completo do imóvel executando o motor no banco sob demanda 
-    ou retornando resultado pré-computado.
+    Diagnóstico completo. Usa dados pré-computados por padrão;
+    passe ?recalcular=true para forçar re-execução do motor.
     """
     imovel = db.query(Imovel).filter(Imovel.id == imovel_id).first()
     if not imovel:
         raise HTTPException(status_code=404, detail=f"Imóvel '{imovel_id}' não encontrado")
 
-    resultado_motor = calcular_diagnostico_postgis(imovel_id, db)
+    tem_divs = db.execute(
+        text("SELECT COUNT(*) FROM divergencia WHERE imovel_id = :iid"),
+        {"iid": imovel_id},
+    ).scalar() or 0
+
+    if recalcular or tem_divs == 0:
+        calcular_diagnostico_postgis(imovel_id, db)
+
+    score = db.execute(
+        text("""
+            SELECT GREATEST(0, 100 - COALESCE(SUM(
+                CASE severidade WHEN 'alta' THEN 15 WHEN 'media' THEN 8 ELSE 3 END
+            ), 0)) FROM divergencia WHERE imovel_id = :iid
+        """),
+        {"iid": imovel_id},
+    ).scalar() or 100.0
+
+    resultado_motor = {"score": float(score)}
 
     # ── Divergências com geometria ────────────────────────────────────────────
     divs_rows = db.execute(
@@ -352,6 +411,203 @@ def get_hidrografia(imovel_id: str, db: Session = Depends(get_db)):
         "total_cursos": len(cursos),
         "cursos": cursos,
     }
+
+
+@app.get("/imovel/{imovel_id}/resumo")
+def get_imovel_resumo(imovel_id: str, db: Session = Depends(get_db)):
+    """Diagnóstico pré-computado sem re-rodar o motor — ideal para painel do mapa."""
+    imovel = db.query(Imovel).filter(Imovel.id == imovel_id).first()
+    if not imovel:
+        raise HTTPException(status_code=404, detail=f"Imóvel '{imovel_id}' não encontrado")
+
+    divs = db.execute(
+        text("""
+            SELECT id, tipo, severidade, area_hectares, descricao, base_legal,
+                   caminho_retificacao, ST_AsGeoJSON(geometria) AS geojson
+            FROM divergencia WHERE imovel_id = :iid
+        """),
+        {"iid": imovel_id},
+    ).fetchall()
+
+    score = max(0.0, 100.0 - sum(
+        15 if d.severidade == "alta" else 8 if d.severidade == "media" else 3
+        for d in divs
+    ))
+
+    cob_rows = db.execute(
+        text("""
+            SELECT classe,
+                   ST_Area(ST_Transform(ST_Union(geometria), 5880)) / 10000.0 AS area_ha
+            FROM cobertura_observada WHERE imovel_id = :iid GROUP BY classe
+        """),
+        {"iid": imovel_id},
+    ).fetchall()
+
+    total_ha = sum(float(r.area_ha or 0) for r in cob_rows) or 1.0
+
+    return {
+        "imovel_id": imovel_id,
+        "nome": imovel.nome,
+        "numero_car": imovel.numero_car,
+        "score_conformidade": round(score, 1),
+        "divergencias": [
+            {
+                "id": d.id,
+                "tipo": d.tipo,
+                "severidade": d.severidade,
+                "area_hectares": d.area_hectares,
+                "texto_linguagem_simples": d.descricao,
+                "base_legal": d.base_legal,
+                "caminho_retificacao": d.caminho_retificacao,
+                "poligono_divergencia": json.loads(d.geojson) if d.geojson else None,
+            }
+            for d in divs
+        ],
+        "cobertura_solo": [
+            {
+                "classe": r.classe,
+                "percentual": round(float(r.area_ha or 0) / total_ha * 100, 1),
+                "cor_hex": next((v for k, v in MAPBIOMAS_COLORS.items() if k in r.classe), "#888888"),
+            }
+            for r in cob_rows
+        ],
+    }
+
+
+@app.get("/municipio/{municipio}/stats")
+def get_municipio_stats(municipio: str, db: Session = Depends(get_db)):
+    """Estatísticas agregadas do município para o painel de resumo."""
+    row = db.execute(
+        text("""
+            WITH scored AS (
+                SELECT i.id,
+                       GREATEST(0, 100 - COALESCE(
+                           SUM(CASE d.severidade WHEN 'alta' THEN 15 WHEN 'media' THEN 8 ELSE 3 END), 0
+                       )) AS score
+                FROM imovel i
+                LEFT JOIN divergencia d ON d.imovel_id = i.id
+                WHERE i.municipio = :mun
+                GROUP BY i.id
+            )
+            SELECT COUNT(*) AS total,
+                   ROUND(AVG(score)::numeric, 1) AS media_score,
+                   ROUND(100.0 * SUM(CASE WHEN score >= 90 THEN 1 ELSE 0 END)::numeric
+                         / NULLIF(COUNT(*), 0), 1) AS perc_conf
+            FROM scored
+        """),
+        {"mun": municipio},
+    ).fetchone()
+
+    cam = {
+        r.tipo: float(r.ha or 0)
+        for r in db.execute(
+            text("SELECT tipo, ROUND(SUM(area_hectares)::numeric,1) AS ha FROM feicao_referencia WHERE municipio=:mun GROUP BY tipo"),
+            {"mun": municipio},
+        ).fetchall()
+    }
+
+    return {
+        "municipio": municipio,
+        "total_imoveis": int(row.total or 0),
+        "media_score": float(row.media_score or 0),
+        "perc_conformidade": float(row.perc_conf or 0),
+        "total_app_ha": cam.get("APP_CURSO_DAGUA", 0),
+        "total_rl_ha": cam.get("RESERVA_LEGAL_PROPOSTA", 0),
+        "total_uso_restrito_ha": cam.get("USO_RESTRITO_ENCOSTA", 0),
+    }
+
+
+@app.get("/municipio/{municipio}/mapa")
+def get_municipio_mapa(municipio: str, db: Session = Depends(get_db)):
+    """GeoJSON FeatureCollection — JSON montado inteiramente pelo Postgres."""
+    def build():
+        return db.execute(
+            text("""
+                WITH scored AS (
+                    SELECT d.imovel_id,
+                           GREATEST(0, 100 - SUM(
+                               CASE d.severidade WHEN 'alta' THEN 15 WHEN 'media' THEN 8 ELSE 3 END
+                           )) AS score,
+                           COUNT(*) AS n_div
+                    FROM divergencia d
+                    GROUP BY d.imovel_id
+                )
+                SELECT json_build_object(
+                    'type', 'FeatureCollection',
+                    'features', COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'type', 'Feature',
+                                'geometry', ST_AsGeoJSON(
+                                    ST_SimplifyPreserveTopology(i.poligono_declarado::geometry, 0.0001)
+                                )::json,
+                                'properties', json_build_object(
+                                    'id',            i.id,
+                                    'nome',          i.nome,
+                                    'numero_car',    i.numero_car,
+                                    'score',         ROUND(COALESCE(s.score, 100)::numeric, 1),
+                                    'n_divergencias', COALESCE(s.n_div, 0)
+                                )
+                            )
+                        ),
+                        '[]'::json
+                    )
+                )::text AS json
+                FROM imovel i
+                LEFT JOIN scored s ON s.imovel_id = i.id
+                WHERE i.municipio = :mun
+                  AND i.poligono_declarado IS NOT NULL
+            """),
+            {"mun": municipio},
+        ).scalar()
+    return _cached(f"mapa:{municipio}", 3600.0, build)
+
+
+_TIPOS_VALIDOS = {"APP_CURSO_DAGUA", "APP_NASCENTE", "APP_LAGO", "APP_VEREDA",
+                  "USO_RESTRITO_ENCOSTA", "RESERVA_LEGAL_PROPOSTA", "COBERTURA"}
+
+
+@app.get("/municipio/{municipio}/camadas/{tipo}")
+def get_municipio_camadas(municipio: str, tipo: str, db: Session = Depends(get_db)):
+    """GeoJSON FeatureCollection de feicao_referencia — montado pelo Postgres."""
+    if tipo not in _TIPOS_VALIDOS:
+        raise HTTPException(status_code=400, detail=f"Tipo inválido: {tipo}")
+
+    def build():
+        return db.execute(
+            text("""
+                SELECT json_build_object(
+                    'type', 'FeatureCollection',
+                    'features', COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'type', 'Feature',
+                                'geometry', ST_AsGeoJSON(geometria)::json,
+                                'properties', json_build_object(
+                                    'id',            id,
+                                    'subclasse',     subclasse,
+                                    'base_legal',    base_legal,
+                                    'area_hectares', area_hectares,
+                                    'confianca',     confianca
+                                )
+                            )
+                        ),
+                        '[]'::json
+                    )
+                )::text AS json
+                FROM feicao_referencia
+                WHERE municipio = :mun AND tipo = :tipo AND geometria IS NOT NULL
+            """),
+            {"mun": municipio, "tipo": tipo},
+        ).scalar()
+    return _cached(f"camadas:{municipio}:{tipo}", 3600.0, build)
+
+
+@app.post("/admin/invalidar-cache")
+def invalidar_cache():
+    """Limpa o cache em memória — chamar após re-execução do pipeline."""
+    _cache.clear()
+    return {"ok": True, "mensagem": "Cache invalidado."}
 
 
 @app.post("/buscar-cars", response_model=BuscarCarsResponse)

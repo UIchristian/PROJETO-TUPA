@@ -10,24 +10,25 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Colunas candidatas a largura nos arquivos da ANA/IBGE
-_COLUNAS_LARGURA = ["largura", "largura_m", "width", "width_m", "ordem_strahler"]
+_COLUNAS_LARGURA = ["largura", "largura_m", "width", "width_m"]
 
 
 class HidrografiaSourceAdapter(BaseSourceAdapter):
-    """Carrega dados da rede de drenagem (ANA/IBGE).
+    """Carrega dados da rede de drenagem (ANA BHO ou IBGE BC250).
 
-    Tenta ler a largura do rio do atributo do arquivo. Se não encontrar,
-    estima a largura para feições do tipo polígono (massas d'água) a partir
-    de area/comprimento. Para linhas sem atributo de largura, mantém NULL —
-    o motor aplica o piso legal de 30m (conservador e defensável).
+    Procura o arquivo nesta ordem:
+      1. data/<municipio>/hidrografia.gpkg
+      2. data/<municipio>/hidrografia.geojson
+      Se não encontrar nenhum, tenta auto-extrair do arquivo global
+      hidrografia.geojson na raiz de tupa-back (requer ijson + geopandas).
     """
 
     def load_data(self, municipio: str, db_session: Session):
         logger.info(f"Carregando hidrografia para {municipio}...")
 
-        file_path = BASE_DIR / "data" / municipio / "hidrografia.gpkg"
-        if not file_path.exists():
-            logger.warning(f"Arquivo hidrografia não encontrado: {file_path}")
+        file_path = self._resolver_arquivo(municipio)
+        if file_path is None:
+            logger.warning(f"Hidrografia não encontrada para {municipio}. Pulando.")
             return
 
         gdf = gpd.read_file(file_path)
@@ -59,9 +60,69 @@ class HidrografiaSourceAdapter(BaseSourceAdapter):
         db_session.commit()
         logger.info(f"Hidrografia carregada: {inseridos} feições para {municipio}.")
 
+    def _resolver_arquivo(self, municipio: str) -> Path | None:
+        """Retorna o arquivo de hidrografia disponível, extraindo se necessário."""
+        mun_dir = BASE_DIR / "data" / municipio
+
+        for nome in ("hidrografia.gpkg", "hidrografia.geojson"):
+            p = mun_dir / nome
+            if p.exists():
+                logger.info(f"  Usando: {p}")
+                return p
+
+        # Tenta auto-extrair do arquivo global (BHO América do Sul)
+        global_src = BASE_DIR / "hidrografia.geojson"
+        if global_src.exists():
+            logger.info(f"  Extraindo do arquivo global ({global_src.name})...")
+            if self._auto_extrair(municipio):
+                return mun_dir / "hidrografia.gpkg"
+
+        return None
+
+    def _auto_extrair(self, municipio: str) -> bool:
+        """Extrai feições do arquivo global para a bbox do município."""
+        import importlib.util, sys
+        script = BASE_DIR / "scripts" / "extrair_hidrografia.py"
+        if not script.exists():
+            logger.error(f"Script não encontrado: {script}")
+            return False
+
+        spec = importlib.util.spec_from_file_location("extrair_hidrografia", script)
+        mod  = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        bbox = self._bbox_municipio(municipio)
+        if bbox is None:
+            logger.warning("Bbox do município não encontrada — rode extrair_hidrografia.py manualmente.")
+            return False
+
+        lat_min, lat_max, lon_min, lon_max = bbox
+        n = mod.extrair(municipio, lat_min, lat_max, lon_min, lon_max)
+        return n > 0
+
+    def _bbox_municipio(self, municipio: str) -> tuple | None:
+        """Tenta ler a bbox do municipality a partir dos imóveis já no banco."""
+        try:
+            from db.database import SessionLocal
+            from db.models import Imovel
+            from sqlalchemy import text
+            with SessionLocal() as db:
+                row = db.execute(text("""
+                    SELECT
+                        ST_YMin(ST_Extent(poligono_declarado)) - 0.1,
+                        ST_YMax(ST_Extent(poligono_declarado)) + 0.1,
+                        ST_XMin(ST_Extent(poligono_declarado)) - 0.1,
+                        ST_XMax(ST_Extent(poligono_declarado)) + 0.1
+                    FROM imovel WHERE municipio = :m
+                """), {"m": municipio}).fetchone()
+                if row and row[0] is not None:
+                    return tuple(row)
+        except Exception as e:
+            logger.debug(f"bbox_municipio falhou: {e}")
+        return None
+
 
 def _extrair_largura(row, col_largura: str | None, geom) -> float | None:
-    """Retorna largura em metros ou None."""
     if col_largura:
         val = row.get(col_largura)
         if val is not None and not (isinstance(val, float) and np.isnan(val)):
@@ -70,18 +131,17 @@ def _extrair_largura(row, col_largura: str | None, geom) -> float | None:
             except (TypeError, ValueError):
                 pass
 
-    # Para polígonos de massa d'água, estima largura como área / comprimento do eixo maior
+    # Para polígonos de massa d'água estima largura como área / comprimento
     if geom is not None and geom.geom_type in ("Polygon", "MultiPolygon"):
         try:
-            # Reprojeção para SIRGAS 2000 Policônica (EPSG:5880) para cálculo em metros
             from shapely.ops import transform
             import pyproj
-            proj = pyproj.Transformer.from_crs("EPSG:4326", "EPSG:5880", always_xy=True).transform
+            proj = pyproj.Transformer.from_crs("EPSG:4326", "EPSG:5880",
+                                                always_xy=True).transform
             geom_m = transform(proj, geom)
             comprimento = geom_m.length
-            area_m2 = geom_m.area
             if comprimento > 0:
-                return round(area_m2 / comprimento, 1)
+                return round(geom_m.area / comprimento, 1)
         except Exception:
             pass
 
@@ -89,7 +149,6 @@ def _extrair_largura(row, col_largura: str | None, geom) -> float | None:
 
 
 def _inferir_tipo(geom, row) -> str:
-    """Classifica o tipo de feição hídrica."""
     tipo_col = next(
         (row.get(c) for c in ["tipo", "type", "cobem_tipo", "natureza"] if c in row.index),
         None,

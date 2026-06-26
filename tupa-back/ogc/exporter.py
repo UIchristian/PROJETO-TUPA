@@ -32,8 +32,9 @@ def _criar_views_postgis(municipio: str, db: Session):
     for tipo in _TIPOS_FEICAO:
         view_name = f"wms_{tipo.lower()}"
         try:
+            db.execute(text(f"DROP VIEW IF EXISTS {view_name} CASCADE;"))
             db.execute(text(f"""
-                CREATE OR REPLACE VIEW {view_name} AS
+                CREATE VIEW {view_name} AS
                 SELECT id, municipio, imovel_id, subclasse, base_legal,
                        confianca, area_hectares, geometria
                 FROM feicao_referencia
@@ -46,8 +47,9 @@ def _criar_views_postgis(municipio: str, db: Session):
 
     # View legada de divergências (mantida para compatibilidade)
     try:
+        db.execute(text("DROP VIEW IF EXISTS wms_divergencias CASCADE;"))
         db.execute(text("""
-            CREATE OR REPLACE VIEW wms_divergencias AS
+            CREATE VIEW wms_divergencias AS
             SELECT id, imovel_id, tipo, severidade, area_hectares, geometria
             FROM divergencia;
         """))

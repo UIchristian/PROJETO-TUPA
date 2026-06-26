@@ -10,83 +10,121 @@ from db.models import Imovel, CoberturaObservada
 from . import BaseSourceAdapter
 
 logger = logging.getLogger(__name__)
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Dicionário de conversão simplificado das classes do MapBiomas (Coleção 8+)
-# Para as classes do Tupã. No mundo real, mapearíamos todos os IDs (ex: 3=Floresta, 15=Pastagem, 39=Soja)
+# Mapeamento MapBiomas 2024 (Coleção 9) → classe interna do Tupã
+# As classes internas são as que o engine.py e gerar_base_referencia.py referenciam.
 MAPBIOMAS_CLASSES = {
-    3: "Floresta Nativa",
-    4: "Formação Savânica",
+    # Formações florestais → Floresta Nativa (conta para Reserva Legal)
+    1:  "Floresta Nativa",
+    3:  "Floresta Nativa",   # Formação Florestal
+    4:  "Formação Savânica", # Savana (Cerrado arbóreo) — conta para RL
+    5:  "Floresta Nativa",   # Mangue
+    6:  "Floresta Nativa",   # Floresta Alagável
+    49: "Floresta Nativa",   # Restinga Arbórea
+
+    # Formações naturais não florestais
+    10: "Formação Campestre",
+    11: "Campo Alagado",
+    12: "Formação Campestre",
+    29: "Afloramento Rochoso",
+    32: "Apicum",
+    50: "Formação Campestre", # Restinga Herbácea
+
+    # Agropecuária
+    14: "Mosaico Agropecuário",
     15: "Pastagem",
-    39: "Lavoura Temporária",
-    41: "Outras Lavouras",
-    33: "Corpos d'Água",
-    24: "Infraestrutura Urbana",
+    18: "Lavoura Temporária",
+    19: "Lavoura Permanente",
+    20: "Lavoura Temporária",  # Cana
+    21: "Mosaico Agropecuário",
+    36: "Lavoura Temporária",  # Outras Lavouras Temporárias
+    39: "Lavoura Temporária",  # Soja
+    40: "Lavoura Temporária",  # Arroz
+    41: "Lavoura Temporária",  # Outras Lavouras
+    46: "Lavoura Permanente",  # Café
+    47: "Lavoura Permanente",  # Citrus
+    48: "Lavoura Permanente",  # Outras Permanentes
+    62: "Lavoura Temporária",  # Algodão
+    9:  "Silvicultura",
+
+    # Área não vegetada
+    22: "Solo Exposto",
+    23: "Solo Exposto",  # Praia e Duna
+    24: "Área Urbanizada",
+    25: "Solo Exposto",  # Outras Áreas não Vegetadas
+    30: "Mineração",
+
+    # Corpos d'água
+    26: "Corpos d'Água",
+    31: "Corpos d'Água",  # Aquicultura
+    33: "Corpos d'Água",  # Rio, Lago e Oceano
+
+    # Não observado / sem dado
+    27: "Não Observado",
+    0:  "Não Observado",
 }
+
 
 class MapBiomasSourceAdapter(BaseSourceAdapter):
     """Lê a cobertura do MapBiomas e carrega no banco PostGIS (tabela cobertura_observada)."""
 
     def load_data(self, municipio: str, db_session: Session):
-        logger.info(f"Carregando cobertura do solo do MapBiomas para {municipio}...")
-        
-        # O arquivo esperado é um raster TIF do MapBiomas para o município
-        raster_path = Path("data") / municipio / "mapbiomas.tif"
-        
+        logger.info(f"Carregando cobertura do solo (MapBiomas) para {municipio}...")
+
+        raster_path = BASE_DIR / "data" / municipio / "mapbiomas.tif"
         if not raster_path.exists():
-            logger.warning(f"Arquivo raster não encontrado: {raster_path}. Pulo da ingestão.")
+            logger.warning(f"Raster não encontrado: {raster_path}. Pulando.")
             return
 
-        # 1. Buscar todos os imóveis do município
         imoveis = db_session.query(Imovel).filter(Imovel.municipio == municipio).all()
         if not imoveis:
             logger.info("Nenhum imóvel encontrado para este município.")
             return
-            
+
+        processados = 0
+        erros = 0
+
         with rasterio.open(raster_path) as src:
             for imovel in imoveis:
                 try:
-                    # Deletar coberturas antigas deste imóvel
-                    db_session.query(CoberturaObservada).filter(CoberturaObservada.imovel_id == imovel.id).delete()
-                    
-                    # Extrair a geometria do imóvel do PostGIS (em WKB -> Shapely)
-                    geom_shapely = to_shape(imovel.poligono_declarado)
-                    
-                    # Rasterio aceita geometrias no formato GeoJSON-like dict
-                    geom_geojson = [geom_shapely.__geo_interface__]
-                    
-                    # 2. Recortar o raster para a área do imóvel (mask)
-                    out_image, out_transform = rasterio.mask.mask(src, geom_geojson, crop=True)
-                    out_image = out_image[0] # Pegar a primeira banda
-                    
-                    # 3. Vetorizar as classes recortadas
-                    # rasterio.features.shapes retorna pares (geometria_geojson, valor_pixel)
-                    shapes_gen = rasterio.features.shapes(out_image, transform=out_transform)
-                    
-                    # Para não inserir ruídos de NoData ou classe 0
-                    for geom, value in shapes_gen:
-                        valor_classe = int(value)
-                        if valor_classe == 0:
-                            continue
-                            
-                        nome_classe = MAPBIOMAS_CLASSES.get(valor_classe, f"Outros ({valor_classe})")
-                        poly_shapely = shape(geom)
-                        if poly_shapely.geom_type == "Polygon":
-                            poly_shapely = MultiPolygon([poly_shapely])
+                    db_session.query(CoberturaObservada)\
+                        .filter(CoberturaObservada.imovel_id == imovel.id).delete()
 
-                        # Inserir a nova cobertura no banco
-                        nova_cobertura = CoberturaObservada(
+                    geom_shapely  = to_shape(imovel.poligono_declarado)
+                    geom_geojson  = [geom_shapely.__geo_interface__]
+
+                    out_image, out_transform = rasterio.mask.mask(
+                        src, geom_geojson, crop=True, nodata=0)
+                    banda = out_image[0]
+
+                    for geom_dict, valor in rasterio.features.shapes(
+                            banda, mask=(banda > 0), transform=out_transform):
+
+                        classe_id = int(valor)
+                        nome = MAPBIOMAS_CLASSES.get(classe_id, f"Outros ({classe_id})")
+                        if nome == "Não Observado":
+                            continue
+
+                        poly = shape(geom_dict)
+                        if poly.is_empty or poly.area < 1e-10:
+                            continue
+                        if poly.geom_type == "Polygon":
+                            poly = MultiPolygon([poly])
+
+                        db_session.add(CoberturaObservada(
                             imovel_id=imovel.id,
-                            classe=nome_classe,
-                            # A área real precisaria do ST_Area no SRID correto, 
-                            # mas podemos deixar nulo ou estimar para preenchimento via DB trigger
-                            area_hectares=0.0, 
-                            geometria=f"SRID=4326;{poly_shapely.wkt}"
-                        )
-                        db_session.add(nova_cobertura)
-                        
+                            classe=nome,
+                            area_hectares=0.0,  # calculado via ST_Area no diagnóstico
+                            geometria=f"SRID=4326;{poly.wkt}"
+                        ))
+
                     db_session.commit()
-                    logger.info(f"Cobertura processada para o imóvel {imovel.id}.")
-                    
+                    processados += 1
+
                 except Exception as e:
                     db_session.rollback()
-                    logger.error(f"Erro ao processar raster para o imóvel {imovel.id}: {e}")
+                    logger.error(f"Erro no imóvel {imovel.id}: {e}")
+                    erros += 1
+
+        logger.info(f"MapBiomas carregado: {processados} imóveis OK, {erros} erros.")

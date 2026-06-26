@@ -73,3 +73,22 @@ export interface LayerGeometries {
   divergencias: Divergencia[];
   coberturaPoligonos: CoberturaPoligono[];
 }
+
+export interface MunicipioStats {
+  municipio: string;
+  totalImoveis: number;
+  mediaScore: number;
+  percConformidade: number;
+  totalAppHa: number;
+  totalRlHa: number;
+  totalUsoRestritoHa: number;
+}
+
+export interface ImovelResumo {
+  imovelId: string;
+  nome: string;
+  numeroCar: string;
+  scoreConformidade: number;
+  divergencias: Divergencia[];
+  coberturaSolo: CoberturaClasse[];
+}
