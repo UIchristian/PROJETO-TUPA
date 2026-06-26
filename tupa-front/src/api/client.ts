@@ -49,7 +49,9 @@ function mapDivergencia(d: any): Divergencia {
   };
 }
 
-function mapImovel(raw: any): Imovel & { score: number; nDivergencias: number; maxSeveridade: string | null } {
+function mapImovel(
+  raw: any,
+): Imovel & { score: number; nDivergencias: number; maxSeveridade: string | null } {
   return {
     id: raw.id,
     nome: raw.nome,
@@ -113,7 +115,9 @@ export async function getMunicipioMapaApi(municipio: string): Promise<any> {
 }
 
 export async function getMunicipioCamadasApi(municipio: string, tipo: string): Promise<any> {
-  return fetchJson<any>(`/municipio/${encodeURIComponent(municipio)}/camadas/${encodeURIComponent(tipo)}`);
+  return fetchJson<any>(
+    `/municipio/${encodeURIComponent(municipio)}/camadas/${encodeURIComponent(tipo)}`,
+  );
 }
 
 export async function getImovelResumoApi(imovelId: string): Promise<ImovelResumo | null> {
@@ -133,13 +137,9 @@ export async function getImovelResumoApi(imovelId: string): Promise<ImovelResumo
   }
 }
 
-export async function getHidrografiaApi(
-  imovelId: string,
-): Promise<HidrografiaData | null> {
+export async function getHidrografiaApi(imovelId: string): Promise<HidrografiaData | null> {
   try {
-    const raw = await fetchJson<any>(
-      `/imovel/${encodeURIComponent(imovelId)}/hidrografia`,
-    );
+    const raw = await fetchJson<any>(`/imovel/${encodeURIComponent(imovelId)}/hidrografia`);
     return {
       imovelId: raw.imovel_id,
       totalCursos: raw.total_cursos,
@@ -166,13 +166,9 @@ export async function getImovelApi(id: string): Promise<Imovel | null> {
   }
 }
 
-export async function getDiagnosticoApi(
-  imovelId: string,
-): Promise<Diagnostico | null> {
+export async function getDiagnosticoApi(imovelId: string): Promise<Diagnostico | null> {
   try {
-    const raw = await fetchJson<any>(
-      `/imovel/${encodeURIComponent(imovelId)}/diagnostico`,
-    );
+    const raw = await fetchJson<any>(`/imovel/${encodeURIComponent(imovelId)}/diagnostico`);
     return {
       imovelId: raw.imovel_id,
       scoreConformidade: raw.score_conformidade,
@@ -185,29 +181,19 @@ export async function getDiagnosticoApi(
   }
 }
 
-export async function getLayersApi(
-  imovelId: string,
-): Promise<LayerGeometries | null> {
+export async function getLayersApi(imovelId: string): Promise<LayerGeometries | null> {
   try {
-    const raw = await fetchJson<any>(
-      `/imovel/${encodeURIComponent(imovelId)}/diagnostico`,
-    );
+    const raw = await fetchJson<any>(`/imovel/${encodeURIComponent(imovelId)}/diagnostico`);
     const camadas = raw.camadas;
     if (!camadas) return null;
 
     return {
       poligonoDeclarado: mapGeometry(camadas.poligono_declarado),
       app: mapGeometry(camadas.app),
-      usoRestrito: camadas.uso_restrito
-        ? mapGeometry(camadas.uso_restrito)
-        : undefined,
-      gabarito: camadas.gabarito
-        ? mapGeometry(camadas.gabarito)
-        : undefined,
+      usoRestrito: camadas.uso_restrito ? mapGeometry(camadas.uso_restrito) : undefined,
+      gabarito: camadas.gabarito ? mapGeometry(camadas.gabarito) : undefined,
       divergencias: (camadas.divergencias ?? []).map(mapDivergencia),
-      coberturaPoligonos: (camadas.cobertura_poligonos ?? []).map(
-        mapCoberturaPoligono,
-      ),
+      coberturaPoligonos: (camadas.cobertura_poligonos ?? []).map(mapCoberturaPoligono),
     };
   } catch (err: any) {
     if (err.message?.includes("404")) return null;

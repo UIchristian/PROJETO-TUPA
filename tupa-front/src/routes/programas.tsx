@@ -168,10 +168,10 @@ function ProgramasScreen() {
                   ? "Your CAR was successfully reviewed. See the available programs below."
                   : "Seu CAR foi analisado com sucesso e está em conformidade, veja abaixo os programas disponíveis."
               : language === "es"
-                  ? "Realice el Diagnóstico de su CAR para desbloquear los programas."
-                  : language === "en"
-                    ? "Run your CAR Diagnostics to unlock programs."
-                    : "Realize o Diagnóstico do seu CAR para destravar os programas."}
+                ? "Realice el Diagnóstico de su CAR para desbloquear los programas."
+                : language === "en"
+                  ? "Run your CAR Diagnostics to unlock programs."
+                  : "Realize o Diagnóstico do seu CAR para destravar os programas."}
           </p>
 
           {!documentoEstaValido && (

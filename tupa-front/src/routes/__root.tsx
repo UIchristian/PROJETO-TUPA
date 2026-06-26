@@ -9,8 +9,21 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { ShieldCheck, LogOut, Menu, UserCircle, Headset, Laptop, TreePine, Sailboat, Tent, Wheat, Map as MapIcon } from "lucide-react";
+import {
+  ShieldCheck,
+  LogOut,
+  Menu,
+  UserCircle,
+  Headset,
+  Laptop,
+  TreePine,
+  Sailboat,
+  Tent,
+  Wheat,
+  Map as MapIcon,
+} from "lucide-react";
 import { useAppState } from "@/lib/app-store";
+import AccessibilityBar from "@/components/AccessibilityBar";
 
 const PRESET_AVATARS = [
   { id: "headset", icon: Headset, bg: "bg-blue-500/20", color: "text-blue-500" },
@@ -81,18 +94,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Tupã Backoffice" },
-      { name: "description", content: "Tupã Backoffice - Sistema de análise de Cadastro Ambiental Rural (CAR)" },
+      {
+        name: "description",
+        content: "Tupã Backoffice - Sistema de análise de Cadastro Ambiental Rural (CAR)",
+      },
       { property: "og:title", content: "Tupã Backoffice" },
-      { property: "og:description", content: "Tupã Backoffice - Sistema de análise de Cadastro Ambiental Rural (CAR)" },
+      {
+        property: "og:description",
+        content: "Tupã Backoffice - Sistema de análise de Cadastro Ambiental Rural (CAR)",
+      },
       { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "preconnect", href: "https://cdngovbr-ds.estaleiro.serpro.gov.br" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap",
+        href: "https://cdngovbr-ds.estaleiro.serpro.gov.br/design-system/fonts/rawline/css/rawline.css",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap",
       },
     ],
   }),
@@ -102,17 +126,49 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const applyAccessibilityScript = `
+  (function() {
+    try {
+      var size = localStorage.getItem("accessibility-size") || "normal";
+      var contrast = localStorage.getItem("accessibility-contrast") === "1";
+      var theme = localStorage.getItem("accessibility-theme") || "light";
+      
+      var root = document.documentElement;
+      
+      if (size === "large") root.classList.add("accessibility-large");
+      if (size === "xlarge") root.classList.add("accessibility-xlarge");
+      
+      if (contrast) root.classList.add("accessibility-high-contrast");
+      
+      if (theme === "dark") root.classList.add("dark");
+    } catch (e) {}
+  })();
+`;
+
 function RootShell({ children }: { children: React.ReactNode }) {
   const { backofficeUser } = useAppState();
-  const activeAvatar = PRESET_AVATARS.find(a => a.id === backofficeUser.avatarId);
+  const activeAvatar = PRESET_AVATARS.find((a) => a.id === backofficeUser.avatarId);
 
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: applyAccessibilityScript }} />
       </head>
       <body className="bg-background text-foreground min-h-screen flex flex-col font-sans">
-        {/* Navbar */}
+        {/* Faixa institucional gov.br */}
+        <div className="w-full bg-navy text-navy-foreground flex items-center justify-between px-6 py-1.5 text-xs">
+          <div className="flex items-center gap-3">
+            <span className="font-bold">gov.br</span>
+            <span className="w-px h-3 bg-white/30"></span>
+            <span>Serviço Florestal Brasileiro</span>
+          </div>
+          <div>
+            <AccessibilityBar />
+          </div>
+        </div>
+
+        {/* Header do Produto */}
         <header className="sticky top-0 z-50 w-full border-b border-border bg-card shadow-soft">
           <div className="flex h-16 items-center px-6">
             <Link to="/" className="flex items-center gap-3">
@@ -120,25 +176,47 @@ function RootShell({ children }: { children: React.ReactNode }) {
                 <ShieldCheck className="text-primary w-6 h-6" />
               </div>
               <div>
-                <span className="block text-xl font-bold tracking-tight leading-none text-foreground">Tupã</span>
-                <span className="text-xs font-semibold text-primary/80 uppercase tracking-wider">Backoffice CAR</span>
+                <span className="block text-xl font-bold tracking-tight leading-none text-foreground">
+                  Tupã
+                </span>
+                <span className="text-xs font-semibold text-primary/80 uppercase tracking-wider">
+                  Base de Referência Ambiental
+                </span>
               </div>
             </Link>
-            
+
             <div className="flex flex-1 items-center justify-end space-x-4">
               <div className="flex items-center gap-6 text-sm font-semibold text-muted-foreground">
-                <Link to="/" className="hover:text-primary transition-colors [&.active]:text-primary">Fila de Imóveis</Link>
-                <Link to="/mapa" className="flex items-center gap-1.5 hover:text-primary transition-colors [&.active]:text-primary">
+                <Link
+                  to="/"
+                  className="hover:text-primary transition-colors [&.active]:text-primary"
+                >
+                  Painel de cobertura
+                </Link>
+                <Link
+                  to="/mapa"
+                  className="flex items-center gap-1.5 hover:text-primary transition-colors [&.active]:text-primary"
+                >
                   <MapIcon className="w-4 h-4" /> Mapa
                 </Link>
-                <Link to="/configuracoes" className="hover:text-primary transition-colors [&.active]:text-primary">Configurações</Link>
+                <Link
+                  to="/configuracoes"
+                  className="hover:text-primary transition-colors [&.active]:text-primary"
+                >
+                  Configurações
+                </Link>
               </div>
-              <Link to="/perfil" className="flex items-center gap-3 pl-6 border-l border-border hover:opacity-80 transition-opacity cursor-pointer group">
+              <Link
+                to="/perfil"
+                className="flex items-center gap-3 pl-6 border-l border-border hover:opacity-80 transition-opacity cursor-pointer group"
+              >
                 <div className="flex flex-col text-right">
                   <span className="text-sm font-bold leading-none">{backofficeUser.nome}</span>
                   <span className="text-xs text-muted-foreground mt-1">{backofficeUser.cargo}</span>
                 </div>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${activeAvatar ? `${activeAvatar.bg} border-transparent group-hover:border-primary/50` : 'bg-secondary/20 border-secondary/30 text-secondary-foreground group-hover:bg-secondary/30'}`}>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${activeAvatar ? `${activeAvatar.bg} border-transparent group-hover:border-primary/50` : "bg-secondary/20 border-secondary/30 text-secondary-foreground group-hover:bg-secondary/30"}`}
+                >
                   {activeAvatar ? (
                     <activeAvatar.icon className={`w-5 h-5 ${activeAvatar.color}`} />
                   ) : (
@@ -151,10 +229,25 @@ function RootShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {children}
-        </main>
-        
+        <main className="flex-1 flex flex-col">{children}</main>
+
+        {/* Rodapé gov.br */}
+        <footer className="mt-auto w-full bg-navy text-navy-foreground py-6 px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="w-6 h-6 text-white/80" />
+              <div>
+                <div className="font-bold">Tupã</div>
+                <div className="text-xs text-white/70">Base de Referência Ambiental</div>
+              </div>
+            </div>
+            <div className="text-xs text-white/60 text-center md:text-right">
+              <p>Criado no haCARthon &mdash; ENAP / Dataprev / Serviço Florestal Brasileiro</p>
+              <p>Fontes de dados: Sentinel-2 (Copernicus) e MapBiomas</p>
+            </div>
+          </div>
+        </footer>
+
         <Scripts />
       </body>
     </html>

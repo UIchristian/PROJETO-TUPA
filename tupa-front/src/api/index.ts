@@ -8,12 +8,7 @@
  * getDiagnostico, getLayers. Only the data source switches.
  */
 
-import type {
-  Diagnostico,
-  HidrografiaData,
-  Imovel,
-  LayerGeometries,
-} from "@/types/imovel";
+import type { Diagnostico, HidrografiaData, Imovel, LayerGeometries } from "@/types/imovel";
 
 // Re-export types for convenience
 export type { Diagnostico, HidrografiaData, Imovel, LayerGeometries } from "@/types/imovel";
@@ -59,7 +54,10 @@ export const getImovel = async (id: string): Promise<Imovel | null> => {
   try {
     return await getImovelApi(id);
   } catch (err) {
-    console.warn(`Tupã Auto-Fallback: Backend real falhou (getImovel ${id}), retornando mock...`, err);
+    console.warn(
+      `Tupã Auto-Fallback: Backend real falhou (getImovel ${id}), retornando mock...`,
+      err,
+    );
     return mockGetImovel(id);
   }
 };
@@ -69,7 +67,10 @@ export const getDiagnostico = async (imovelId: string): Promise<Diagnostico | nu
   try {
     return await getDiagnosticoApi(imovelId);
   } catch (err) {
-    console.warn(`Tupã Auto-Fallback: Backend real falhou (getDiagnostico ${imovelId}), retornando mock...`, err);
+    console.warn(
+      `Tupã Auto-Fallback: Backend real falhou (getDiagnostico ${imovelId}), retornando mock...`,
+      err,
+    );
     return mockGetDiagnostico(imovelId);
   }
 };
@@ -79,7 +80,10 @@ export const getLayers = async (imovelId: string): Promise<LayerGeometries | nul
   try {
     return await getLayersApi(imovelId);
   } catch (err) {
-    console.warn(`Tupã Auto-Fallback: Backend real falhou (getLayers ${imovelId}), retornando mock...`, err);
+    console.warn(
+      `Tupã Auto-Fallback: Backend real falhou (getLayers ${imovelId}), retornando mock...`,
+      err,
+    );
     return mockGetLayers(imovelId);
   }
 };
@@ -88,7 +92,10 @@ export const getHidrografia = async (imovelId: string): Promise<HidrografiaData 
   try {
     return await getHidrografiaApi(imovelId);
   } catch (err) {
-    console.warn(`Tupã Auto-Fallback: Backend real falhou (getHidrografia ${imovelId}), retornando null...`, err);
+    console.warn(
+      `Tupã Auto-Fallback: Backend real falhou (getHidrografia ${imovelId}), retornando null...`,
+      err,
+    );
     return null;
   }
 };

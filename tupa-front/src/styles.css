@@ -6,14 +6,14 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "rawline", "Raleway", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-  --radius-2xl: 0px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -35,7 +35,6 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Brand semantic tokens */
   --color-navy: var(--navy);
   --color-navy-foreground: var(--navy-foreground);
   --color-amber-warn: var(--amber-warn);
@@ -45,83 +44,139 @@
   --color-soft: var(--soft);
   --color-feature: var(--feature);
   --color-feature-foreground: var(--feature-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  /* Confiança por feição. Escala INVERTIDA da severidade: alta = verde (bom), baixa = vermelho (atenção). */
+  --color-conf-alta: var(--conf-alta);
+  --color-conf-media: var(--conf-media);
+  --color-conf-baixa: var(--conf-baixa);
+  --color-conf-foreground: var(--conf-foreground);
+
+  /* Paleta de domínio do mapa (verde/SICAR), só para feições. */
+  --color-app: var(--app);
+  --color-rl: var(--rl);
+  --color-uso-restrito: var(--uso-restrito);
+  --color-limite: var(--limite);
 }
 
 :root {
-  /* Brand palette: warm earth, forestry greens, and terroso gold */
-  --background: #faf8f5; /* Warm cream/sandy neutral paper */
-  --foreground: #142118; /* Deep dark forest charcoal, high readability */
+  --background: #ffffff;
+  --foreground: #1a1a1a;
   --card: #ffffff;
-  --card-foreground: #142118;
+  --card-foreground: #1a1a1a;
   --popover: #ffffff;
-  --popover-foreground: #142118;
+  --popover-foreground: #1a1a1a;
 
-  --primary: #154c30; /* Dark forest green, sober and official */
-  --primary-foreground: #faf8f5;
+  --primary: #1351b4;
+  --primary-foreground: #ffffff;
 
-  --secondary: #d1a14e; /* Earthy gold highlight */
-  --secondary-foreground: #142118;
+  --secondary: #f0f3f8;
+  --secondary-foreground: #142a4d;
 
-  --muted: #f0ede6; /* Soft neutral sandy cream */
-  --muted-foreground: #526356; /* Gray-green muted soil color */
+  --muted: #f4f6fa;
+  --muted-foreground: #5a6b72;
 
-  --accent: #f5f2eb; /* Soft warm sandy beige */
-  --accent-foreground: #142118;
+  --accent: #e6eefb;
+  --accent-foreground: #0c326f;
 
-  --destructive: #9b2c2c; /* Sober crimson red warning */
-  --destructive-foreground: #faf8f5;
+  --destructive: #c92a2a;
+  --destructive-foreground: #ffffff;
 
-  --border: #dfdbcf; /* Warm sand/clay outline */
-  --input: #dfdbcf;
-  --ring: #154c30;
+  --border: #d6dee8;
+  --input: #d6dee8;
+  --ring: #1351b4;
 
-  --navy: #1b2d20; /* Deep charcoal forest green */
+  --navy: #071d41;
   --navy-foreground: #ffffff;
 
-  --amber-warn: #c68a35; /* Earthy amber warning */
+  --amber-warn: #b8791f;
   --amber-warn-foreground: #ffffff;
 
-  --alert: #a83232;
+  --alert: #c92a2a;
   --alert-foreground: #ffffff;
 
-  --soft: #f4f1e8; /* Soft warm canvas surface */
+  --soft: #f4f6fa;
 
-  --feature: #1b2d20; /* Deep soil green-black */
+  --feature: #0c326f;
   --feature-foreground: #ffffff;
 
-  --radius: 0px;
+  --success: #168821;
+  --success-foreground: #ffffff;
+  --info: #155bcb;
+  --info-foreground: #ffffff;
+
+  --conf-alta: #168821;
+  --conf-media: #b8791f;
+  --conf-baixa: #c92a2a;
+  --conf-foreground: #ffffff;
+
+  --app: #1098ad;
+  --rl: #1f6b3b;
+  --uso-restrito: #e8830c;
+  --limite: #f2c200;
+
+  --radius: 4px;
 }
 
 .dark {
-  /* Dark mode palette */
-  --background: #0d120f; /* Very deep obsidian forest green-black */
-  --foreground: #edf1ee; /* Warm soft green-white */
-  --card: #141b17; /* Dark pine slate */
-  --card-foreground: #edf1ee;
-  --popover: #141b17;
-  --popover-foreground: #edf1ee;
-  --primary: #227c4b; /* Vibrant forest green for dark mode contrast */
-  --primary-foreground: #0d120f;
-  --secondary: #d1a14e; /* Earthy gold highlight */
-  --secondary-foreground: #0d120f;
-  --muted: #1a231e;
-  --muted-foreground: #84968a;
-  --accent: #1e2923;
-  --accent-foreground: #edf1ee;
-  --destructive: #e5484d;
-  --destructive-foreground: #faf8f5;
-  --border: #222d26;
-  --input: #222d26;
-  --ring: #227c4b;
-  --navy: #cbd5e1;
-  --navy-foreground: #0d120f;
-  --amber-warn: #d1a14e;
-  --amber-warn-foreground: #0d120f;
-  --alert: #e5484d;
-  --alert-foreground: #0d120f;
-  --soft: #141b17;
-  --feature: #0f1411;
-  --feature-foreground: #edf1ee;
+  --background: #0b1320;
+  --foreground: #eef2f7;
+  --card: #111b2e;
+  --card-foreground: #eef2f7;
+  --popover: #111b2e;
+  --popover-foreground: #eef2f7;
+
+  --primary: #5b8def;
+  --primary-foreground: #06101f;
+
+  --secondary: #16233a;
+  --secondary-foreground: #eef2f7;
+
+  --muted: #16233a;
+  --muted-foreground: #9fb0c6;
+
+  --accent: #1b2c49;
+  --accent-foreground: #eef2f7;
+
+  --destructive: #ff6b6b;
+  --destructive-foreground: #06101f;
+
+  --border: #22324f;
+  --input: #22324f;
+  --ring: #5b8def;
+
+  --navy: #0a1322;
+  --navy-foreground: #eef2f7;
+
+  --amber-warn: #e0a32e;
+  --amber-warn-foreground: #06101f;
+
+  --alert: #ff6b6b;
+  --alert-foreground: #06101f;
+
+  --soft: #111b2e;
+
+  --feature: #0a1322;
+  --feature-foreground: #eef2f7;
+
+  --success: #4ec77a;
+  --success-foreground: #06101f;
+  --info: #5b8def;
+  --info-foreground: #06101f;
+
+  --conf-alta: #4ec77a;
+  --conf-media: #e0a32e;
+  --conf-baixa: #ff6b6b;
+  --conf-foreground: #06101f;
+
+  --app: #22b8cf;
+  --rl: #2f9e57;
+  --uso-restrito: #ff9f43;
+  --limite: #f7d038;
 }
 
 @layer base {
@@ -351,7 +406,7 @@ html.accessibility-high-contrast {
   --popover: #ffffff;
   --popover-foreground: #000000;
 
-  --primary: #0b6623;
+  --primary: #0c326f;
   --primary-foreground: #ffffff;
 
   --secondary: #e6e6e6;
@@ -368,7 +423,7 @@ html.accessibility-high-contrast {
 
   --border: #000000;
   --input: #000000;
-  --ring: #0b6623;
+  --ring: #0c326f;
 
   --navy: #000000;
   --navy-foreground: #ffffff;

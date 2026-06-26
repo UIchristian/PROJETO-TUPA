@@ -92,3 +92,78 @@ export interface ImovelResumo {
   divergencias: Divergencia[];
   coberturaSolo: CoberturaClasse[];
 }
+
+// Conceito "base de referência": base gerada + confiança por feição.
+
+/** Nível de confiança. ATENÇÃO: alta = bom (verde), o oposto de severidade. */
+export type NivelConfianca = "alta" | "media" | "baixa";
+
+/** Tipos de feição (espelha feicao_referencia no back). */
+export type TipoFeicao =
+  | "APP_CURSO_DAGUA"
+  | "APP_NASCENTE"
+  | "APP_LAGO"
+  | "APP_VEREDA"
+  | "USO_RESTRITO_ENCOSTA"
+  | "RESERVA_LEGAL_PROPOSTA"
+  | "COBERTURA"
+  | (string & {});
+
+export type DecisaoFeicao = "pendente" | "validada" | "ajustada" | "rejeitada";
+
+export interface FeicaoReferencia {
+  id: string;
+  imovelId?: string;
+  municipio: string;
+  tipo: TipoFeicao;
+  subclasse?: string;
+  baseLegal: string; // ex: "Art. 4, I, Lei 12.651/2012"
+  areaHectares: number;
+  confianca: NivelConfianca;
+  confiancaMotivo?: string; // ex: "largura do rio desconhecida"
+  geometry: GeoJSONGeometry;
+  decisao?: DecisaoFeicao;
+  observacao?: string;
+}
+
+export interface FeicaoReferenciaCollection {
+  municipio: string;
+  feicoes: FeicaoReferencia[];
+}
+
+/** Status de cobertura de um município (Tela 1). */
+export interface CoberturaMunicipal {
+  municipio: string;
+  uf: string;
+  temBaseReferencia: boolean;
+  totalImoveis: number;
+  imoveisImpactados: number;
+  haSemCobertura: number;
+}
+
+/** Enquadramento da Reserva Legal (Tela 5). */
+export interface EnquadramentoRL {
+  imovelId: string;
+  enquadramento: string; // "Art. 12, Lei 12.651/2012" | "Art. 67, ..."
+  areaLiquidaHa: number;
+  modulosFiscais: number;
+  rlExigidaHa: number;
+  deficitHa: number;
+  confianca: NivelConfianca;
+  observacao?: string | null;
+  bioma?: string;
+  percentualAplicavel?: number;
+  art68Pendente?: boolean; // Art. 68 nunca é aplicado sozinho (manual)
+}
+
+/** Resumo da base gerada (Tela 6). */
+export interface ResumoBase {
+  municipio: string;
+  totalFeicoes: number;
+  haApp: number;
+  haReservaLegal: number;
+  haUsoRestrito: number;
+  percAlta: number;
+  percMedia: number;
+  percBaixa: number;
+}

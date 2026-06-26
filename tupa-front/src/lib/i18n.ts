@@ -11,7 +11,7 @@ const translations = { es, pt, en } as const;
  */
 export function t(
   key: string,
-  currentLang: Language = "es",
+  currentLang: Language = "pt",
   args?: Record<string, string | number>,
 ): string {
   const keys = key.split(".");
@@ -27,9 +27,9 @@ export function t(
     }
   }
 
-  // 2. Try fallback (es)
-  if (typeof val !== "string" && currentLang !== "es") {
-    let fallbackVal: any = translations["es"];
+  // 2. Try fallback (pt)
+  if (typeof val !== "string" && currentLang !== "pt") {
+    let fallbackVal: any = translations["pt"];
     for (const k of keys) {
       if (fallbackVal && typeof fallbackVal === "object" && k in fallbackVal) {
         fallbackVal = fallbackVal[k];
@@ -62,7 +62,7 @@ export function t(
 
 export function useTranslation() {
   const state = useAppState();
-  const language = state.language || "es";
+  const language = state.language || "pt";
 
   const setLanguage = (lang: Language) => {
     appStore.set({ language: lang });

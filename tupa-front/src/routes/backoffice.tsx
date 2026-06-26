@@ -9,7 +9,7 @@ import {
   Search,
   XCircle,
   MapPin,
-  FileText
+  FileText,
 } from "lucide-react";
 import { getImoveis, getDiagnostico, getLayers } from "@/api";
 import type { Imovel, Diagnostico, LayerGeometries } from "@/types/imovel";
@@ -31,8 +31,10 @@ function BackofficeAnalistaScreen() {
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
-  const [severityFilter, setSeverityFilter] = useState<"todos" | "alta" | "media" | "baixa">("todos");
-  
+  const [severityFilter, setSeverityFilter] = useState<"todos" | "alta" | "media" | "baixa">(
+    "todos",
+  );
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [layers, setLayers] = useState<LayerGeometries | null>(null);
 
@@ -60,10 +62,10 @@ function BackofficeAnalistaScreen() {
           } catch (e) {
             console.error(`Erro ao carregar diagnóstico para ${imovel.id}`, e);
           }
-        })
+        }),
       );
       setDiagnosticos(diags);
-      
+
       if (list.length > 0 && !selectedId) {
         setSelectedId(list[0].id);
       }
@@ -101,7 +103,7 @@ function BackofficeAnalistaScreen() {
 
   // Derived state: filtered and sorted list
   const filaOrdenada = useMemo(() => {
-    let result = imoveis.filter((im) => {
+    const result = imoveis.filter((im) => {
       // Search by CAR
       if (search && !im.numeroCAR.toLowerCase().includes(search.toLowerCase())) {
         return false;
@@ -110,7 +112,7 @@ function BackofficeAnalistaScreen() {
       if (severityFilter !== "todos") {
         const diag = diagnosticos[im.id];
         if (!diag) return false;
-        const hasSeverity = diag.divergencias.some(d => d.severidade === severityFilter);
+        const hasSeverity = diag.divergencias.some((d) => d.severidade === severityFilter);
         if (!hasSeverity) return false;
       }
       return true;
@@ -129,20 +131,20 @@ function BackofficeAnalistaScreen() {
   const handleValidar = () => {
     if (!selectedId) return;
     // Remove from local list as "processed"
-    setImoveis(prev => prev.filter(im => im.id !== selectedId));
+    setImoveis((prev) => prev.filter((im) => im.id !== selectedId));
     setSelectedId(null);
   };
 
   const handleRetificar = () => {
     if (!selectedId || !motivoRetificacao.trim()) return;
     // Removes from local list as "returned"
-    setImoveis(prev => prev.filter(im => im.id !== selectedId));
+    setImoveis((prev) => prev.filter((im) => im.id !== selectedId));
     setSelectedId(null);
     setShowRejectModal(false);
     setMotivoRetificacao("");
   };
 
-  const selectedImovel = imoveis.find(i => i.id === selectedId);
+  const selectedImovel = imoveis.find((i) => i.id === selectedId);
   const selectedDiagnostico = selectedId ? diagnosticos[selectedId] : null;
 
   return (
@@ -169,35 +171,36 @@ function BackofficeAnalistaScreen() {
 
       {/* Main Layout */}
       <main className="flex-1 flex overflow-hidden">
-        
         {/* Left Column: Priority Queue */}
         <aside className="w-96 flex flex-col border-r border-slate-200 bg-white shrink-0 z-0 shadow-[4px_0_12px_rgba(0,0,0,0.02)] relative">
           <div className="p-4 border-b border-slate-100 flex flex-col gap-3">
             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between">
               Fila de Análise
-              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs">{filaOrdenada.length}</span>
+              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs">
+                {filaOrdenada.length}
+              </span>
             </h2>
-            
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Buscar por CAR..."
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
                 className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
               />
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-              {(["todos", "alta", "media", "baixa"] as const).map(sev => (
+              {(["todos", "alta", "media", "baixa"] as const).map((sev) => (
                 <button
                   key={sev}
                   onClick={() => setSeverityFilter(sev)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-                    severityFilter === sev 
-                      ? "bg-slate-800 text-white" 
+                    severityFilter === sev
+                      ? "bg-slate-800 text-white"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
@@ -217,11 +220,11 @@ function BackofficeAnalistaScreen() {
                 Nenhum imóvel na fila.
               </div>
             ) : (
-              filaOrdenada.map(imovel => {
+              filaOrdenada.map((imovel) => {
                 const diag = diagnosticos[imovel.id];
                 const score = diag?.scoreConformidade ?? 100;
                 const isSelected = selectedId === imovel.id;
-                
+
                 let scoreColor = "text-emerald-700 bg-emerald-50 border-emerald-200";
                 if (score < 90) scoreColor = "text-amber-700 bg-amber-50 border-amber-200";
                 if (score < 60) scoreColor = "text-rose-700 bg-rose-50 border-rose-200";
@@ -231,20 +234,28 @@ function BackofficeAnalistaScreen() {
                     key={imovel.id}
                     onClick={() => setSelectedId(imovel.id)}
                     className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
-                      isSelected 
-                        ? "bg-emerald-50/50 border-emerald-500 shadow-sm ring-1 ring-emerald-500" 
+                      isSelected
+                        ? "bg-emerald-50/50 border-emerald-500 shadow-sm ring-1 ring-emerald-500"
                         : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <span className="font-bold text-sm text-slate-900 truncate pr-2">{imovel.numeroCAR}</span>
-                      <span className={`px-2 py-0.5 rounded-md text-xs font-bold border shrink-0 ${scoreColor}`}>
+                      <span className="font-bold text-sm text-slate-900 truncate pr-2">
+                        {imovel.numeroCAR}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-xs font-bold border shrink-0 ${scoreColor}`}
+                      >
                         {score.toFixed(1)}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-                      <span className="flex items-center gap-1"><MapPin size={12}/> {imovel.municipio}</span>
-                      <span className="flex items-center gap-1"><FileText size={12}/> {imovel.areaHectares} ha</span>
+                      <span className="flex items-center gap-1">
+                        <MapPin size={12} /> {imovel.municipio}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <FileText size={12} /> {imovel.areaHectares} ha
+                      </span>
                     </div>
                   </button>
                 );
@@ -267,17 +278,18 @@ function BackofficeAnalistaScreen() {
                   <h2 className="font-bold text-slate-900 text-lg">{selectedImovel.numeroCAR}</h2>
                   <div className="h-4 w-px bg-slate-300"></div>
                   <span className="text-sm font-medium text-slate-600">
-                    {selectedImovel.municipio} - {selectedImovel.uf} ({selectedImovel.areaHectares} ha)
+                    {selectedImovel.municipio} - {selectedImovel.uf} ({selectedImovel.areaHectares}{" "}
+                    ha)
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button 
+                  <button
                     onClick={() => setShowRejectModal(true)}
                     className="h-9 px-4 rounded-lg font-bold text-sm bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 cursor-pointer flex items-center gap-2 transition-colors"
                   >
                     <XCircle size={16} /> Devolver Retificação
                   </button>
-                  <button 
+                  <button
                     onClick={handleValidar}
                     className="h-9 px-4 rounded-lg font-bold text-sm bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm cursor-pointer flex items-center gap-2 transition-colors"
                   >
@@ -288,20 +300,19 @@ function BackofficeAnalistaScreen() {
 
               {/* Map & Alerts Area */}
               <div className="flex-1 flex overflow-hidden p-6 gap-6">
-                
                 {/* Map Container */}
                 <div className="flex-[2] rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden relative flex flex-col">
                   <div className="absolute top-4 left-4 z-[1000] bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm text-xs font-bold text-slate-700">
                     Visão de Conformidade (Declarado vs Observado)
                   </div>
-                  
+
                   {loadingLayers ? (
                     <div className="flex-1 flex items-center justify-center bg-slate-50">
                       <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
                     </div>
                   ) : layers ? (
                     <div className="flex-1 relative">
-                      <Suspense fallback={<div className="flex-1 bg-slate-50"/>}>
+                      <Suspense fallback={<div className="flex-1 bg-slate-50" />}>
                         {!import.meta.env.SSR && (
                           <TupaMap
                             imovel={selectedImovel}
@@ -335,17 +346,26 @@ function BackofficeAnalistaScreen() {
                       </div>
                       <div>
                         <h4 className="font-bold text-emerald-900">Nenhuma divergência</h4>
-                        <p className="text-sm text-emerald-700/80 mt-1">O polígono declarado está compatível com as imagens de satélite.</p>
+                        <p className="text-sm text-emerald-700/80 mt-1">
+                          O polígono declarado está compatível com as imagens de satélite.
+                        </p>
                       </div>
                     </div>
                   ) : (
                     selectedDiagnostico?.divergencias.map((div) => (
-                      <div key={div.id} className="rounded-xl border border-rose-200 bg-white p-4 shadow-sm flex flex-col gap-3">
+                      <div
+                        key={div.id}
+                        className="rounded-xl border border-rose-200 bg-white p-4 shadow-sm flex flex-col gap-3"
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <h4 className="font-bold text-slate-900 leading-tight">{div.tipo}</h4>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                            div.severidade === 'alta' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
-                          }`}>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              div.severidade === "alta"
+                                ? "bg-rose-100 text-rose-700"
+                                : "bg-amber-100 text-amber-700"
+                            }`}
+                          >
                             {div.severidade}
                           </span>
                         </div>
@@ -353,8 +373,13 @@ function BackofficeAnalistaScreen() {
                           {div.textoLinguagemSimples}
                         </p>
                         <div className="flex items-center gap-4 mt-1 text-xs font-semibold text-slate-500">
-                          <span className="flex items-center gap-1.5"><AlertTriangle size={14} className="text-rose-500"/> Área: {div.areaHectares} ha</span>
-                          <span className="flex items-center gap-1.5"><FileText size={14} /> {div.baseLegal}</span>
+                          <span className="flex items-center gap-1.5">
+                            <AlertTriangle size={14} className="text-rose-500" /> Área:{" "}
+                            {div.areaHectares} ha
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <FileText size={14} /> {div.baseLegal}
+                          </span>
                         </div>
                       </div>
                     ))
@@ -364,7 +389,6 @@ function BackofficeAnalistaScreen() {
             </>
           )}
         </section>
-
       </main>
 
       {/* Retification Modal */}
@@ -379,16 +403,16 @@ function BackofficeAnalistaScreen() {
               className="w-full h-32 p-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none resize-none mb-6"
               placeholder="Ex: Identificamos que parte do polígono declarado sobrepõe a APP do Rio..."
               value={motivoRetificacao}
-              onChange={e => setMotivoRetificacao(e.target.value)}
+              onChange={(e) => setMotivoRetificacao(e.target.value)}
             />
             <div className="flex items-center justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setShowRejectModal(false)}
                 className="px-4 py-2 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 onClick={handleRetificar}
                 disabled={!motivoRetificacao.trim()}
                 className="px-4 py-2 rounded-lg font-bold text-sm bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 transition-colors"

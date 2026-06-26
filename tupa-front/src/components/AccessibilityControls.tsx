@@ -43,7 +43,9 @@ export default function AccessibilityControls() {
     if (size === "xlarge") root.classList.add("accessibility-xlarge");
     try {
       localStorage.setItem("accessibility-size", size);
-    } catch { }
+    } catch (e) {
+      console.warn(e);
+    }
   }, [size]);
 
   // Contrast
@@ -53,7 +55,9 @@ export default function AccessibilityControls() {
     else root.classList.remove("accessibility-high-contrast");
     try {
       localStorage.setItem("accessibility-contrast", contrast ? "1" : "0");
-    } catch { }
+    } catch (e) {
+      console.warn(e);
+    }
   }, [contrast]);
 
   // Theme
@@ -63,14 +67,18 @@ export default function AccessibilityControls() {
     else root.classList.remove("dark");
     try {
       localStorage.setItem("accessibility-theme", theme);
-    } catch { }
+    } catch (e) {
+      console.warn(e);
+    }
   }, [theme]);
 
   // Leitura de Voz (Text-to-Speech)
   useEffect(() => {
     try {
       localStorage.setItem("accessibility-voice", voiceReader ? "1" : "0");
-    } catch { }
+    } catch (e) {
+      console.warn(e);
+    }
 
     const handleMouseUp = () => {
       if (!voiceReader) return;
@@ -97,11 +105,14 @@ export default function AccessibilityControls() {
 
   return (
     <div className="flex flex-col gap-8">
-      
       {/* Bloco 1: Tamanho da Fonte */}
       <div>
         <h4 className="text-sm font-semibold text-foreground mb-3">Tamanho da Fonte</h4>
-        <div className="accessibility-bar inline-flex bg-card" role="toolbar" aria-label="Acessibilidade Tamanho">
+        <div
+          className="accessibility-bar inline-flex bg-card"
+          role="toolbar"
+          aria-label="Acessibilidade Tamanho"
+        >
           <button
             aria-pressed={size === "normal"}
             title="Tamanho normal"
@@ -142,7 +153,7 @@ export default function AccessibilityControls() {
             <Contrast size={18} />
             Alto Contraste
           </button>
-          
+
           <button
             type="button"
             aria-pressed={theme === "light"}
@@ -152,7 +163,7 @@ export default function AccessibilityControls() {
           >
             Claro
           </button>
-          
+
           <button
             type="button"
             aria-pressed={theme === "dark"}
@@ -172,7 +183,9 @@ export default function AccessibilityControls() {
           aria-pressed={voiceReader}
           onClick={() => {
             if (!voiceReader) {
-              const u = new SpeechSynthesisUtterance("Leitura por voz ativada. Selecione um texto na tela para ouvir.");
+              const u = new SpeechSynthesisUtterance(
+                "Leitura por voz ativada. Selecione um texto na tela para ouvir.",
+              );
               u.lang = "pt-BR";
               window.speechSynthesis.speak(u);
             } else {
@@ -186,10 +199,10 @@ export default function AccessibilityControls() {
           {voiceReader ? "Voz Ativada" : "Ativar Leitura por Voz"}
         </button>
         <p className="text-xs text-muted-foreground mt-2 max-w-sm leading-relaxed">
-          Quando ativado, selecione qualquer texto na tela para que o sistema leia em voz alta. Funcionalidade desenvolvida para analistas com visão subnormal.
+          Quando ativado, selecione qualquer texto na tela para que o sistema leia em voz alta.
+          Funcionalidade desenvolvida para analistas com visão subnormal.
         </p>
       </div>
-
     </div>
   );
 }

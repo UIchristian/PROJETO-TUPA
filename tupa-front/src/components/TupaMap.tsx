@@ -87,7 +87,12 @@ export default function TupaMap({
               <Polygon
                 key={`cover-${idx}-${ri}-${imovel.id}`}
                 positions={positions}
-                pathOptions={{ color: "transparent", fillColor: poly.corHex, fillOpacity: 0.45, weight: 0 }}
+                pathOptions={{
+                  color: "transparent",
+                  fillColor: poly.corHex,
+                  fillOpacity: 0.45,
+                  weight: 0,
+                }}
               />
             )),
           )}
@@ -98,7 +103,13 @@ export default function TupaMap({
             <Polygon
               key={`app-${i}`}
               positions={positions}
-              pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.2, weight: 2.5, dashArray: "6, 6" }}
+              pathOptions={{
+                color: "#3b82f6",
+                fillColor: "#3b82f6",
+                fillOpacity: 0.2,
+                weight: 2.5,
+                dashArray: "6, 6",
+              }}
             />
           ))}
 
@@ -108,7 +119,13 @@ export default function TupaMap({
             <Polygon
               key={`restrito-${i}`}
               positions={positions}
-              pathOptions={{ color: "#c68a35", fillColor: "#c68a35", fillOpacity: 0.15, weight: 2, dashArray: "4, 4" }}
+              pathOptions={{
+                color: "#c68a35",
+                fillColor: "#c68a35",
+                fillOpacity: 0.15,
+                weight: 2,
+                dashArray: "4, 4",
+              }}
             />
           ))}
 
@@ -119,7 +136,12 @@ export default function TupaMap({
               <Polygon
                 key={`${div.id}-${ri}`}
                 positions={positions}
-                pathOptions={{ color: "#ef4444", fillColor: "#ef4444", fillOpacity: 0.35, weight: 3 }}
+                pathOptions={{
+                  color: "#ef4444",
+                  fillColor: "#ef4444",
+                  fillOpacity: 0.35,
+                  weight: 3,
+                }}
               />
             )),
           )}

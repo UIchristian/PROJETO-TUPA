@@ -18,8 +18,8 @@ function scoreColor(score: number) {
 }
 
 const OVERLAY_STYLES: Record<string, { color: string; fillColor: string }> = {
-  APP_CURSO_DAGUA:        { color: "#3b82f6", fillColor: "#3b82f6" },
-  USO_RESTRITO_ENCOSTA:   { color: "#f97316", fillColor: "#f97316" },
+  APP_CURSO_DAGUA: { color: "#3b82f6", fillColor: "#3b82f6" },
+  USO_RESTRITO_ENCOSTA: { color: "#f97316", fillColor: "#f97316" },
   RESERVA_LEGAL_PROPOSTA: { color: "#16a34a", fillColor: "#16a34a" },
 };
 
@@ -37,18 +37,21 @@ function FitBounds({ data }: { data: any }) {
     try {
       const bounds = L.geoJSON(data).getBounds();
       if (bounds.isValid()) map.fitBounds(bounds, { padding: [24, 24] });
-    } catch {}
+    } catch (e) {
+      console.warn(e);
+    }
   }, [data, map]);
   return null;
 }
 
-export default function MunicipioMap({ featureCollection, overlays, selectedId, onSelect }: MunicipioMapProps) {
+export default function MunicipioMap({
+  featureCollection,
+  overlays,
+  selectedId,
+  onSelect,
+}: MunicipioMapProps) {
   return (
-    <MapContainer
-      center={[-18.5, -47.4]}
-      zoom={11}
-      style={{ width: "100%", height: "100%" }}
-    >
+    <MapContainer center={[-18.5, -47.4]} zoom={11} style={{ width: "100%", height: "100%" }}>
       <TileLayer
         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         attribution="&copy; Esri"
@@ -78,7 +81,7 @@ export default function MunicipioMap({ featureCollection, overlays, selectedId, 
                 <b style="color:${scoreColor(score)}">${score}/100</b>
                 &nbsp;&nbsp;${n_divergencias} divergência${n_divergencias !== 1 ? "s" : ""}
               </div>`,
-              { sticky: true, className: "tupa-tooltip" }
+              { sticky: true, className: "tupa-tooltip" },
             );
             layer.on("click", () => onSelect(feature.properties.id));
           }}

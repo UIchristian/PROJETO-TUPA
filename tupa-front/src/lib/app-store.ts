@@ -82,7 +82,7 @@ const defaultInitial: AppState = {
   },
   protected: false,
   payout: "pending",
-  language: "es", // Espanhol como padrão
+  language: "pt", // Português como padrão
   carVerified: false,
   documentoValidado: false,
   documentoArquivoNome: "",
@@ -179,7 +179,7 @@ export const appStore = {
       data: new Date().toISOString(),
     };
     appStore.set({
-      logs: [newLog, ...(state.logs || [])]
+      logs: [newLog, ...(state.logs || [])],
     });
   },
   cycleStatus: () => {
