@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getBaseReferencia } from "@/api";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import BaseReferenciaMap from "@/components/BaseReferenciaMap";
-import { FeicaoReferencia, TipoFeicao, NivelConfianca } from "@/types/imovel";
+import { FeicaoReferencia, TipoFeicao, NivelConfianca, DecisaoFeicao } from "@/types/imovel";
 import { Layers, ShieldAlert, ArrowRight, Info, AlertTriangle } from "lucide-react";
 
 type MapaSearch = {
@@ -50,6 +51,8 @@ const COLORS_CONF: Record<string, string> = {
   baixa: "var(--conf-baixa)",
 };
 
+type DecisoesFeicao = Record<string, { decisao: DecisaoFeicao; observacao: string }>;
+
 function MapaScreen() {
   const { municipio } = Route.useSearch();
 
@@ -63,19 +66,65 @@ function MapaScreen() {
     new Set(["alta", "media", "baixa"]),
   );
   const [vigencia, setVigencia] = useState<number>(new Date().getFullYear());
-  const [selectedFeicao, setSelectedFeicao] = useState<FeicaoReferencia | null>(null);
+  const [selectedFeicaoId, setSelectedFeicaoId] = useState<string | null>(null);
 
-  // Initialize visible types with all available types from data
-  useMemo(() => {
-    if (data && tiposVisiveis.size === 0) {
+  // Initialize visible types with all available types from data (runs once per data fetch/municipio)
+  const initializedMunicipio = useRef<string | null>(null);
+  useEffect(() => {
+    if (data && initializedMunicipio.current !== municipio) {
+      initializedMunicipio.current = municipio || null;
       const allTipos = new Set(data.feicoes.map((f) => f.tipo));
       setTiposVisiveis(allTipos);
+      setSelectedFeicaoId(null);
     }
-  }, [data, tiposVisiveis]);
+  }, [data, municipio]);
+
+  // Estado de Decisões do LocalStorage
+  const [decisoes, setDecisoes] = useState<DecisoesFeicao>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const saved = localStorage.getItem("tupa_decisoes_feicao");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const salvarDecisao = (feicaoId: string, decisao: DecisaoFeicao, observacao: string) => {
+    const next = { ...decisoes, [feicaoId]: { decisao, observacao } };
+    setDecisoes(next);
+    try {
+      localStorage.setItem("tupa_decisoes_feicao", JSON.stringify(next));
+    } catch (e) {
+      console.error("Failed to save decisoes", e);
+    }
+  };
+
+  const feicoesComDecisao = useMemo(() => {
+    if (!data) return [];
+    return data.feicoes.map((f) => {
+      const dec = decisoes[f.id];
+      return {
+        ...f,
+        decisao: dec?.decisao || "pendente",
+        observacao: dec?.observacao || "",
+      };
+    });
+  }, [data, decisoes]);
+
+  const selectedFeicao = useMemo(() => {
+    return feicoesComDecisao.find((f) => f.id === selectedFeicaoId) || null;
+  }, [feicoesComDecisao, selectedFeicaoId]);
+
+  // Texto temporário da observação
+  const [obsLocal, setObsLocal] = useState("");
+  useEffect(() => {
+    setObsLocal(selectedFeicao?.observacao || "");
+  }, [selectedFeicao?.id, selectedFeicao?.observacao]);
 
   const feicoesPresentes = useMemo(() => {
-    if (!data) return [];
-    const agrupado = data.feicoes.reduce(
+    if (!feicoesComDecisao) return [];
+    const agrupado = feicoesComDecisao.reduce(
       (acc, f) => {
         if (!acc[f.tipo]) acc[f.tipo] = { count: 0, confs: { alta: 0, media: 0, baixa: 0 } };
         acc[f.tipo].count++;
@@ -93,7 +142,7 @@ function MapaScreen() {
         return { tipo: tipo as TipoFeicao, predominante, count: info.count };
       })
       .sort((a, b) => a.tipo.localeCompare(b.tipo));
-  }, [data]);
+  }, [feicoesComDecisao]);
 
   if (isLoading) {
     return (
@@ -139,6 +188,25 @@ function MapaScreen() {
     setConfiancasVisiveis(next);
   };
 
+  const getBadgeProps = (decisao?: DecisaoFeicao) => {
+    switch (decisao) {
+      case "validada":
+        return {
+          variant: "default" as const,
+          className: "bg-green-600 hover:bg-green-700 text-white",
+        };
+      case "ajustada":
+        return {
+          variant: "default" as const,
+          className: "bg-amber-500 hover:bg-amber-600 text-white",
+        };
+      case "rejeitada":
+        return { variant: "destructive" as const };
+      default:
+        return { variant: "secondary" as const, className: "text-muted-foreground" };
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-64px)]">
       <header className="px-6 py-4 border-b border-border bg-card flex items-center justify-between">
@@ -176,11 +244,11 @@ function MapaScreen() {
           ) : (
             <BaseReferenciaMap
               limites={data.limites}
-              feicoes={data.feicoes}
+              feicoes={feicoesComDecisao}
               tiposVisiveis={tiposVisiveis}
               confiancasVisiveis={confiancasVisiveis}
               selectedId={selectedFeicao?.id}
-              onSelectFeicao={setSelectedFeicao}
+              onSelectFeicao={(f) => setSelectedFeicaoId(f.id)}
             />
           )}
         </div>
@@ -269,11 +337,19 @@ function MapaScreen() {
               <Card className="p-4 shadow-sm border-border">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h4 className="font-semibold text-sm">
-                      {LABELS_TIPO[selectedFeicao.tipo] || selectedFeicao.tipo}
-                    </h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-sm">
+                        {LABELS_TIPO[selectedFeicao.tipo] || selectedFeicao.tipo}
+                      </h4>
+                      <Badge
+                        {...getBadgeProps(selectedFeicao.decisao)}
+                        className="capitalize text-[10px] h-5 px-1.5 rounded-sm"
+                      >
+                        {selectedFeicao.decisao}
+                      </Badge>
+                    </div>
                     {selectedFeicao.subclasse && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground block mt-0.5">
                         {selectedFeicao.subclasse}
                       </span>
                     )}
@@ -299,7 +375,7 @@ function MapaScreen() {
                     <span className="text-muted-foreground text-xs mb-0.5">Base Legal:</span>
                     <span className="text-xs leading-snug">{selectedFeicao.baseLegal}</span>
                   </div>
-                  {selectedFeicao.confiancaMotivo && (
+                  {selectedFeicao.confiancaMotivo && selectedFeicao.confianca === "baixa" && (
                     <div className="flex items-start gap-2 mt-3 p-2 bg-muted/50 rounded-md border border-border">
                       <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
                       <p className="text-xs text-muted-foreground leading-snug">
@@ -309,16 +385,54 @@ function MapaScreen() {
                   )}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-border">
-                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider text-center">
-                    Validar, ajustar ou rejeitar: próxima etapa.
-                  </p>
+                {/* Validation Panel */}
+                <div className="mt-4 pt-4 border-t border-border space-y-3">
+                  <Textarea
+                    placeholder="Observação da analista (opcional)"
+                    value={obsLocal}
+                    onChange={(e) => setObsLocal(e.target.value)}
+                    className="text-xs min-h-[60px] resize-none"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant={selectedFeicao.decisao === "validada" ? "default" : "outline"}
+                      className={
+                        selectedFeicao.decisao === "validada"
+                          ? "bg-green-600 hover:bg-green-700 flex-1 text-white"
+                          : "flex-1"
+                      }
+                      onClick={() => salvarDecisao(selectedFeicao.id, "validada", obsLocal)}
+                    >
+                      Validar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={selectedFeicao.decisao === "ajustada" ? "default" : "outline"}
+                      className={
+                        selectedFeicao.decisao === "ajustada"
+                          ? "bg-amber-500 hover:bg-amber-600 flex-1 text-white"
+                          : "flex-1"
+                      }
+                      onClick={() => salvarDecisao(selectedFeicao.id, "ajustada", obsLocal)}
+                    >
+                      Ajustar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={selectedFeicao.decisao === "rejeitada" ? "destructive" : "outline"}
+                      className="flex-1"
+                      onClick={() => salvarDecisao(selectedFeicao.id, "rejeitada", obsLocal)}
+                    >
+                      Rejeitar
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ) : (
               <div className="h-full flex items-center justify-center text-center p-4">
                 <p className="text-sm text-muted-foreground">
-                  Clique em uma feição no mapa para ver detalhes.
+                  Clique em uma feição no mapa para ver detalhes e validar.
                 </p>
               </div>
             )}

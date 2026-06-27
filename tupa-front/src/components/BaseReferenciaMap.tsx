@@ -74,7 +74,7 @@ function useThemeTokens() {
 function getFeicaoStyle(f: FeicaoReferencia, tokens: Record<string, string>, isSelected: boolean) {
   let color = "#3b82f6";
   let fillColor = "#3b82f6";
-  let dashArray = undefined;
+  let dashArray: string | undefined = undefined;
   let weight = isSelected ? 4 : 2;
   let fillOpacity = 0.3;
 
@@ -87,24 +87,41 @@ function getFeicaoStyle(f: FeicaoReferencia, tokens: Record<string, string>, isS
   } else if (f.tipo === "RESERVA_LEGAL_PROPOSTA") {
     color = tokens.rl || "#00ff00";
     fillColor = color;
-    dashArray = "4, 4"; // sugerir hachura
+    dashArray = "4, 4";
   } else if (f.tipo === "COBERTURA") {
     color = "transparent";
-    fillColor = tokens.rl || "#00ff00"; // preenchimento verde suave
+    fillColor = tokens.rl || "#00ff00";
     weight = 0;
-    fillOpacity = 0.15; // baixa opacidade
+    fillOpacity = 0.15;
   }
 
-  // Modulate by confianca
-  if (f.confianca === "alta") {
-    fillOpacity = Math.max(0.2, fillOpacity * 1.5);
-  } else if (f.confianca === "media") {
-    // defaults are fine
-  } else if (f.confianca === "baixa") {
-    color = tokens.confBaixa || "#ef4444";
-    dashArray = "2, 4";
+  // Modulate by decisao (highest priority)
+  if (f.decisao === "validada") {
+    color = tokens.confAlta || "#22c55e"; // solid confirmation border
+    dashArray = undefined;
     if (weight > 0) weight = isSelected ? 5 : 3;
-    fillOpacity = fillOpacity * 0.5; // less fill to highlight the border
+    // fill opacity remains normal
+  } else if (f.decisao === "ajustada") {
+    color = tokens.confMedia || "#f59e0b"; // amber adjustment border
+    dashArray = undefined;
+    if (weight > 0) weight = isSelected ? 5 : 3;
+  } else if (f.decisao === "rejeitada") {
+    color = "#9ca3af"; // gray border
+    dashArray = "4, 4";
+    fillOpacity = 0.05; // almost invisible
+    if (weight > 0) weight = isSelected ? 4 : 2;
+  } else {
+    // pendente (fallback to confianca modulation)
+    if (f.confianca === "alta") {
+      fillOpacity = Math.max(0.2, fillOpacity * 1.5);
+    } else if (f.confianca === "media") {
+      // defaults are fine
+    } else if (f.confianca === "baixa") {
+      color = tokens.confBaixa || "#ef4444";
+      dashArray = "2, 4";
+      if (weight > 0) weight = isSelected ? 5 : 3;
+      fillOpacity = fillOpacity * 0.5;
+    }
   }
 
   if (isSelected && weight > 0) {
