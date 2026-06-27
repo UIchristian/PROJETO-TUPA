@@ -21,7 +21,10 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SOURCE   = BASE_DIR / "hidrografia.geojson"
+# Fonte padrão: arquivo global. Se existir o recorte de MG, use-o (muito menor).
+_MG_SRC    = BASE_DIR / "data" / "minas_gerais" / "hidrografia.geojson"
+_GLOBAL_SRC = BASE_DIR / "hidrografia.geojson"
+SOURCE = _MG_SRC if _MG_SRC.exists() else _GLOBAL_SRC
 
 # Largura estimada (metros) por ordem de Strahler — referência ANA
 _LARGURA_STRAHLER = {
@@ -78,28 +81,37 @@ def _geom_intersecta_bbox(geom: dict, xmin, ymin, xmax, ymax) -> bool:
 
 
 def extrair(municipio: str, lat_min: float, lat_max: float,
-            lon_min: float, lon_max: float) -> int:
+            lon_min: float, lon_max: float,
+            source: "Path | None" = None) -> int:
+    """Extrai feições hidrográficas dentro da bbox para o município.
+
+    source: caminho para o GeoJSON de origem. Se None, usa o recorte MG
+            (data/minas_gerais/hidrografia.geojson) ou o arquivo global.
+    """
     try:
         import ijson
     except ImportError:
         logger.error("ijson não instalado. Execute: pip install ijson")
         return 0
 
+    src = Path(source) if source else SOURCE
+
     dest_dir = BASE_DIR / "data" / municipio
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / "hidrografia.gpkg"
 
-    if not SOURCE.exists():
-        logger.error(f"Arquivo fonte não encontrado: {SOURCE}")
+    if not src.exists():
+        logger.error(f"Arquivo fonte não encontrado: {src}")
         return 0
 
+    size_label = f"{src.stat().st_size/1e6:.0f} MB" if src.stat().st_size < 1e9 else f"{src.stat().st_size/1e9:.2f} GB"
     logger.info(f"Extraindo hidrografia para {municipio} (bbox: {lon_min},{lat_min} → {lon_max},{lat_max})")
-    logger.info(f"Fonte: {SOURCE.name} ({SOURCE.stat().st_size/1e9:.2f} GB) — aguarde...")
+    logger.info(f"Fonte: {src.name} ({size_label}) — aguarde...")
 
     features_out = []
     total_lidos  = 0
 
-    with open(SOURCE, "rb") as f:
+    with open(src, "rb") as f:
         for feat in ijson.items(f, "features.item"):
             total_lidos += 1
             if total_lidos % 50000 == 0:
@@ -132,11 +144,19 @@ def extrair(municipio: str, lat_min: float, lat_max: float,
             else:
                 largura = None  # adapter aplica piso de 30m
 
+            geom_type = geom.get("type", "")
+            if geom_type in ("Polygon", "MultiPolygon"):
+                tipo_feat = "lago"
+            elif strahler is not None and int(strahler) == 1:
+                tipo_feat = "nascente"
+            else:
+                tipo_feat = "rio"
+
             features_out.append({
                 "type": "Feature",
                 "geometry": geom,
                 "properties": {
-                    "tipo":         "rio",
+                    "tipo":         tipo_feat,
                     "largura":      largura,
                     "strahler":     int(strahler) if strahler else None,
                     "nome_rio":     props.get("NORIOCOMP") or props.get("NOORIGINAL"),

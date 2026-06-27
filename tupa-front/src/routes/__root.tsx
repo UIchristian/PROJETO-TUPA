@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -7,6 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { fallbackBus } from "@/lib/fallback-bus";
 
 import appCss from "../styles.css?url";
 import {
@@ -20,7 +22,6 @@ import {
   Sailboat,
   Tent,
   Wheat,
-  Map as MapIcon,
 } from "lucide-react";
 import { useAppState } from "@/lib/app-store";
 import AccessibilityBar from "@/components/AccessibilityBar";
@@ -146,6 +147,26 @@ const applyAccessibilityScript = `
   })();
 `;
 
+function MockFallbackBanner() {
+  const occurred = useSyncExternalStore(
+    fallbackBus.subscribe,
+    () => fallbackBus.occurred,
+    () => false,
+  );
+  if (!occurred) return null;
+  return (
+    <div className="w-full bg-amber-400 text-amber-900 text-xs font-bold text-center py-1 px-4 flex items-center justify-center gap-2">
+      <span>⚠ DADOS SIMULADOS (MOCK) — backend não respondeu. Verifique se o servidor está rodando.</span>
+      <button
+        onClick={() => fallbackBus.reset()}
+        className="ml-3 underline opacity-70 hover:opacity-100"
+      >
+        Fechar
+      </button>
+    </div>
+  );
+}
+
 function RootShell({ children }: { children: React.ReactNode }) {
   const { backofficeUser } = useAppState();
   const activeAvatar = PRESET_AVATARS.find((a) => a.id === backofficeUser.avatarId);
@@ -168,6 +189,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
             <AccessibilityBar />
           </div>
         </div>
+
+        <MockFallbackBanner />
 
         {/* Header do Produto */}
         <header className="sticky top-0 z-50 w-full border-b border-border bg-card shadow-soft">
@@ -193,12 +216,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
                   className="hover:text-primary transition-colors [&.active]:text-primary"
                 >
                   Painel de cobertura
-                </Link>
-                <Link
-                  to="/mapa"
-                  className="flex items-center gap-1.5 hover:text-primary transition-colors [&.active]:text-primary"
-                >
-                  <MapIcon className="w-4 h-4" /> Mapa
                 </Link>
                 <Link
                   to="/configuracoes"

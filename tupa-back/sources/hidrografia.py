@@ -64,24 +64,34 @@ class HidrografiaSourceAdapter(BaseSourceAdapter):
         """Retorna o arquivo de hidrografia disponível, extraindo se necessário."""
         mun_dir = BASE_DIR / "data" / municipio
 
+        # 1. Arquivo já extraído para este município
         for nome in ("hidrografia.gpkg", "hidrografia.geojson"):
             p = mun_dir / nome
             if p.exists():
-                logger.info(f"  Usando: {p}")
+                logger.info(f"  Usando arquivo municipal: {p}")
                 return p
 
-        # Tenta auto-extrair do arquivo global (BHO América do Sul)
+        # 2. Extrai a partir do recorte MG (muito menor) ou do global como fallback
+        mg_src     = BASE_DIR / "data" / "minas_gerais" / "hidrografia.geojson"
         global_src = BASE_DIR / "hidrografia.geojson"
-        if global_src.exists():
-            logger.info(f"  Extraindo do arquivo global ({global_src.name})...")
-            if self._auto_extrair(municipio):
+
+        src = mg_src if mg_src.exists() else (global_src if global_src.exists() else None)
+        if src:
+            label = "recorte MG" if src == mg_src else "arquivo global BHO"
+            logger.info(f"  Extraindo do {label} ({src.name})...")
+            if self._auto_extrair(municipio, src):
                 return mun_dir / "hidrografia.gpkg"
+        else:
+            logger.warning(
+                "Nenhum arquivo de hidrografia encontrado. "
+                "Execute: python scripts/recortar_hidrografia_mg.py"
+            )
 
         return None
 
-    def _auto_extrair(self, municipio: str) -> bool:
-        """Extrai feições do arquivo global para a bbox do município."""
-        import importlib.util, sys
+    def _auto_extrair(self, municipio: str, src: Path) -> bool:
+        """Extrai feições do arquivo src para a bbox do município."""
+        import importlib.util
         script = BASE_DIR / "scripts" / "extrair_hidrografia.py"
         if not script.exists():
             logger.error(f"Script não encontrado: {script}")
@@ -97,7 +107,7 @@ class HidrografiaSourceAdapter(BaseSourceAdapter):
             return False
 
         lat_min, lat_max, lon_min, lon_max = bbox
-        n = mod.extrair(municipio, lat_min, lat_max, lon_min, lon_max)
+        n = mod.extrair(municipio, lat_min, lat_max, lon_min, lon_max, source=src)
         return n > 0
 
     def _bbox_municipio(self, municipio: str) -> tuple | None:

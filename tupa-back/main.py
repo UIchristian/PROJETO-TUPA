@@ -14,7 +14,6 @@ from __future__ import annotations
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
 from typing import List
 
 import json
@@ -97,7 +96,7 @@ class BuscarCarsResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     # Cria as tabelas se não existirem
     try:
         Base.metadata.create_all(bind=engine)
@@ -482,6 +481,54 @@ def get_imovel_resumo(imovel_id: str, db: Session = Depends(get_db)):
     }
 
 
+@app.get("/imovel/{imovel_id}/enquadramento_rl")
+def get_enquadramento_rl(imovel_id: str, db: Session = Depends(get_db)):
+    """Calcula e retorna o enquadramento de Reserva Legal para um imóvel."""
+    from gerar_base_referencia import calcular_enquadramento_rl, _modulo_fiscal, _percentual_rl
+    imovel = db.query(Imovel).filter(Imovel.id == imovel_id).first()
+    if not imovel:
+        raise HTTPException(status_code=404, detail=f"Imóvel '{imovel_id}' não encontrado")
+    mf = _modulo_fiscal(imovel.municipio)
+    enq = calcular_enquadramento_rl(imovel_id, db, modulo_fiscal_ha=mf)
+    if not enq:
+        raise HTTPException(status_code=404, detail="Não foi possível calcular o enquadramento")
+    perc = _percentual_rl(imovel.uf or "MG")
+    return {
+        "imovel_id": imovel_id,
+        "bioma": "Cerrado",
+        "percentual_aplicavel": perc,
+        "art68_pendente": False,
+        **enq,
+    }
+
+
+@app.get("/municipios/cobertura")
+def get_municipios_cobertura(db: Session = Depends(get_db)):
+    """Lista municípios com contagem de imóveis e indicador de base gerada."""
+    rows = db.execute(text("""
+        SELECT
+            i.municipio,
+            COALESCE(i.uf, 'MG') AS uf,
+            COUNT(DISTINCT i.id) AS total_imoveis,
+            COUNT(DISTINCT f.imovel_id) > 0 AS tem_base_referencia
+        FROM imovel i
+        LEFT JOIN feicao_referencia f ON f.municipio = i.municipio
+        GROUP BY i.municipio, i.uf
+        ORDER BY i.municipio
+    """)).fetchall()
+    return [
+        {
+            "municipio": r.municipio,
+            "uf": r.uf,
+            "tem_base_referencia": bool(r.tem_base_referencia),
+            "total_imoveis": int(r.total_imoveis),
+            "imoveis_impactados": 0,
+            "ha_sem_cobertura": 0.0,
+        }
+        for r in rows
+    ]
+
+
 @app.get("/municipio/{municipio}/stats")
 def get_municipio_stats(municipio: str, db: Session = Depends(get_db)):
     """Estatísticas agregadas do município para o painel de resumo."""
@@ -628,7 +675,7 @@ def processar_car(cod_imovel: str, db: Session = Depends(get_db)):
     from pathlib import Path as _Path
     import geopandas as gpd
     from shapely.geometry import MultiPolygon
-    from gerar_base_referencia import gerar_base_municipio
+    from gerar_base_referencia import gerar_base_municipio, gerar_base_imovel
 
     imovel_id = f"imovel_{cod_imovel}"
 
@@ -664,21 +711,36 @@ def processar_car(cod_imovel: str, db: Session = Depends(get_db)):
         db.commit()
         logger.info(f"CAR inserido: {cod_imovel} ({municipio})")
 
-        # Fontes carregadas com o municipio REAL do imóvel (não "minas_gerais")
-        # MapBiomas e Elevação já têm fallback para data/minas_gerais/
-        # Hidrografia auto-extrai do arquivo global via bbox do imóvel
-        from sources.mapbiomas import MapBiomasSourceAdapter
-        from sources.hidrografia import HidrografiaSourceAdapter
-        from sources.elevacao import ElevacaoSourceAdapter
-        MapBiomasSourceAdapter().load_data(municipio, db)
+    # Carrega fontes apenas quando ausentes — evita re-ler arquivos grandes a cada clique.
+    # Para forçar recarga completa, DELETE as linhas do município nas tabelas e reprocesse.
+    from sources.mapbiomas import MapBiomasSourceAdapter
+    from sources.hidrografia import HidrografiaSourceAdapter
+    from sources.elevacao import ElevacaoSourceAdapter
+
+    hidro_count = db.execute(
+        text("SELECT COUNT(*) FROM hidrografia WHERE municipio = :m"), {"m": municipio}
+    ).scalar() or 0
+    if hidro_count == 0:
+        logger.info(f"Hidrografia ausente para {municipio} — extraindo…")
         HidrografiaSourceAdapter().load_data(municipio, db)
+    else:
+        logger.info(f"Hidrografia já presente para {municipio} ({hidro_count} feições) — pulando.")
+
+    cob_count = db.execute(
+        text("SELECT COUNT(*) FROM cobertura_observada WHERE imovel_id = :iid"), {"iid": imovel_id}
+    ).scalar() or 0
+    if cob_count == 0:
+        logger.info(f"Cobertura ausente para {imovel_id} — carregando MapBiomas + Elevação…")
+        MapBiomasSourceAdapter().load_data(municipio, db)
         ElevacaoSourceAdapter().load_data(municipio, db)
+    else:
+        logger.info(f"Cobertura já presente para {imovel_id} ({cob_count} polígonos) — pulando.")
 
     # (Re)calcula divergências
     calcular_diagnostico_postgis(imovel_id, db)
 
-    # Gera/atualiza feições de referência para este município
-    gerar_base_municipio(municipio, db)
+    # Gera/atualiza feições de referência apenas para este imóvel
+    gerar_base_imovel(imovel_id, municipio, db)
 
     _cache.pop("imoveis", None)
     return {"ok": True, "imovel_id": imovel_id}

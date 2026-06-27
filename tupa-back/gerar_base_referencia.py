@@ -43,8 +43,12 @@ def _case_buffer() -> str:
 # APP de Cursos d'Água (Art. 4, I)
 # ---------------------------------------------------------------------------
 
-def gerar_app_cursos(municipio: str, db: Session) -> int:
+def gerar_app_cursos(municipio: str, db: Session, imovel_id: str | None = None) -> int:
     buf = _case_buffer()
+    iid_filter = "AND i.id = :iid" if imovel_id else ""
+    params: dict = {"m": municipio}
+    if imovel_id:
+        params["iid"] = imovel_id
     result = db.execute(text(f"""
         INSERT INTO feicao_referencia
             (municipio, imovel_id, tipo, subclasse, base_legal, area_hectares, confianca, geometria)
@@ -66,7 +70,7 @@ def gerar_app_cursos(municipio: str, db: Session) -> int:
         FROM imovel i
         JOIN hidrografia h ON ST_Intersects(
             ST_Buffer(h.geometria::geography, {buf})::geometry, i.poligono_declarado)
-        WHERE i.municipio = :m
+        WHERE i.municipio = :m {iid_filter}
           AND h.municipio = i.municipio
           AND h.tipo = 'rio'
           AND ST_Area(ST_Transform(
@@ -74,7 +78,7 @@ def gerar_app_cursos(municipio: str, db: Session) -> int:
                   ST_Buffer(h.geometria::geography, {buf})::geometry,
                   i.poligono_declarado),
               {SRID_AREA})) / 10000.0 > 0.001;
-    """), {"m": municipio})
+    """), params)
     db.commit()
     count = result.rowcount if result.rowcount >= 0 else 0
     logger.info(f"APP_CURSO_DAGUA: {count} feições geradas para {municipio}.")
@@ -85,8 +89,12 @@ def gerar_app_cursos(municipio: str, db: Session) -> int:
 # APP de Nascentes (Art. 4, IV) — buffer de 50m em pontos de nascente
 # ---------------------------------------------------------------------------
 
-def gerar_app_nascentes(municipio: str, db: Session) -> int:
+def gerar_app_nascentes(municipio: str, db: Session, imovel_id: str | None = None) -> int:
     raio = regras.app.nascentes.raio_app
+    iid_filter = "AND i.id = :iid" if imovel_id else ""
+    params: dict = {"m": municipio}
+    if imovel_id:
+        params["iid"] = imovel_id
     result = db.execute(text(f"""
         INSERT INTO feicao_referencia
             (municipio, imovel_id, tipo, subclasse, base_legal, area_hectares, confianca, geometria)
@@ -108,10 +116,10 @@ def gerar_app_nascentes(municipio: str, db: Session) -> int:
         FROM imovel i
         JOIN hidrografia h ON ST_Intersects(
             ST_Buffer(h.geometria::geography, {raio})::geometry, i.poligono_declarado)
-        WHERE i.municipio = :m
+        WHERE i.municipio = :m {iid_filter}
           AND h.municipio = i.municipio
           AND h.tipo = 'nascente';
-    """), {"m": municipio})
+    """), params)
     db.commit()
     count = result.rowcount if result.rowcount >= 0 else 0
     logger.info(f"APP_NASCENTE: {count} feições geradas para {municipio}.")
@@ -122,9 +130,12 @@ def gerar_app_nascentes(municipio: str, db: Session) -> int:
 # APP de Lagos e Lagoas Naturais (Art. 4, II)
 # ---------------------------------------------------------------------------
 
-def gerar_app_lagos(municipio: str, db: Session) -> int:
+def gerar_app_lagos(municipio: str, db: Session, imovel_id: str | None = None) -> int:
     cfg = regras.app.lagos_lagoas_naturais
-    # Buffer padrão para zonas rurais; usa faixa reduzida se área do lago ≤ 20ha
+    iid_filter = "AND i.id = :iid" if imovel_id else ""
+    params: dict = {"m": municipio}
+    if imovel_id:
+        params["iid"] = imovel_id
     result = db.execute(text(f"""
         INSERT INTO feicao_referencia
             (municipio, imovel_id, tipo, subclasse, base_legal, area_hectares, confianca, geometria)
@@ -161,11 +172,11 @@ def gerar_app_lagos(municipio: str, db: Session) -> int:
                 i.poligono_declarado))
         FROM imovel i
         JOIN hidrografia h ON ST_Intersects(h.geometria, i.poligono_declarado)
-        WHERE i.municipio = :m
+        WHERE i.municipio = :m {iid_filter}
           AND h.municipio = i.municipio
           AND h.tipo = 'lago'
           AND ST_Area(ST_Transform(h.geometria, {SRID_AREA})) / 10000.0 > {cfg.dispensa_inferior_ha};
-    """), {"m": municipio})
+    """), params)
     db.commit()
     count = result.rowcount if result.rowcount >= 0 else 0
     logger.info(f"APP_LAGO: {count} feições geradas para {municipio}.")
@@ -176,8 +187,12 @@ def gerar_app_lagos(municipio: str, db: Session) -> int:
 # APP de Veredas (Art. 4, XI) — faixa de 50m
 # ---------------------------------------------------------------------------
 
-def gerar_app_veredas(municipio: str, db: Session) -> int:
+def gerar_app_veredas(municipio: str, db: Session, imovel_id: str | None = None) -> int:
     faixa = regras.app.veredas.faixa_marginal
+    iid_filter = "AND i.id = :iid" if imovel_id else ""
+    params: dict = {"m": municipio}
+    if imovel_id:
+        params["iid"] = imovel_id
     result = db.execute(text(f"""
         INSERT INTO feicao_referencia
             (municipio, imovel_id, tipo, subclasse, base_legal, area_hectares, confianca, geometria)
@@ -199,10 +214,10 @@ def gerar_app_veredas(municipio: str, db: Session) -> int:
         FROM imovel i
         JOIN hidrografia h ON ST_Intersects(
             ST_Buffer(h.geometria::geography, {faixa})::geometry, i.poligono_declarado)
-        WHERE i.municipio = :m
+        WHERE i.municipio = :m {iid_filter}
           AND h.municipio = i.municipio
           AND h.tipo = 'vereda';
-    """), {"m": municipio})
+    """), params)
     db.commit()
     count = result.rowcount if result.rowcount >= 0 else 0
     logger.info(f"APP_VEREDA: {count} feições geradas para {municipio}.")
@@ -213,7 +228,11 @@ def gerar_app_veredas(municipio: str, db: Session) -> int:
 # Uso Restrito de Encosta (Art. 11) — copia de uso_restrito para feicao_referencia
 # ---------------------------------------------------------------------------
 
-def gerar_uso_restrito(municipio: str, db: Session) -> int:
+def gerar_uso_restrito(municipio: str, db: Session, imovel_id: str | None = None) -> int:
+    iid_join = "AND i.id = :iid" if imovel_id else ""
+    params: dict = {"m": municipio}
+    if imovel_id:
+        params["iid"] = imovel_id
     result = db.execute(text(f"""
         INSERT INTO feicao_referencia
             (municipio, imovel_id, tipo, subclasse, base_legal, area_hectares, confianca, geometria)
@@ -229,13 +248,13 @@ def gerar_uso_restrito(municipio: str, db: Session) -> int:
             'media',
             ST_Multi(ST_Intersection(u.geometria, i.poligono_declarado))
         FROM uso_restrito u
-        JOIN imovel i ON i.municipio = :m
+        JOIN imovel i ON i.municipio = :m {iid_join}
             AND ST_Intersects(u.geometria, i.poligono_declarado)
         WHERE u.municipio = :m
           AND ST_Area(ST_Transform(
               ST_Intersection(u.geometria, i.poligono_declarado),
               {SRID_AREA})) / 10000.0 > 0.001;
-    """), {"m": municipio})
+    """), params)
     db.commit()
     count = result.rowcount if result.rowcount >= 0 else 0
     logger.info(f"USO_RESTRITO_ENCOSTA: {count} feições geradas para {municipio}.")
@@ -347,12 +366,15 @@ def calcular_enquadramento_rl(imovel_id: str, db: Session,
     }
 
 
-def gerar_reserva_legal(municipio: str, db: Session) -> int:
+def gerar_reserva_legal(municipio: str, db: Session, imovel_id: str | None = None) -> int:
     """Grava a RL proposta com enquadramento correto (Art. 12 ou Art. 67) por imóvel."""
     mf = _modulo_fiscal(municipio)
-    imoveis = db.execute(
-        text("SELECT id FROM imovel WHERE municipio = :m"), {"m": municipio}
-    ).fetchall()
+    if imovel_id:
+        imoveis = [(imovel_id,)]
+    else:
+        imoveis = db.execute(
+            text("SELECT id FROM imovel WHERE municipio = :m"), {"m": municipio}
+        ).fetchall()
 
     count = 0
     for (imovel_id,) in imoveis:
@@ -389,8 +411,12 @@ def gerar_reserva_legal(municipio: str, db: Session) -> int:
     return count
 
 
-def gerar_cobertura(municipio: str, db: Session) -> int:
+def gerar_cobertura(municipio: str, db: Session, imovel_id: str | None = None) -> int:
     """Copia a cobertura observada para feicao_referencia como camada COBERTURA."""
+    iid_filter = "AND i.id = :iid" if imovel_id else ""
+    params: dict = {"m": municipio}
+    if imovel_id:
+        params["iid"] = imovel_id
     result = db.execute(text(f"""
         INSERT INTO feicao_referencia
             (municipio, imovel_id, tipo, subclasse, base_legal, area_hectares, confianca, geometria)
@@ -405,8 +431,8 @@ def gerar_cobertura(municipio: str, db: Session) -> int:
             c.geometria
         FROM cobertura_observada c
         JOIN imovel i ON i.id = c.imovel_id
-        WHERE i.municipio = :m;
-    """), {"m": municipio})
+        WHERE i.municipio = :m {iid_filter};
+    """), params)
     db.commit()
     count = result.rowcount if result.rowcount >= 0 else 0
     logger.info(f"COBERTURA: {count} feições geradas para {municipio}.")
@@ -443,6 +469,28 @@ def gerar_base_municipio(municipio: str, db: Session) -> dict:
 
     total = sum(resumo.values())
     logger.info(f"Base gerada: {total} feições totais para {municipio}. Resumo: {resumo}")
+    return resumo
+
+
+def gerar_base_imovel(imovel_id: str, municipio: str, db: Session) -> dict:
+    """Gera feições de referência para um único imóvel sem apagar outros do município."""
+    logger.info(f"Gerando base para imóvel {imovel_id} ({municipio})...")
+
+    db.execute(text("DELETE FROM feicao_referencia WHERE imovel_id = :iid"), {"iid": imovel_id})
+    db.commit()
+
+    resumo = {
+        "APP_CURSO_DAGUA": gerar_app_cursos(municipio, db, imovel_id),
+        "APP_NASCENTE": gerar_app_nascentes(municipio, db, imovel_id),
+        "APP_LAGO": gerar_app_lagos(municipio, db, imovel_id),
+        "APP_VEREDA": gerar_app_veredas(municipio, db, imovel_id),
+        "USO_RESTRITO_ENCOSTA": gerar_uso_restrito(municipio, db, imovel_id),
+        "RESERVA_LEGAL_PROPOSTA": gerar_reserva_legal(municipio, db, imovel_id),
+        "COBERTURA": gerar_cobertura(municipio, db, imovel_id),
+    }
+
+    total = sum(resumo.values())
+    logger.info(f"Base do imóvel: {total} feições. Resumo: {resumo}")
     return resumo
 
 

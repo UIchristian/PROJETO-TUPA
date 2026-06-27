@@ -50,7 +50,10 @@ import {
   getCamadaApi,
   getLimitesImovelApi,
   getEnquadramentoRLApi,
+  getCoberturaMunicipiosApi,
 } from "@/api/client";
+
+import { fallbackBus } from "@/lib/fallback-bus";
 
 const useMock = import.meta.env.VITE_USE_MOCK === "true";
 
@@ -59,7 +62,7 @@ export const getImoveis = async (): Promise<Imovel[]> => {
   try {
     return await getImoveisApi();
   } catch (err) {
-    console.warn("Tupã Auto-Fallback: Backend real falhou (getImoveis), retornando mock...", err);
+    fallbackBus.signal(); console.warn("Tupã Auto-Fallback [MOCK ATIVO]: Backend real falhou (getImoveis), retornando mock...", err);
     return mockGetImoveis();
   }
 };
@@ -185,6 +188,12 @@ export const getEnquadramentoRL = async (imovelId: string) => {
 };
 
 export const getCoberturaMunicipios = async () => {
-  // Always use mock for Tela 1 as requested: "Pode chamar o mock direto se não houver endpoint real"
-  return getCoberturaMunicipiosMock();
+  if (useMock) return getCoberturaMunicipiosMock();
+  try {
+    return await getCoberturaMunicipiosApi();
+  } catch (err) {
+    fallbackBus.signal();
+    console.warn("Tupã Auto-Fallback [MOCK ATIVO]: Backend real falhou (getCoberturaMunicipios), retornando mock...", err);
+    return getCoberturaMunicipiosMock();
+  }
 };

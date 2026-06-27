@@ -6,6 +6,7 @@
 import type {
   CoberturaClasse,
   CoberturaPoligono,
+  CoberturaMunicipal,
   CursoDAguaInfo,
   Diagnostico,
   Divergencia,
@@ -237,6 +238,18 @@ export async function getLayersApi(imovelId: string): Promise<LayerGeometries | 
     if (err.message?.includes("404")) return null;
     throw err;
   }
+}
+
+export async function getCoberturaMunicipiosApi(): Promise<CoberturaMunicipal[]> {
+  const raw = await fetchJson<any[]>("/municipios/cobertura");
+  return raw.map((r: any) => ({
+    municipio: r.municipio,
+    uf: r.uf,
+    temBaseReferencia: r.tem_base_referencia,
+    totalImoveis: r.total_imoveis,
+    imoveisImpactados: r.imoveis_impactados ?? 0,
+    haSemCobertura: r.ha_sem_cobertura ?? 0,
+  }));
 }
 
 export async function getEnquadramentoRLApi(imovelId: string): Promise<EnquadramentoRL | null> {
