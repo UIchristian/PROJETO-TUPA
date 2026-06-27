@@ -18,6 +18,8 @@ export type {
   CursoDAguaInfo,
   Divergencia,
   GeoJSONGeometry,
+  FeicaoReferencia,
+  TipoFeicao,
 } from "@/types/imovel";
 
 // Mock implementations (renamed in mock/index.ts)
@@ -26,6 +28,8 @@ import {
   getImovel as mockGetImovel,
   getDiagnostico as mockGetDiagnostico,
   getLayers as mockGetLayers,
+  getCamada as mockGetCamada,
+  getLimitesImovel as mockGetLimitesImovel,
 } from "@/mock";
 
 // Real API implementations
@@ -35,6 +39,8 @@ import {
   getDiagnosticoApi,
   getLayersApi,
   getHidrografiaApi,
+  getCamadaApi,
+  getLimitesImovelApi,
 } from "@/api/client";
 
 const useMock = import.meta.env.VITE_USE_MOCK === "true";
@@ -98,4 +104,60 @@ export const getHidrografia = async (imovelId: string): Promise<HidrografiaData 
     );
     return null;
   }
+};
+
+export const getCamada = async (
+  municipio: string,
+  tipo: TipoFeicao,
+): Promise<FeicaoReferencia[]> => {
+  if (useMock) return mockGetCamada(municipio, tipo);
+  try {
+    return await getCamadaApi(municipio, tipo);
+  } catch (err) {
+    console.warn(
+      `Tupã Auto-Fallback: Backend real falhou (getCamada ${municipio} - ${tipo}), retornando mock...`,
+      err,
+    );
+    return mockGetCamada(municipio, tipo);
+  }
+};
+
+export const getLimitesImovel = async (
+  municipio: string,
+): Promise<{ id: string; nome: string; numeroCar: string; geometry: GeoJSONGeometry }[]> => {
+  if (useMock) return mockGetLimitesImovel(municipio);
+  try {
+    return await getLimitesImovelApi(municipio);
+  } catch (err) {
+    console.warn(
+      `Tupã Auto-Fallback: Backend real falhou (getLimitesImovel ${municipio}), retornando mock...`,
+      err,
+    );
+    return mockGetLimitesImovel(municipio);
+  }
+};
+
+export const getBaseReferencia = async (
+  municipio: string,
+): Promise<{
+  limites: { id: string; nome: string; numeroCar: string; geometry: GeoJSONGeometry }[];
+  feicoes: FeicaoReferencia[];
+}> => {
+  const tipos: TipoFeicao[] = [
+    "APP_CURSO_DAGUA",
+    "APP_NASCENTE",
+    "APP_LAGO",
+    "APP_VEREDA",
+    "USO_RESTRITO_ENCOSTA",
+    "RESERVA_LEGAL_PROPOSTA",
+    "COBERTURA",
+  ];
+
+  const limitesPromise = getLimitesImovel(municipio);
+  const camadasPromises = tipos.map((t) => getCamada(municipio, t));
+
+  const [limites, ...camadasRes] = await Promise.all([limitesPromise, ...camadasPromises]);
+
+  const feicoes = camadasRes.flat();
+  return { limites, feicoes };
 };

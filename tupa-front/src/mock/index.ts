@@ -9,7 +9,14 @@ export type {
   LayerGeometries,
 } from "@/types/imovel";
 
-import type { GeoJSONGeometry, Imovel, Diagnostico, LayerGeometries } from "@/types/imovel";
+import type {
+  GeoJSONGeometry,
+  Imovel,
+  Diagnostico,
+  LayerGeometries,
+  FeicaoReferencia,
+  TipoFeicao,
+} from "@/types/imovel";
 
 export const MOCK_IMOVEIS: Imovel[] = [
   {
@@ -2396,6 +2403,146 @@ export const MOCK_IMOVEIS: Imovel[] = [
     },
   },
 ];
+
+export async function getCamada(municipio: string, tipo: TipoFeicao): Promise<FeicaoReferencia[]> {
+  await new Promise((resolve) => setTimeout(resolve, 800)); // fake delay
+
+  if (municipio !== "Abadia Dos Dourados") return [];
+
+  const basePolygons = MOCK_IMOVEIS.slice(0, 3).map((i) => i.poligonoDeclarado as GeoJSONGeometry);
+
+  const shiftPoly = (poly: GeoJSONGeometry, dx: number, dy: number): GeoJSONGeometry => {
+    if (poly.type === "Polygon") {
+      return {
+        type: "Polygon",
+        coordinates: (poly.coordinates as number[][][]).map((ring) =>
+          ring.map(([lng, lat]) => [lng + dx, lat + dy]),
+        ),
+      };
+    }
+    return poly;
+  };
+
+  const feicoes: FeicaoReferencia[] = [];
+
+  if (tipo === "APP_CURSO_DAGUA") {
+    feicoes.push({
+      id: "f-app-curso-1",
+      municipio,
+      tipo,
+      baseLegal: "Art. 4, I, Lei 12.651/2012",
+      areaHectares: 1.8,
+      confianca: "baixa",
+      confiancaMotivo: "largura do rio desconhecida",
+      geometry: shiftPoly(basePolygons[0], 0.001, 0.001),
+      decisao: "pendente",
+    });
+    feicoes.push({
+      id: "f-app-curso-2",
+      municipio,
+      tipo,
+      baseLegal: "Art. 4, I, Lei 12.651/2012",
+      areaHectares: 2.1,
+      confianca: "baixa",
+      confiancaMotivo: "largura do rio desconhecida",
+      geometry: shiftPoly(basePolygons[1], -0.001, 0.002),
+      decisao: "pendente",
+    });
+  }
+
+  if (tipo === "APP_NASCENTE") {
+    feicoes.push({
+      id: "f-app-nascente-1",
+      municipio,
+      tipo,
+      baseLegal: "Art. 4, IV, Lei 12.651/2012",
+      areaHectares: 0.5,
+      confianca: "alta",
+      geometry: shiftPoly(basePolygons[0], -0.0005, -0.0005),
+      decisao: "pendente",
+    });
+  }
+
+  if (tipo === "USO_RESTRITO_ENCOSTA") {
+    feicoes.push({
+      id: "f-uso-restrito-1",
+      municipio,
+      tipo,
+      baseLegal: "Art. 11, Lei 12.651/2012",
+      areaHectares: 4.2,
+      confianca: "media",
+      geometry: shiftPoly(basePolygons[2], 0.002, -0.001),
+      decisao: "pendente",
+    });
+  }
+
+  if (tipo === "RESERVA_LEGAL_PROPOSTA") {
+    feicoes.push({
+      id: "f-rl-proposta-1",
+      municipio,
+      tipo,
+      baseLegal: "Art. 12, Lei 12.651/2012",
+      areaHectares: 8.5,
+      confianca: "media",
+      geometry: shiftPoly(basePolygons[1], 0.001, -0.001),
+      decisao: "pendente",
+    });
+  }
+
+  if (tipo === "COBERTURA") {
+    feicoes.push({
+      id: "f-cob-1",
+      municipio,
+      tipo,
+      subclasse: "Floresta Nativa",
+      baseLegal: "Mapeamento MapBiomas",
+      areaHectares: 12.0,
+      confianca: "alta",
+      geometry: shiftPoly(basePolygons[0], 0, 0),
+      decisao: "pendente",
+    });
+    feicoes.push({
+      id: "f-cob-2",
+      municipio,
+      tipo,
+      subclasse: "Pastagem",
+      baseLegal: "Mapeamento MapBiomas",
+      areaHectares: 15.5,
+      confianca: "alta",
+      geometry: shiftPoly(basePolygons[1], 0.0005, 0.0005),
+      decisao: "pendente",
+    });
+    feicoes.push({
+      id: "f-cob-3",
+      municipio,
+      tipo,
+      subclasse: "Lavoura Temporária",
+      baseLegal: "Mapeamento MapBiomas",
+      areaHectares: 20.1,
+      confianca: "alta",
+      geometry: shiftPoly(basePolygons[2], -0.001, -0.001),
+      decisao: "pendente",
+    });
+  }
+
+  return feicoes;
+}
+
+export async function getLimitesImovel(
+  municipio: string,
+): Promise<{ id: string; nome: string; numeroCar: string; geometry: GeoJSONGeometry }[]> {
+  await new Promise((resolve) => setTimeout(resolve, 500)); // fake delay
+
+  if (municipio !== "Abadia Dos Dourados") return [];
+
+  // Return the first 5 limits to focus the view
+  return MOCK_IMOVEIS.slice(0, 5).map((i) => ({
+    id: i.id,
+    nome: i.nome,
+    numeroCar: i.numeroCAR,
+    geometry: i.poligonoDeclarado,
+  }));
+}
 
 export const MOCK_DIAGNOSTICOS: Record<string, Diagnostico> = {
   "MG-3100104-E9954CB333FD4FF1B66DF696BA778990": {

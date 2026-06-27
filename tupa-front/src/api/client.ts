@@ -15,6 +15,8 @@ import type {
   ImovelResumo,
   LayerGeometries,
   MunicipioStats,
+  FeicaoReferencia,
+  TipoFeicao,
 } from "@/types/imovel";
 
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -118,6 +120,40 @@ export async function getMunicipioCamadasApi(municipio: string, tipo: string): P
   return fetchJson<any>(
     `/municipio/${encodeURIComponent(municipio)}/camadas/${encodeURIComponent(tipo)}`,
   );
+}
+
+export async function getCamadaApi(
+  municipio: string,
+  tipo: TipoFeicao,
+): Promise<FeicaoReferencia[]> {
+  const raw = await fetchJson<any>(
+    `/municipio/${encodeURIComponent(municipio)}/camadas/${encodeURIComponent(tipo)}`,
+  );
+  const features = raw.features || [];
+  return features.map((f: any) => ({
+    id: f.properties?.id ?? crypto.randomUUID(),
+    municipio,
+    tipo,
+    subclasse: f.properties?.subclasse,
+    baseLegal: f.properties?.base_legal ?? "",
+    areaHectares: f.properties?.area_hectares ?? 0,
+    confianca: f.properties?.confianca ?? "media",
+    geometry: mapGeometry(f.geometry),
+    decisao: "pendente",
+  }));
+}
+
+export async function getLimitesImovelApi(
+  municipio: string,
+): Promise<{ id: string; nome: string; numeroCar: string; geometry: GeoJSONGeometry }[]> {
+  const raw = await fetchJson<any>(`/municipio/${encodeURIComponent(municipio)}/mapa`);
+  const features = raw.features || [];
+  return features.map((f: any) => ({
+    id: f.properties?.id ?? crypto.randomUUID(),
+    nome: f.properties?.nome ?? "",
+    numeroCar: f.properties?.numero_car ?? "",
+    geometry: mapGeometry(f.geometry),
+  }));
 }
 
 export async function getImovelResumoApi(imovelId: string): Promise<ImovelResumo | null> {
