@@ -177,7 +177,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: applyAccessibilityScript }} />
       </head>
-      <body className="bg-background text-foreground min-h-screen flex flex-col font-sans pb-[76px] md:pb-0">
+      <body className="bg-background text-foreground h-screen overflow-hidden flex flex-col font-sans">
         {/* Faixa institucional gov.br */}
         <div className="w-full bg-navy text-navy-foreground flex items-center justify-between px-6 py-1.5 text-xs">
           <div className="flex items-center gap-3">
@@ -247,23 +247,16 @@ function RootShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col">{children}</main>
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden">{children}</main>
 
         {/* Rodapé gov.br */}
-        <footer className="mt-auto w-full bg-navy text-navy-foreground py-6 px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="w-6 h-6 text-white/80" />
-              <div>
-                <div className="font-bold">Tupã</div>
-                <div className="text-xs text-white/70">Base de Referência Ambiental</div>
-              </div>
-            </div>
-            <div className="text-xs text-white/60 text-center md:text-right">
-              <p>Criado no haCARthon &mdash; ENAP / Dataprev / Serviço Florestal Brasileiro</p>
-              <p>Fontes de dados: Sentinel-2 (Copernicus) e MapBiomas</p>
-            </div>
+        <footer className="w-full bg-navy text-navy-foreground py-2 px-6 hidden md:flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-white/80" />
+            <span className="text-xs font-bold text-white/90">Tupã</span>
+            <span className="text-xs text-white/50">— haCARthon · ENAP / Dataprev / SFB</span>
           </div>
+          <span className="text-xs text-white/50">Sentinel-2 (Copernicus) · MapBiomas</span>
         </footer>
         <BottomNav />
         <Scripts />

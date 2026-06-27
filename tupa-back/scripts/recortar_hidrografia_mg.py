@@ -15,7 +15,16 @@ Bounding box de MG (com margem de 0.2°):
 import json
 import sys
 import logging
+import decimal
 from pathlib import Path
+
+
+class _DecimalEncoder(json.JSONEncoder):
+    """Converte Decimal → float ao serializar (ijson retorna Decimal para números)."""
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            return float(obj)
+        return super().default(obj)
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -88,7 +97,7 @@ def recortar() -> int:
         return 0
 
     with open(MG_OUT, "w", encoding="utf-8") as out:
-        json.dump({"type": "FeatureCollection", "features": features_mg}, out)
+        json.dump({"type": "FeatureCollection", "features": features_mg}, out, cls=_DecimalEncoder)
 
     out_mb = MG_OUT.stat().st_size / 1e6
     logger.info(f"Salvo: {MG_OUT} ({out_mb:.1f} MB)")

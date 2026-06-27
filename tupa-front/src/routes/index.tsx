@@ -462,7 +462,7 @@ function PainelCobertura() {
   const showSidebar = processingState === "done";
 
   return (
-    <div className="relative flex h-[calc(100vh-64px)] overflow-hidden">
+    <div className="relative flex flex-1 min-h-0 overflow-hidden">
       {/* Left: CAR list — collapsible */}
       {leftOpen && (
         <div
@@ -474,12 +474,9 @@ function PainelCobertura() {
             onMouseDown={leftSidebar.onMouseDown}
             onTouchStart={leftSidebar.onTouchStart}
           />
-          <div className="p-5 border-b border-border flex items-start justify-between gap-2">
+          <div className="p-3 border-b border-border flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <h1 className="text-lg font-bold text-foreground">Painel de Cobertura</h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Selecione um CAR para gerar a base de referência ambiental
-              </p>
+              <h1 className="text-base font-bold text-foreground">Painel de Cobertura</h1>
             </div>
             <button
               onClick={() => setLeftOpen(false)}
@@ -490,18 +487,18 @@ function PainelCobertura() {
             </button>
           </div>
 
-        <div className="grid grid-cols-2 gap-3 p-4 border-b border-border">
-          <div className="bg-muted/50 rounded-lg p-3">
-            <div className="text-2xl font-bold tabular-nums">
+        <div className="grid grid-cols-2 gap-2 p-3 border-b border-border">
+          <div className="bg-muted/50 rounded-lg p-2">
+            <div className="text-lg font-bold tabular-nums">
               {isLoading ? "—" : imoveis.length}
             </div>
-            <div className="text-xs text-muted-foreground mt-0.5">CARs disponíveis</div>
+            <div className="text-xs text-muted-foreground">CARs disponíveis</div>
           </div>
-          <div className="bg-muted/50 rounded-lg p-3">
-            <div className="text-2xl font-bold tabular-nums">
+          <div className="bg-muted/50 rounded-lg p-2">
+            <div className="text-lg font-bold tabular-nums">
               {isLoading ? "—" : municipiosCount}
             </div>
-            <div className="text-xs text-muted-foreground mt-0.5">Municípios de MG</div>
+            <div className="text-xs text-muted-foreground">Municípios de MG</div>
           </div>
         </div>
 
@@ -533,7 +530,7 @@ function PainelCobertura() {
                 <button
                   key={imovel.id}
                   onClick={() => handleSelect(imovel.id)}
-                  className={`w-full text-left px-4 py-3 hover:bg-muted/40 transition-colors flex items-center gap-3 border-l-2 ${
+                  className={`w-full text-left px-3 py-2 hover:bg-muted/40 transition-colors flex items-center gap-3 border-l-2 ${
                     isSelected ? "bg-primary/10 border-primary" : "border-transparent"
                   }`}
                 >
@@ -616,7 +613,7 @@ function PainelCobertura() {
 
             {/* Bottom pipeline bar — only during processing */}
             {processingState === "processing" && (
-              <div className="shrink-0 border-t border-border bg-card px-4 pt-3 pb-3 space-y-2.5">
+              <div className="shrink-0 border-t border-border bg-card px-3 pt-2 pb-2 space-y-2">
                 {/* Row 1: title + elapsed + estimate */}
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-semibold text-foreground flex items-center gap-2 min-w-0">
@@ -729,7 +726,7 @@ function PainelCobertura() {
             onTouchStart={rightSidebar.onTouchStart}
           />
           {/* Header */}
-          <div className="p-4 border-b border-border">
+          <div className="p-3 border-b border-border">
             <div className="flex items-center gap-2">
               {apiError ? (
                 <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
@@ -750,37 +747,37 @@ function PainelCobertura() {
 
           <div className="flex-1 overflow-y-auto">
             {/* Volume stats */}
-            <div className="p-4 border-b border-border">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <div className="p-3 border-b border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Volume da Base
               </p>
               {loadingBase || !resumo ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-muted/50 rounded-lg p-3 animate-pulse h-14" />
+                    <div key={i} className="bg-muted/50 rounded-lg p-2 animate-pulse h-12" />
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-muted/40 rounded-lg p-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-muted/40 rounded-lg p-2">
                     <div className="text-xs text-muted-foreground">Total feições</div>
-                    <div className="text-xl font-bold tabular-nums mt-0.5">{resumo.total}</div>
+                    <div className="text-lg font-bold tabular-nums">{resumo.total}</div>
                   </div>
-                  <div className="bg-muted/40 rounded-lg p-3">
+                  <div className="bg-muted/40 rounded-lg p-2">
                     <div className="text-xs text-muted-foreground">APP (ha)</div>
-                    <div className="text-xl font-bold tabular-nums font-mono mt-0.5">
+                    <div className="text-lg font-bold tabular-nums font-mono">
                       {resumo.haApp.toFixed(1)}
                     </div>
                   </div>
-                  <div className="bg-muted/40 rounded-lg p-3">
+                  <div className="bg-muted/40 rounded-lg p-2">
                     <div className="text-xs text-muted-foreground">Reserva Legal (ha)</div>
-                    <div className="text-xl font-bold tabular-nums font-mono mt-0.5">
+                    <div className="text-lg font-bold tabular-nums font-mono">
                       {resumo.haRL.toFixed(1)}
                     </div>
                   </div>
-                  <div className="bg-muted/40 rounded-lg p-3">
+                  <div className="bg-muted/40 rounded-lg p-2">
                     <div className="text-xs text-muted-foreground">Uso Restrito (ha)</div>
-                    <div className="text-xl font-bold tabular-nums font-mono mt-0.5">
+                    <div className="text-lg font-bold tabular-nums font-mono">
                       {resumo.haUR.toFixed(1)}
                     </div>
                   </div>
@@ -789,8 +786,8 @@ function PainelCobertura() {
             </div>
 
             {/* Confiança */}
-            <div className="p-4 border-b border-border">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <div className="p-3 border-b border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Confiança do Motor
               </p>
               {loadingBase || !resumo ? (
@@ -845,8 +842,8 @@ function PainelCobertura() {
             </div>
 
             {/* Camadas */}
-            <div className="p-4 border-b border-border">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <div className="p-3 border-b border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Camadas da Base
               </p>
               <div className="space-y-2">
@@ -895,8 +892,8 @@ function PainelCobertura() {
             </div>
 
             {/* Export */}
-            <div className="p-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <div className="p-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Exportar
               </p>
               <Button
