@@ -74,8 +74,20 @@ class MapBiomasSourceAdapter(BaseSourceAdapter):
 
         raster_path = BASE_DIR / "data" / municipio / "mapbiomas.tif"
         if not raster_path.exists():
-            logger.warning(f"Raster não encontrado: {raster_path}. Pulando.")
-            return
+            # Fallback: raster estadual preferindo minas_gerais, depois qualquer outro
+            _fallback = BASE_DIR / "data" / "minas_gerais" / "mapbiomas.tif"
+            if not _fallback.exists():
+                _fallback = next(
+                    (d / "mapbiomas.tif" for d in (BASE_DIR / "data").iterdir()
+                     if d.name != municipio and (d / "mapbiomas.tif").exists()),
+                    None,
+                )
+            if _fallback:
+                logger.info(f"  Raster municipal não encontrado, usando estadual: {_fallback}")
+                raster_path = _fallback
+            else:
+                logger.warning(f"Raster não encontrado: {raster_path}. Pulando.")
+                return
 
         imoveis = db_session.query(Imovel).filter(Imovel.municipio == municipio).all()
         if not imoveis:

@@ -133,6 +133,7 @@ export async function getCamadaApi(
   const features = raw.features || [];
   return features.map((f: any) => ({
     id: f.properties?.id ?? crypto.randomUUID(),
+    imovelId: f.properties?.imovel_id ?? undefined,
     municipio,
     tipo,
     subclasse: f.properties?.subclasse,

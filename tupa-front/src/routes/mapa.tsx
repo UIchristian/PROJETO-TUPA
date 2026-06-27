@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getBaseReferencia } from "@/api";
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import BaseReferenciaMap from "@/components/BaseReferenciaMap";
 import { FeicaoReferencia, TipoFeicao, NivelConfianca, DecisaoFeicao } from "@/types/imovel";
 import { EnquadramentoRLDialog } from "@/components/EnquadramentoRLDialog";
-import { Layers, ShieldAlert, ArrowRight, Info, AlertTriangle, Scale } from "lucide-react";
+import { Layers, ShieldAlert, ArrowRight, Info, AlertTriangle, Scale, FileEdit } from "lucide-react";
 
 type MapaSearch = {
   municipio?: string;
@@ -56,6 +56,7 @@ type DecisoesFeicao = Record<string, { decisao: DecisaoFeicao; observacao: strin
 
 function MapaScreen() {
   const { municipio } = Route.useSearch();
+  const navigate = useNavigate();
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["baseReferencia", municipio],
@@ -383,6 +384,25 @@ function MapaScreen() {
 
                 {/* Validation Panel */}
                 <div className="mt-4 pt-4 border-t border-border space-y-3">
+                  {selectedFeicao.imovelId && (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between gap-2"
+                      onClick={() =>
+                        navigate({
+                          to: "/diagnostico",
+                          search: { imovelId: selectedFeicao.imovelId!, municipio: municipio || undefined },
+                        })
+                      }
+                    >
+                      <span className="flex items-center gap-2">
+                        <FileEdit className="w-4 h-4" />
+                        Ver diagnóstico completo
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+
                   {selectedFeicao.tipo === "RESERVA_LEGAL_PROPOSTA" && (
                     <Button
                       variant="outline"

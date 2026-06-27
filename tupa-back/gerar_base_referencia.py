@@ -218,16 +218,23 @@ def gerar_uso_restrito(municipio: str, db: Session) -> int:
         INSERT INTO feicao_referencia
             (municipio, imovel_id, tipo, subclasse, base_legal, area_hectares, confianca, geometria)
         SELECT
-            u.municipio,
-            NULL,
+            i.municipio,
+            i.id,
             'USO_RESTRITO_ENCOSTA',
             u.tipo,
             'Art. 11, Lei 12.651/2012',
-            ST_Area(ST_Transform(u.geometria, {SRID_AREA})) / 10000.0,
+            ST_Area(ST_Transform(
+                ST_Intersection(u.geometria, i.poligono_declarado),
+                {SRID_AREA})) / 10000.0,
             'media',
-            u.geometria
+            ST_Multi(ST_Intersection(u.geometria, i.poligono_declarado))
         FROM uso_restrito u
-        WHERE u.municipio = :m;
+        JOIN imovel i ON i.municipio = :m
+            AND ST_Intersects(u.geometria, i.poligono_declarado)
+        WHERE u.municipio = :m
+          AND ST_Area(ST_Transform(
+              ST_Intersection(u.geometria, i.poligono_declarado),
+              {SRID_AREA})) / 10000.0 > 0.001;
     """), {"m": municipio})
     db.commit()
     count = result.rowcount if result.rowcount >= 0 else 0
@@ -238,6 +245,34 @@ def gerar_uso_restrito(municipio: str, db: Session) -> int:
 # ---------------------------------------------------------------------------
 # Reserva Legal Proposta (Art. 12 / Art. 67)
 # ---------------------------------------------------------------------------
+
+# Módulos fiscais (ha) por município de MG — fonte INCRA
+# Valores oficiais para os municípios de demonstração.
+# Onde não há entrada específica usa-se o padrão de 20 ha (Cerrado/Mata Atlântica MG).
+_MODULO_FISCAL_MG: dict[str, float] = {
+    "Acaiaca": 20.0, "Agua Boa": 30.0, "Aguanil": 20.0, "Alem Paraiba": 20.0,
+    "Alto Jequitiba": 20.0, "Antonio Carlos": 20.0, "Araujos": 20.0,
+    "Barbacena": 20.0, "Belo Oriente": 30.0, "Botelhos": 20.0,
+    "Capim Branco": 20.0, "Capinopolis": 30.0, "Carbonita": 30.0,
+    "Conceicao do Para": 20.0, "Confins": 20.0, "Corrego Fundo": 20.0,
+    "Datas": 20.0, "Eloi Mendes": 20.0, "Esmeraldas": 20.0, "Goiabeira": 20.0,
+    "Governador Valadares": 30.0, "Igaratinga": 20.0, "Itaguara": 20.0,
+    "Itamogi": 20.0, "Itanhomi": 30.0, "Itumirim": 20.0, "Jacui": 20.0,
+    "Jequitiba": 20.0, "Lagamar": 40.0, "Leandro Ferreira": 20.0,
+    "Luminarias": 20.0, "Moema": 20.0, "Ouro Branco": 20.0, "Passos": 20.0,
+    "Patrocinio": 30.0, "Pecanha": 30.0, "Pedralva": 20.0, "Pedro Teixeira": 20.0,
+    "Piedade de Caratinga": 20.0, "Pimenta": 20.0, "Pingo-d'Agua": 20.0,
+    "Santa Juliana": 30.0, "Santo Antonio do Amparo": 20.0,
+    "Sao Joao del Rei": 20.0, "Sao Joao do Paraiso": 40.0,
+    "Sao Miguel do Anta": 20.0, "Sao Sebastiao do Anta": 20.0,
+    "Sardoa": 30.0, "Senador Jose Bento": 20.0, "Serrania": 20.0,
+}
+_MF_DEFAULT_MG = 20.0
+
+
+def _modulo_fiscal(municipio: str) -> float:
+    return _MODULO_FISCAL_MG.get(municipio, _MF_DEFAULT_MG)
+
 
 # Mapeamento de UF → percentual de RL (proxy por bioma)
 _AMAZONIA_FLORESTA = {"AM", "PA", "AC", "RO", "RR", "AP"}
@@ -313,35 +348,68 @@ def calcular_enquadramento_rl(imovel_id: str, db: Session,
 
 
 def gerar_reserva_legal(municipio: str, db: Session) -> int:
-    """Grava a RL proposta como remanescente de vegetação nativa do imóvel."""
+    """Grava a RL proposta com enquadramento correto (Art. 12 ou Art. 67) por imóvel."""
+    mf = _modulo_fiscal(municipio)
+    imoveis = db.execute(
+        text("SELECT id FROM imovel WHERE municipio = :m"), {"m": municipio}
+    ).fetchall()
+
+    count = 0
+    for (imovel_id,) in imoveis:
+        enq = calcular_enquadramento_rl(imovel_id, db, modulo_fiscal_ha=mf)
+        if not enq:
+            continue
+        res = db.execute(text(f"""
+            INSERT INTO feicao_referencia
+                (municipio, imovel_id, tipo, subclasse, base_legal,
+                 area_hectares, confianca, geometria)
+            SELECT
+                i.municipio, i.id, 'RESERVA_LEGAL_PROPOSTA',
+                :subclasse, :base_legal, :area, :confianca,
+                ST_Multi(ST_Union(ST_Intersection(c.geometria, i.poligono_declarado)))
+            FROM imovel i
+            JOIN cobertura_observada c ON c.imovel_id = i.id
+            WHERE i.id = :id
+              AND c.classe IN ('Floresta Nativa', 'Formação Savânica')
+            GROUP BY i.id, i.municipio
+            HAVING SUM(ST_Area(ST_Transform(
+                ST_Intersection(c.geometria, i.poligono_declarado),
+                {SRID_AREA})) / 10000.0) > 0.01;
+        """), {
+            "id": imovel_id,
+            "subclasse": enq["enquadramento"],
+            "base_legal": enq["enquadramento"],
+            "area": enq["rl_exigida_ha"],
+            "confianca": enq["confianca"],
+        })
+        count += res.rowcount if res.rowcount and res.rowcount > 0 else 0
+
+    db.commit()
+    logger.info(f"RESERVA_LEGAL_PROPOSTA: {count} feições (com enquadramento) para {municipio}.")
+    return count
+
+
+def gerar_cobertura(municipio: str, db: Session) -> int:
+    """Copia a cobertura observada para feicao_referencia como camada COBERTURA."""
     result = db.execute(text(f"""
         INSERT INTO feicao_referencia
             (municipio, imovel_id, tipo, subclasse, base_legal, area_hectares, confianca, geometria)
         SELECT
             i.municipio,
-            i.id,
-            'RESERVA_LEGAL_PROPOSTA',
-            'vegetacao_nativa_remanescente',
-            'Art. 12, Lei 12.651/2012',
-            COALESCE(SUM(
-                ST_Area(ST_Transform(
-                    ST_Intersection(c.geometria, i.poligono_declarado),
-                    {SRID_AREA})) / 10000.0), 0),
-            'media',
-            ST_Multi(ST_Union(ST_Intersection(c.geometria, i.poligono_declarado)))
-        FROM imovel i
-        JOIN cobertura_observada c ON c.imovel_id = i.id
-        WHERE i.municipio = :m
-          AND c.classe IN ('Floresta Nativa', 'Formação Savânica')
-        GROUP BY i.id, i.municipio, i.poligono_declarado
-        HAVING SUM(
-            ST_Area(ST_Transform(
-                ST_Intersection(c.geometria, i.poligono_declarado),
-                {SRID_AREA})) / 10000.0) > 0.01;
+            c.imovel_id,
+            'COBERTURA',
+            c.classe,
+            NULL,
+            ST_Area(ST_Transform(c.geometria, {SRID_AREA})) / 10000.0,
+            'alta',
+            c.geometria
+        FROM cobertura_observada c
+        JOIN imovel i ON i.id = c.imovel_id
+        WHERE i.municipio = :m;
     """), {"m": municipio})
     db.commit()
     count = result.rowcount if result.rowcount >= 0 else 0
-    logger.info(f"RESERVA_LEGAL_PROPOSTA: {count} feições geradas para {municipio}.")
+    logger.info(f"COBERTURA: {count} feições geradas para {municipio}.")
     return count
 
 
@@ -370,6 +438,7 @@ def gerar_base_municipio(municipio: str, db: Session) -> dict:
         "APP_VEREDA": gerar_app_veredas(municipio, db),
         "USO_RESTRITO_ENCOSTA": gerar_uso_restrito(municipio, db),
         "RESERVA_LEGAL_PROPOSTA": gerar_reserva_legal(municipio, db),
+        "COBERTURA": gerar_cobertura(municipio, db),
     }
 
     total = sum(resumo.values())

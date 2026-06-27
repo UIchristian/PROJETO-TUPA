@@ -162,16 +162,24 @@ def health(db: Session = Depends(get_db)):
 @app.get("/imovel/{imovel_id}")
 def get_imovel(imovel_id: str, db: Session = Depends(get_db)):
     """Retorna dados base do imóvel cadastrado no PostGIS."""
-    imovel = db.query(Imovel).filter(Imovel.id == imovel_id).first()
-    if not imovel:
+    row = db.execute(
+        text("""
+            SELECT id, nome, municipio, uf, numero_car,
+                   ST_AsGeoJSON(poligono_declarado) AS poligono_geojson
+            FROM imovel WHERE id = :iid
+        """),
+        {"iid": imovel_id},
+    ).first()
+    if not row:
         raise HTTPException(status_code=404, detail=f"Imóvel '{imovel_id}' não encontrado")
 
     return {
-        "id": imovel.id,
-        "nome": imovel.nome,
-        "municipio": imovel.municipio,
-        "uf": imovel.uf,
-        "numero_car": imovel.numero_car
+        "id": row.id,
+        "nome": row.nome,
+        "municipio": row.municipio,
+        "uf": row.uf,
+        "numero_car": row.numero_car,
+        "poligono_declarado": json.loads(row.poligono_geojson) if row.poligono_geojson else None,
     }
 
 
@@ -585,6 +593,7 @@ def get_municipio_camadas(municipio: str, tipo: str, db: Session = Depends(get_d
                                 'geometry', ST_AsGeoJSON(geometria)::json,
                                 'properties', json_build_object(
                                     'id',            id,
+                                    'imovel_id',     imovel_id,
                                     'subclasse',     subclasse,
                                     'base_legal',    base_legal,
                                     'area_hectares', area_hectares,
@@ -608,6 +617,71 @@ def invalidar_cache():
     """Limpa o cache em memória — chamar após re-execução do pipeline."""
     _cache.clear()
     return {"ok": True, "mensagem": "Cache invalidado."}
+
+
+@app.post("/imovel/processar/{cod_imovel}")
+def processar_car(cod_imovel: str, db: Session = Depends(get_db)):
+    """
+    Processa um CAR sob demanda: extrai polígono, carrega fontes, roda motor de
+    divergências e gera base de referência (feicao_referencia).
+    """
+    from pathlib import Path as _Path
+    import geopandas as gpd
+    from shapely.geometry import MultiPolygon
+    from gerar_base_referencia import gerar_base_municipio
+
+    imovel_id = f"imovel_{cod_imovel}"
+
+    existente = db.query(Imovel).filter(Imovel.id == imovel_id).first()
+    if existente:
+        municipio = existente.municipio
+    else:
+        gpkg = _Path(__file__).resolve().parent / "data" / "minas_gerais" / "declarado.gpkg"
+        if not gpkg.exists():
+            raise HTTPException(status_code=404, detail="declarado.gpkg de MG não encontrado.")
+
+        gdf = gpd.read_file(gpkg, where=f"cod_imovel = '{cod_imovel}'")
+        if gdf.empty:
+            raise HTTPException(status_code=404, detail=f"CAR não encontrado: {cod_imovel}")
+
+        if gdf.crs and gdf.crs.to_epsg() != 4326:
+            gdf = gdf.to_crs("EPSG:4326")
+
+        row = gdf.iloc[0]
+        geom = row.geometry
+        if geom and geom.geom_type == "Polygon":
+            geom = MultiPolygon([geom])
+
+        municipio = str(row.get("municipio") or "Minas Gerais")
+        db.add(Imovel(
+            id=imovel_id,
+            nome=cod_imovel,
+            municipio=municipio,
+            uf="MG",
+            numero_car=cod_imovel,
+            poligono_declarado=f"SRID=4326;{geom.wkt}" if geom else None,
+        ))
+        db.commit()
+        logger.info(f"CAR inserido: {cod_imovel} ({municipio})")
+
+        # Fontes carregadas com o municipio REAL do imóvel (não "minas_gerais")
+        # MapBiomas e Elevação já têm fallback para data/minas_gerais/
+        # Hidrografia auto-extrai do arquivo global via bbox do imóvel
+        from sources.mapbiomas import MapBiomasSourceAdapter
+        from sources.hidrografia import HidrografiaSourceAdapter
+        from sources.elevacao import ElevacaoSourceAdapter
+        MapBiomasSourceAdapter().load_data(municipio, db)
+        HidrografiaSourceAdapter().load_data(municipio, db)
+        ElevacaoSourceAdapter().load_data(municipio, db)
+
+    # (Re)calcula divergências
+    calcular_diagnostico_postgis(imovel_id, db)
+
+    # Gera/atualiza feições de referência para este município
+    gerar_base_municipio(municipio, db)
+
+    _cache.pop("imoveis", None)
+    return {"ok": True, "imovel_id": imovel_id}
 
 
 @app.post("/buscar-cars", response_model=BuscarCarsResponse)

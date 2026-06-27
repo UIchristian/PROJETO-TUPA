@@ -20,6 +20,21 @@ class ElevacaoSourceAdapter(BaseSourceAdapter):
     Arquivo esperado: data/<municipio>/dem.tif (SRTM ou Copernicus GLO-30, 30m, GeoTIFF)
     """
 
+    def _bbox_municipio(self, municipio: str, db_session: Session):
+        """Returns (min_lat, max_lat, min_lon, max_lon) for the municipality's imóveis, or None."""
+        from sqlalchemy import text
+        try:
+            row = db_session.execute(text("""
+                SELECT ST_YMin(ext), ST_YMax(ext), ST_XMin(ext), ST_XMax(ext)
+                FROM (SELECT ST_Extent(poligono_declarado) AS ext FROM imovel WHERE municipio = :m) t
+                WHERE ext IS NOT NULL
+            """), {"m": municipio}).first()
+            if row and row[0] is not None:
+                return (row[0], row[1], row[2], row[3])
+        except Exception as e:
+            logger.warning(f"Não foi possível obter bbox do município: {e}")
+        return None
+
     def load_data(self, municipio: str, db_session: Session):
         try:
             import rasterio
@@ -30,14 +45,29 @@ class ElevacaoSourceAdapter(BaseSourceAdapter):
 
         dem_path = BASE_DIR / "data" / municipio / "dem.tif"
         if not dem_path.exists():
-            logger.warning(f"DEM não encontrado: {dem_path}. Pulando geração de declividade.")
-            return
+            _fallback = BASE_DIR / "data" / "minas_gerais" / "dem.tif"
+            if _fallback.exists():
+                logger.info(f"  DEM municipal não encontrado, usando estadual: {_fallback}")
+                dem_path = _fallback
+            else:
+                logger.warning(f"DEM não encontrado: {dem_path}. Pulando geração de declividade.")
+                return
 
         logger.info(f"Processando DEM para {municipio}...")
 
+        # Clipar DEM à bbox dos imóveis do município (evita processar o estado inteiro)
+        bbox = self._bbox_municipio(municipio, db_session)
+
         with rasterio.open(dem_path) as src:
-            dem = src.read(1).astype("float32")
-            transform = src.transform
+            if bbox:
+                from rasterio.windows import from_bounds
+                window = from_bounds(bbox[2], bbox[0], bbox[3], bbox[1],
+                                     src.transform)
+                dem = src.read(1, window=window).astype("float32")
+                transform = src.window_transform(window)
+            else:
+                dem = src.read(1).astype("float32")
+                transform = src.transform
             nodata = src.nodata
             # Resolução em graus → convertida para metros (aproximação)
             res_x_m = abs(transform.a) * 111320
