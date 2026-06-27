@@ -336,7 +336,11 @@ function ExportarScreen() {
           </Card>
 
           <div className="flex justify-end pt-4">
-            <Button size="lg" className="bg-primary px-8" onClick={() => setSucesso(true)}>
+            <Button
+              size="lg"
+              className="w-full md:w-auto bg-primary md:px-8"
+              onClick={() => setSucesso(true)}
+            >
               Concluir e disponibilizar a base do município
             </Button>
           </div>

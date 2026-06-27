@@ -145,8 +145,8 @@ function PainelCoberturaScreen() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Lista de Municípios */}
-            <Card className="col-span-2 flex flex-col shadow-sm">
-              <CardHeader className="pb-4 border-b border-border flex flex-row items-center justify-between space-y-0">
+            <Card className="col-span-1 lg:col-span-2 flex flex-col shadow-sm">
+              <CardHeader className="pb-4 border-b border-border flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0">
                 <div>
                   <CardTitle className="text-lg">Municípios</CardTitle>
                 </div>
@@ -166,44 +166,48 @@ function PainelCoberturaScreen() {
               </CardHeader>
               <CardContent className="p-0 overflow-hidden flex flex-col">
                 <div className="overflow-y-auto max-h-[500px]">
-                  <Table>
-                    <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
-                      <TableRow>
-                        <TableHead>Município</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Nº Imóveis</TableHead>
-                        <TableHead className="text-right">Área S/ Base (ha)</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredMunicipios.map((m) => (
-                        <TableRow
-                          key={m.municipio}
-                          className={`cursor-pointer transition-colors ${municipioSelecionado === m.municipio ? "bg-primary/5 hover:bg-primary/10" : ""}`}
-                          onClick={() => setMunicipioSelecionado(m.municipio)}
-                        >
-                          <TableCell className="font-medium">
-                            {m.municipio} - {m.uf}
-                          </TableCell>
-                          <TableCell>
-                            {m.temBaseReferencia ? (
-                              <Badge className="bg-[var(--conf-alta)] text-white hover:bg-[var(--conf-alta)]/90">
-                                Com base
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-[var(--conf-baixa)] text-white hover:bg-[var(--conf-baixa)]/90">
-                                Sem base
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right font-mono">{m.totalImoveis}</TableCell>
-                          <TableCell className="text-right font-mono text-muted-foreground">
-                            {m.haSemCobertura > 0 ? m.haSemCobertura.toLocaleString("pt-BR") : "-"}
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
+                        <TableRow>
+                          <TableHead>Município</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Nº Imóveis</TableHead>
+                          <TableHead className="text-right">Área S/ Base (ha)</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredMunicipios.map((m) => (
+                          <TableRow
+                            key={m.municipio}
+                            className={`cursor-pointer transition-colors ${municipioSelecionado === m.municipio ? "bg-primary/5 hover:bg-primary/10" : ""}`}
+                            onClick={() => setMunicipioSelecionado(m.municipio)}
+                          >
+                            <TableCell className="font-medium">
+                              {m.municipio} - {m.uf}
+                            </TableCell>
+                            <TableCell>
+                              {m.temBaseReferencia ? (
+                                <Badge className="bg-[var(--conf-alta)] text-white hover:bg-[var(--conf-alta)]/90">
+                                  Com base
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-[var(--conf-baixa)] text-white hover:bg-[var(--conf-baixa)]/90">
+                                  Sem base
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right font-mono">{m.totalImoveis}</TableCell>
+                            <TableCell className="text-right font-mono text-muted-foreground">
+                              {m.haSemCobertura > 0
+                                ? m.haSemCobertura.toLocaleString("pt-BR")
+                                : "-"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </Card>

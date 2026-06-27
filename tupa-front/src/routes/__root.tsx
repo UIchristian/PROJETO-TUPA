@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useAppState } from "@/lib/app-store";
 import AccessibilityBar from "@/components/AccessibilityBar";
+import { BottomNav } from "@/components/BottomNav";
 
 const PRESET_AVATARS = [
   { id: "headset", icon: Headset, bg: "bg-blue-500/20", color: "text-blue-500" },
@@ -155,7 +156,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: applyAccessibilityScript }} />
       </head>
-      <body className="bg-background text-foreground min-h-screen flex flex-col font-sans">
+      <body className="bg-background text-foreground min-h-screen flex flex-col font-sans pb-[76px] md:pb-0">
         {/* Faixa institucional gov.br */}
         <div className="w-full bg-navy text-navy-foreground flex items-center justify-between px-6 py-1.5 text-xs">
           <div className="flex items-center gap-3">
@@ -185,8 +186,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
               </div>
             </Link>
 
-            <div className="flex flex-1 items-center justify-end space-x-4">
-              <div className="flex items-center gap-6 text-sm font-semibold text-muted-foreground">
+            <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
+              <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-muted-foreground">
                 <Link
                   to="/"
                   className="hover:text-primary transition-colors [&.active]:text-primary"
@@ -208,9 +209,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
               </div>
               <Link
                 to="/perfil"
-                className="flex items-center gap-3 pl-6 border-l border-border hover:opacity-80 transition-opacity cursor-pointer group"
+                className="flex items-center gap-3 pl-4 md:pl-6 border-l border-border hover:opacity-80 transition-opacity cursor-pointer group"
               >
-                <div className="flex flex-col text-right">
+                <div className="hidden md:flex flex-col text-right">
                   <span className="text-sm font-bold leading-none">{backofficeUser.nome}</span>
                   <span className="text-xs text-muted-foreground mt-1">{backofficeUser.cargo}</span>
                 </div>
@@ -247,7 +248,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </footer>
-
+        <BottomNav />
         <Scripts />
       </body>
     </html>

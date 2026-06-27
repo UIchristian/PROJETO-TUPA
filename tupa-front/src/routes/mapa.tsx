@@ -149,15 +149,15 @@ function MapaScreen() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-[calc(100vh-64px)]">
+      <div className="flex flex-col h-auto md:h-[calc(100vh-64px)]">
         <header className="px-6 py-4 border-b bg-background">
           <Skeleton className="h-6 w-64" />
         </header>
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 p-4">
+        <div className="flex flex-col md:flex-row md:flex-1 md:overflow-hidden">
+          <div className="h-[45vh] md:h-auto md:flex-1 p-4">
             <Skeleton className="h-full w-full rounded-md" />
           </div>
-          <aside className="w-80 border-l p-4 space-y-4">
+          <aside className="w-full md:w-80 border-t md:border-t-0 md:border-l p-4 space-y-4">
             <Skeleton className="h-40 w-full" />
           </aside>
         </div>
@@ -167,7 +167,7 @@ function MapaScreen() {
 
   if (isError || !data) {
     return (
-      <div className="flex flex-col h-[calc(100vh-64px)] items-center justify-center space-y-4">
+      <div className="flex flex-col h-auto md:h-[calc(100vh-64px)] items-center justify-center space-y-4 py-10 md:py-0">
         <ShieldAlert className="w-12 h-12 text-destructive" />
         <h2 className="text-xl font-bold">Erro ao carregar base de referência</h2>
         <Button onClick={() => refetch()}>Tentar Novamente</Button>
@@ -211,7 +211,7 @@ function MapaScreen() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)]">
+    <div className="flex flex-col h-auto md:h-[calc(100vh-64px)]">
       <header className="px-6 py-4 border-b border-border bg-card flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-foreground">Base de referência gerada</h1>
@@ -220,13 +220,15 @@ function MapaScreen() {
 
         <Button asChild variant="outline" className="gap-2">
           <Link to="/exportar" search={{ municipio: municipio || "Abadia Dos Dourados" }}>
-            Ir para exportação <ArrowRight className="w-4 h-4" />
+            <span className="hidden sm:inline">Ir para exportação</span>
+            <span className="sm:hidden">Exportar</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </Button>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 relative">
+      <div className="flex flex-col md:flex-row md:flex-1 md:overflow-hidden">
+        <div className="h-[45vh] md:h-auto md:flex-1 relative">
           {isEmpty ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-muted/20">
               <Info className="w-12 h-12 text-muted-foreground mb-4" />
@@ -247,7 +249,7 @@ function MapaScreen() {
           )}
         </div>
 
-        <aside className="w-[380px] border-l border-border bg-card flex flex-col overflow-y-auto">
+        <aside className="w-full md:w-[380px] border-t md:border-t-0 md:border-l border-border bg-card flex flex-col md:overflow-y-auto">
           <div className="p-5 border-b border-border">
             <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
               <Layers className="w-4 h-4" /> Camadas da Base

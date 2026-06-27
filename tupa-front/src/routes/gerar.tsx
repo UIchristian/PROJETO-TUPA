@@ -66,8 +66,8 @@ function GerarScreen() {
   }, [isFinished]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-muted/20 items-center justify-center p-8 overflow-y-auto">
-      <div className="max-w-2xl w-full space-y-8 bg-card p-10 rounded-2xl border border-border shadow-soft relative overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-muted/20 items-center justify-center p-4 md:p-8 overflow-y-auto">
+      <div className="max-w-2xl w-full space-y-8 bg-card p-6 md:p-10 rounded-2xl border border-border shadow-soft relative overflow-hidden">
         <div className="text-center space-y-2 relative z-10">
           <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
             {isFinished ? "Base gerada" : "Gerando base de referência"}
