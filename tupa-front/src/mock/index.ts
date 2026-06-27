@@ -17,6 +17,7 @@ import type {
   FeicaoReferencia,
   TipoFeicao,
   EnquadramentoRL,
+  CoberturaMunicipal,
 } from "@/types/imovel";
 
 export const MOCK_IMOVEIS: Imovel[] = [
@@ -5159,20 +5160,80 @@ export async function getLayers(imovelId: string): Promise<LayerGeometries | nul
 }
 
 export async function getEnquadramentoRLMock(imovelId: string): Promise<EnquadramentoRL> {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
+  await new Promise((resolve) => setTimeout(resolve, 800));
   return {
     imovelId,
     enquadramento: "Art. 67, Lei 12.651/2012",
     areaLiquidaHa: 33.0,
     modulosFiscais: 2.06,
+    rlExigidaHa: 6.6, // 20% no Cerrado
+    deficitHa: 0, // não tem déficit, tem excedente
+    confianca: "alta",
     bioma: "Cerrado",
     percentualAplicavel: 20,
-    rlExigidaHa: 6.6,
-    deficitHa: 0,
-    confianca: "media",
-    art68Pendente: true,
-    observacao:
-      "Imóvel com até 4 módulos fiscais; RL admitida no remanescente existente em 22/07/2008 (Art. 67).",
+    art68Pendente: true, // "Anexar documento" ficará visível/desabilitado
+    observacao: "Área de Reserva Legal proposta excede o mínimo exigido.",
   };
+}
+
+export async function getCoberturaMunicipios(): Promise<CoberturaMunicipal[]> {
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  return [
+    {
+      municipio: "Abadia Dos Dourados",
+      uf: "MG",
+      temBaseReferencia: false,
+      totalImoveis: 420,
+      imoveisImpactados: 420,
+      haSemCobertura: 15400,
+    },
+    {
+      municipio: "Coromandel",
+      uf: "MG",
+      temBaseReferencia: true,
+      totalImoveis: 1350,
+      imoveisImpactados: 0,
+      haSemCobertura: 0,
+    },
+    {
+      municipio: "Monte Carmelo",
+      uf: "MG",
+      temBaseReferencia: false,
+      totalImoveis: 890,
+      imoveisImpactados: 750,
+      haSemCobertura: 31000,
+    },
+    {
+      municipio: "Estrela do Sul",
+      uf: "MG",
+      temBaseReferencia: true,
+      totalImoveis: 560,
+      imoveisImpactados: 0,
+      haSemCobertura: 0,
+    },
+    {
+      municipio: "Romaria",
+      uf: "MG",
+      temBaseReferencia: false,
+      totalImoveis: 310,
+      imoveisImpactados: 310,
+      haSemCobertura: 12500,
+    },
+    {
+      municipio: "Cascalho Rico",
+      uf: "MG",
+      temBaseReferencia: false,
+      totalImoveis: 480,
+      imoveisImpactados: 400,
+      haSemCobertura: 18200,
+    },
+    {
+      municipio: "Douradoquara",
+      uf: "MG",
+      temBaseReferencia: true,
+      totalImoveis: 290,
+      imoveisImpactados: 0,
+      haSemCobertura: 0,
+    },
+  ];
 }

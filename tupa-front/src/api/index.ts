@@ -37,6 +37,7 @@ import {
   getCamada as mockGetCamada,
   getLimitesImovel as mockGetLimitesImovel,
   getEnquadramentoRLMock,
+  getCoberturaMunicipios as getCoberturaMunicipiosMock,
 } from "@/mock";
 
 // Real API implementations
@@ -181,4 +182,9 @@ export const getEnquadramentoRL = async (imovelId: string) => {
     );
     return getEnquadramentoRLMock(imovelId);
   }
+};
+
+export const getCoberturaMunicipios = async () => {
+  // Always use mock for Tela 1 as requested: "Pode chamar o mock direto se não houver endpoint real"
+  return getCoberturaMunicipiosMock();
 };
