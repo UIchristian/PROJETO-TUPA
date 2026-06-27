@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getBaseReferencia } from "@/api";
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -218,20 +218,11 @@ function MapaScreen() {
           <p className="text-sm text-muted-foreground">{municipio}</p>
         </div>
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <Button disabled variant="outline" className="gap-2">
-                  Ir para exportação <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Disponível na etapa de exportação</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button asChild variant="outline" className="gap-2">
+          <Link to="/exportar" search={{ municipio: municipio || "Abadia Dos Dourados" }}>
+            Ir para exportação <ArrowRight className="w-4 h-4" />
+          </Link>
+        </Button>
       </header>
 
       <div className="flex flex-1 overflow-hidden">

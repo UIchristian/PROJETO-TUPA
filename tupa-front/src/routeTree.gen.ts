@@ -14,6 +14,7 @@ import { Route as ProgramasRouteImport } from './routes/programas'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MapaRouteImport } from './routes/mapa'
+import { Route as ExportarRouteImport } from './routes/exportar'
 import { Route as DiagnosticoRouteImport } from './routes/diagnostico'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
@@ -43,6 +44,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const MapaRoute = MapaRouteImport.update({
   id: '/mapa',
   path: '/mapa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExportarRoute = ExportarRouteImport.update({
+  id: '/exportar',
+  path: '/exportar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiagnosticoRoute = DiagnosticoRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/diagnostico': typeof DiagnosticoRoute
+  '/exportar': typeof ExportarRoute
   '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/diagnostico': typeof DiagnosticoRoute
+  '/exportar': typeof ExportarRoute
   '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/diagnostico': typeof DiagnosticoRoute
+  '/exportar': typeof ExportarRoute
   '/mapa': typeof MapaRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/configuracoes'
     | '/diagnostico'
+    | '/exportar'
     | '/mapa'
     | '/onboarding'
     | '/perfil'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/configuracoes'
     | '/diagnostico'
+    | '/exportar'
     | '/mapa'
     | '/onboarding'
     | '/perfil'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/configuracoes'
     | '/diagnostico'
+    | '/exportar'
     | '/mapa'
     | '/onboarding'
     | '/perfil'
@@ -153,6 +165,7 @@ export interface RootRouteChildren {
   CadastroRoute: typeof CadastroRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DiagnosticoRoute: typeof DiagnosticoRoute
+  ExportarRoute: typeof ExportarRoute
   MapaRoute: typeof MapaRoute
   OnboardingRoute: typeof OnboardingRoute
   PerfilRoute: typeof PerfilRoute
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/mapa'
       fullPath: '/mapa'
       preLoaderRoute: typeof MapaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exportar': {
+      id: '/exportar'
+      path: '/exportar'
+      fullPath: '/exportar'
+      preLoaderRoute: typeof ExportarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/diagnostico': {
@@ -241,6 +261,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroRoute: CadastroRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   DiagnosticoRoute: DiagnosticoRoute,
+  ExportarRoute: ExportarRoute,
   MapaRoute: MapaRoute,
   OnboardingRoute: OnboardingRoute,
   PerfilRoute: PerfilRoute,
