@@ -17,6 +17,7 @@ import type {
   MunicipioStats,
   FeicaoReferencia,
   TipoFeicao,
+  EnquadramentoRL,
 } from "@/types/imovel";
 
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -230,6 +231,28 @@ export async function getLayersApi(imovelId: string): Promise<LayerGeometries | 
       gabarito: camadas.gabarito ? mapGeometry(camadas.gabarito) : undefined,
       divergencias: (camadas.divergencias ?? []).map(mapDivergencia),
       coberturaPoligonos: (camadas.cobertura_poligonos ?? []).map(mapCoberturaPoligono),
+    };
+  } catch (err: any) {
+    if (err.message?.includes("404")) return null;
+    throw err;
+  }
+}
+
+export async function getEnquadramentoRLApi(imovelId: string): Promise<EnquadramentoRL | null> {
+  try {
+    const raw = await fetchJson<any>(`/imovel/${encodeURIComponent(imovelId)}/enquadramento_rl`);
+    return {
+      imovelId: raw.imovel_id,
+      enquadramento: raw.enquadramento,
+      areaLiquidaHa: raw.area_liquida_ha,
+      modulosFiscais: raw.modulos_fiscais,
+      rlExigidaHa: raw.rl_exigida_ha,
+      deficitHa: raw.deficit_ha,
+      confianca: raw.confianca,
+      observacao: raw.observacao,
+      bioma: raw.bioma,
+      percentualAplicavel: raw.percentual_aplicavel,
+      art68Pendente: raw.art68_pendente,
     };
   } catch (err: any) {
     if (err.message?.includes("404")) return null;

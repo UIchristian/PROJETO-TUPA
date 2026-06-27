@@ -11,7 +11,13 @@
 import type { Diagnostico, HidrografiaData, Imovel, LayerGeometries } from "@/types/imovel";
 
 // Re-export types for convenience
-export type { Diagnostico, HidrografiaData, Imovel, LayerGeometries } from "@/types/imovel";
+export type {
+  Diagnostico,
+  HidrografiaData,
+  Imovel,
+  LayerGeometries,
+  EnquadramentoRL,
+} from "@/types/imovel";
 export type {
   CoberturaClasse,
   CoberturaPoligono,
@@ -30,6 +36,7 @@ import {
   getLayers as mockGetLayers,
   getCamada as mockGetCamada,
   getLimitesImovel as mockGetLimitesImovel,
+  getEnquadramentoRLMock,
 } from "@/mock";
 
 // Real API implementations
@@ -41,6 +48,7 @@ import {
   getHidrografiaApi,
   getCamadaApi,
   getLimitesImovelApi,
+  getEnquadramentoRLApi,
 } from "@/api/client";
 
 const useMock = import.meta.env.VITE_USE_MOCK === "true";
@@ -160,4 +168,17 @@ export const getBaseReferencia = async (
 
   const feicoes = camadasRes.flat();
   return { limites, feicoes };
+};
+
+export const getEnquadramentoRL = async (imovelId: string) => {
+  if (useMock) return getEnquadramentoRLMock(imovelId);
+  try {
+    return await getEnquadramentoRLApi(imovelId);
+  } catch (err) {
+    console.warn(
+      `Tupã Auto-Fallback: Backend real falhou (getEnquadramentoRL ${imovelId}), retornando mock...`,
+      err,
+    );
+    return getEnquadramentoRLMock(imovelId);
+  }
 };

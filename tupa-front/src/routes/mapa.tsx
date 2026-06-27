@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import BaseReferenciaMap from "@/components/BaseReferenciaMap";
 import { FeicaoReferencia, TipoFeicao, NivelConfianca, DecisaoFeicao } from "@/types/imovel";
-import { Layers, ShieldAlert, ArrowRight, Info, AlertTriangle } from "lucide-react";
+import { EnquadramentoRLDialog } from "@/components/EnquadramentoRLDialog";
+import { Layers, ShieldAlert, ArrowRight, Info, AlertTriangle, Scale } from "lucide-react";
 
 type MapaSearch = {
   municipio?: string;
@@ -67,6 +68,8 @@ function MapaScreen() {
   );
   const [vigencia, setVigencia] = useState<number>(new Date().getFullYear());
   const [selectedFeicaoId, setSelectedFeicaoId] = useState<string | null>(null);
+
+  const [isRLDialogOpen, setIsRLDialogOpen] = useState(false);
 
   // Initialize visible types with all available types from data (runs once per data fetch/municipio)
   const initializedMunicipio = useRef<string | null>(null);
@@ -387,6 +390,17 @@ function MapaScreen() {
 
                 {/* Validation Panel */}
                 <div className="mt-4 pt-4 border-t border-border space-y-3">
+                  {selectedFeicao.tipo === "RESERVA_LEGAL_PROPOSTA" && (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-center bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary border-primary/20"
+                      onClick={() => setIsRLDialogOpen(true)}
+                    >
+                      <Scale className="w-4 h-4 mr-2" />
+                      Ver enquadramento da Reserva Legal
+                    </Button>
+                  )}
+
                   <Textarea
                     placeholder="Observação da analista (opcional)"
                     value={obsLocal}
@@ -439,6 +453,21 @@ function MapaScreen() {
           </div>
         </aside>
       </div>
+
+      {selectedFeicao &&
+        selectedFeicao.tipo === "RESERVA_LEGAL_PROPOSTA" &&
+        selectedFeicao.imovelId && (
+          <EnquadramentoRLDialog
+            isOpen={isRLDialogOpen}
+            onOpenChange={setIsRLDialogOpen}
+            imovelId={selectedFeicao.imovelId}
+            feicaoId={selectedFeicao.id}
+            onValidar={(feicaoId) => {
+              salvarDecisao(feicaoId, "validada", obsLocal);
+              setIsRLDialogOpen(false);
+            }}
+          />
+        )}
     </div>
   );
 }

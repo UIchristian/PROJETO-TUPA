@@ -16,6 +16,7 @@ import type {
   LayerGeometries,
   FeicaoReferencia,
   TipoFeicao,
+  EnquadramentoRL,
 } from "@/types/imovel";
 
 export const MOCK_IMOVEIS: Imovel[] = [
@@ -2479,6 +2480,7 @@ export async function getCamada(municipio: string, tipo: TipoFeicao): Promise<Fe
   if (tipo === "RESERVA_LEGAL_PROPOSTA") {
     feicoes.push({
       id: "f-rl-proposta-1",
+      imovelId: MOCK_IMOVEIS[1].id,
       municipio,
       tipo,
       baseLegal: "Art. 12, Lei 12.651/2012",
@@ -5154,4 +5156,23 @@ export async function getLayers(imovelId: string): Promise<LayerGeometries | nul
   await new Promise((resolve) => setTimeout(resolve, 300));
   const found = MOCK_LAYERS[imovelId];
   return found ? { ...found } : null;
+}
+
+export async function getEnquadramentoRLMock(imovelId: string): Promise<EnquadramentoRL> {
+  await new Promise((resolve) => setTimeout(resolve, 600));
+
+  return {
+    imovelId,
+    enquadramento: "Art. 67, Lei 12.651/2012",
+    areaLiquidaHa: 33.0,
+    modulosFiscais: 2.06,
+    bioma: "Cerrado",
+    percentualAplicavel: 20,
+    rlExigidaHa: 6.6,
+    deficitHa: 0,
+    confianca: "media",
+    art68Pendente: true,
+    observacao:
+      "Imóvel com até 4 módulos fiscais; RL admitida no remanescente existente em 22/07/2008 (Art. 67).",
+  };
 }
