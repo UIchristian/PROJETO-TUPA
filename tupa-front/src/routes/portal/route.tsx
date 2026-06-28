@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
 import { TreePine } from "lucide-react";
+import { useEffect } from "react";
 
 
 export const Route = createFileRoute("/portal")({
@@ -7,6 +8,23 @@ export const Route = createFileRoute("/portal")({
 });
 
 function PortalLayout() {
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const scriptId = "vlibras-script";
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement("script");
+        script.id = scriptId;
+        script.src = "https://vlibras.gov.br/app/vlibras-plugin.js";
+        script.onload = () => {
+          if ((window as any).VLibras) {
+            new (window as any).VLibras.Widget("https://vlibras.gov.br/app");
+          }
+        };
+        document.body.appendChild(script);
+      }
+    }
+  }, []);
+
   return (
     <div className="flex h-full overflow-y-auto flex-col bg-background text-foreground font-sans">
       {/* Header do Portal da Transparência */}
@@ -34,20 +52,36 @@ function PortalLayout() {
       </main>
 
       {/* Rodapé do Portal */}
-      <footer className="w-full bg-navy text-navy-foreground py-6 px-6 mt-8">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-          <div className="flex items-center gap-2 justify-center md:justify-start">
-            <TreePine className="w-5 h-5 text-emerald-400" />
-            <div>
-              <span className="block font-bold text-white/90">TUPÃ</span>
-              <span className="text-xs text-white/50">haCARthon · ENAP / Dataprev / SFB</span>
+      <footer className="w-full bg-navy text-navy-foreground pt-8 pb-12 px-6 mt-8">
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <TreePine className="w-6 h-6 text-emerald-400" />
+              <span className="text-xl font-bold text-white">TUPÃ</span>
+            </div>
+            <div className="text-sm text-white/70 max-w-sm">
+              Informações ambientais simplificadas para o agricultor brasileiro.
             </div>
           </div>
-          <div className="text-xs text-white/50">
-            Dados fornecidos via satélite Sentinel-2 (Copernicus) e MapBiomas.
+          <div className="flex flex-col gap-2 text-sm text-white/80">
+            <a href="#" className="hover:text-white transition-colors">Acesso à Informação</a>
+            <a href="#" className="hover:text-white transition-colors">Política de Privacidade</a>
+            <a href="#" className="hover:text-white transition-colors">Termos de Uso</a>
           </div>
         </div>
+        <div className="max-w-4xl mx-auto mt-8 pt-6 border-t border-white/10 text-xs text-white/50 flex flex-col sm:flex-row justify-between gap-4">
+          <div>haCARthon · ENAP / Dataprev / SFB</div>
+          <div>Dados fornecidos via satélite Sentinel-2 (Copernicus) e MapBiomas.</div>
+        </div>
       </footer>
+
+      {/* VLibras Widget */}
+      <div vw="true" className="enabled">
+        <div vw-access-button="true" className="active"></div>
+        <div vw-plugin-wrapper="true">
+          <div className="vw-plugin-top-wrapper"></div>
+        </div>
+      </div>
     </div>
   );
 }

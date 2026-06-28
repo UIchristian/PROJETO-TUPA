@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Map as MapIcon, CheckCircle2, AlertTriangle, Info } from "lucide-react";
+import { jsPDF } from "jspdf";
+import { Download, ArrowLeft, Info, Search, MapIcon, Droplets, ShieldCheck, CheckCircle2, AlertTriangle, ExternalLink } from "lucide-react";
 
 import { buscarCarPorNumero, getBaseReferencia } from "@/api";
 import type { TipoFeicao, NivelConfianca } from "@/types/imovel";
@@ -45,23 +46,22 @@ function ImovelPortalView() {
   });
 
   const [retificacaoEnviada, setRetificacaoEnviada] = useState(false);
-  const [tipoDivergencia, setTipoDivergencia] = useState("");
+  const [tipoDivergencia, setTipoDivergencia] = useState<string>("");
   const [observacao, setObservacao] = useState("");
+  const [protocolo, setProtocolo] = useState<string | null>(null);
 
   const handleEnviarRetificacao = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tipoDivergencia) return;
-
-    // Save to localStorage as requested
-    const existing = JSON.parse(localStorage.getItem("tupa_retificacoes") || "[]");
-    existing.push({
-      car,
-      tipoDivergencia,
-      observacao,
-      data: new Date().toISOString(),
-    });
-    localStorage.setItem("tupa_retificacoes", JSON.stringify(existing));
-
+    const numeroProtocolo = `2026.${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+    setProtocolo(numeroProtocolo);
+    
+    try {
+      const storagesStr = localStorage.getItem("tupa_retificacoes");
+      const saved = storagesStr ? JSON.parse(storagesStr) : [];
+      saved.push({ car, tipoDivergencia, observacao, protocolo: numeroProtocolo, data: new Date().toISOString() });
+      localStorage.setItem("tupa_retificacoes", JSON.stringify(saved));
+    } catch(e) {}
+    
     setRetificacaoEnviada(true);
   };
 
@@ -132,20 +132,66 @@ function ImovelPortalView() {
     if (f.confianca === "baixa") temBaixaConfianca = true;
   });
 
+  const handleDownloadPDF = () => {
+    if (!imovel) return;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(16);
+    doc.text("Demonstrativo da Situação Ambiental", 14, 20);
+    
+    doc.setFontSize(12);
+    doc.text(`Imóvel: ${imovel.nome} - ${imovel.municipio}/${imovel.uf}`, 14, 30);
+    doc.text(`Número CAR: ${imovel.numeroCAR}`, 14, 36);
+    doc.text(`Área Total: ${imovel.areaHectares.toFixed(1)} ha`, 14, 42);
+    
+    doc.text("Resumo de Áreas (Mapeamento via Satélite):", 14, 54);
+    doc.text(`- Áreas de Preservação (APP): ${areaPreservacao.toFixed(1)} ha`, 14, 62);
+    doc.text(`- Reserva Legal Proposta: ${areaReserva.toFixed(1)} ha`, 14, 68);
+    
+    if (temBaixaConfianca) {
+      doc.text("Atenção: Algumas áreas requerem verificação humana ou do produtor.", 14, 80);
+    } else {
+      doc.text("Atenção: A princípio, não foram detectadas divergências severas.", 14, 80);
+    }
+    
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    doc.text("Este é um documento informativo, gerado a partir de dados de satélite,", 14, 275);
+    doc.text("e NÃO é um documento oficial do CAR.", 14, 280);
+    
+    doc.save(`demonstrativo-${car}.pdf`);
+  };
+
   return (
     <div className="flex-1 w-full bg-muted/20">
       <div className="max-w-5xl mx-auto px-4 py-6 md:py-8 space-y-6">
         {/* Cabeçalho */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild className="rounded-full">
-            <Link to="/portal">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground leading-tight">Sua propriedade</h1>
-            <p className="text-sm text-muted-foreground font-mono">{imovel.numeroCAR}</p>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="rounded-full shrink-0">
+              <Link to="/portal">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight flex flex-wrap items-center gap-3">
+                Sua propriedade
+                {imovel.situacao && (
+                  <span className={`text-[10px] sm:text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wider ${
+                    imovel.situacao === 'Analisado' ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400' : 'bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400'
+                  }`}>
+                    {imovel.situacao}
+                  </span>
+                )}
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground font-mono mt-1 break-all">{imovel.numeroCAR}</p>
+            </div>
           </div>
+          
+          <Button variant="outline" className="shrink-0 gap-2 font-semibold w-full sm:w-auto" onClick={handleDownloadPDF}>
+            <Download className="w-4 h-4" />
+            Baixar demonstrativo
+          </Button>
         </div>
 
         {/* Mapa */}
@@ -264,18 +310,22 @@ function ImovelPortalView() {
           </div>
 
           {retificacaoEnviada ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-center flex flex-col items-center">
+            <div className="bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-900/30 rounded-xl p-6 text-center flex flex-col items-center">
               <CheckCircle2 className="w-12 h-12 text-emerald-500 mb-3" />
-              <h3 className="font-bold text-emerald-800 text-lg">
+              <h3 className="font-bold text-emerald-800 dark:text-emerald-400 text-lg">
                 Sua solicitação foi enviada para análise!
               </h3>
-              <p className="text-emerald-700 text-sm mt-2">
-                Nossos analistas do órgão ambiental receberam o seu pedido e irão verificar as
-                imagens de satélite.
+              {protocolo && (
+                <p className="text-emerald-700 dark:text-emerald-500 font-bold mt-2 text-lg">
+                  Protocolo: {protocolo}
+                </p>
+              )}
+              <p className="text-emerald-700 dark:text-emerald-500 text-sm mt-2 max-w-md">
+                Acompanhe sua solicitação pelo protocolo acima. Nossos analistas do órgão ambiental receberam o seu pedido e irão verificar as imagens de satélite.
               </p>
               <Button
                 variant="outline"
-                className="mt-6"
+                className="mt-6 border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/50"
                 onClick={() => setRetificacaoEnviada(false)}
               >
                 Enviar nova correção

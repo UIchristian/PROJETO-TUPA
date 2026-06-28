@@ -76,14 +76,13 @@ function PortalIndex() {
           </p>
           {/* Note: Autenticação real com gov.br está fora de escopo para esta demo */}
           <Button
-            variant="outline"
-            className="w-full h-12 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 dark:border-blue-800 flex items-center justify-center gap-3 font-bold"
+            className="w-full h-12 bg-[#1351b4] hover:bg-[#0c326f] text-white flex items-center justify-center gap-3 font-medium rounded-full shadow-sm transition-colors"
             onClick={() =>
               alert("A integração real com o Gov.br está fora do escopo desta demonstração.")
             }
           >
             <UserCircle2 className="w-5 h-5" />
-            Entrar com gov.br
+            <span>Entrar com <span className="font-extrabold">gov.br</span></span>
           </Button>
         </div>
 

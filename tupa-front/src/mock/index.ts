@@ -28,6 +28,7 @@ export const MOCK_IMOVEIS: Imovel[] = [
     uf: "MG",
     areaHectares: 3.6,
     numeroCAR: "MG-3100104-E9954CB333FD4FF1B66DF696BA778990",
+    situacao: "Analisado",
     poligonoDeclarado: {
       type: "Polygon",
       coordinates: [
@@ -48,6 +49,7 @@ export const MOCK_IMOVEIS: Imovel[] = [
     uf: "MG",
     areaHectares: 5.7,
     numeroCAR: "MG-3100104-D209227588AB462AACB7A0F573904520",
+    situacao: "Pendente de análise",
     poligonoDeclarado: {
       type: "Polygon",
       coordinates: [
@@ -68,6 +70,7 @@ export const MOCK_IMOVEIS: Imovel[] = [
     uf: "MG",
     areaHectares: 35.3,
     numeroCAR: "MG-3100104-59F69064D61440268CF7B17E93FE5225",
+    situacao: "Analisado",
     poligonoDeclarado: {
       type: "Polygon",
       coordinates: [
@@ -92,6 +95,7 @@ export const MOCK_IMOVEIS: Imovel[] = [
     uf: "MG",
     areaHectares: 21.0,
     numeroCAR: "MG-3100104-0D603DA3582745258AEEF28C9B575A43",
+    situacao: "Pendente de análise",
     poligonoDeclarado: {
       type: "Polygon",
       coordinates: [

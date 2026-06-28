@@ -185,9 +185,17 @@ function RootShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3">
             <span className="font-bold">gov.br</span>
             <span className="w-px h-3 bg-white/30"></span>
-            <span>Serviço Florestal Brasileiro</span>
+            <span className={isPortal ? "hidden sm:block" : ""}>
+              {isPortal ? "Ministério do Meio Ambiente e Mudança do Clima" : "Serviço Florestal Brasileiro"}
+            </span>
           </div>
-          <div>
+          <div className="flex items-center gap-4">
+            {isPortal && (
+              <>
+                <a href="#" className="hover:underline hidden sm:block">Acesso à Informação</a>
+                <a href="#" className="hover:underline hidden sm:block">Acessibilidade</a>
+              </>
+            )}
             <AccessibilityBar />
           </div>
         </div>

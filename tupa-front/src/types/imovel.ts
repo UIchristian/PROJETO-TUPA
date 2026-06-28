@@ -18,6 +18,7 @@ export interface Imovel {
   areaHectares: number;
   numeroCAR: string;
   poligonoDeclarado: GeoJSONGeometry;
+  situacao?: "Pendente de análise" | "Analisado" | "Cancelado" | "Suspenso" | "Ativo";
 }
 
 export interface CoberturaClasse {
