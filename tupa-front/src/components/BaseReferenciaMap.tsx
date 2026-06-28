@@ -33,13 +33,18 @@ const geomToRings = (geometry: GeoJSONGeometry | undefined): [number, number][][
 };
 
 function formatFeicaoName(tipo: string) {
+  if (tipo === "APP_GERAL") return "Outras APPs";
   if (tipo.startsWith("APP_")) {
     const subtipo = tipo.replace("APP_", "").replace(/_/g, " ").toLowerCase();
     return `Preservação (${subtipo})`;
   }
-  if (tipo === "USO_RESTRITO_ENCOSTA") return "Uso Restrito (Encosta)";
+  if (tipo === "USO_RESTRITO_ENCOSTA") return "Uso Restrito (Encostas)";
   if (tipo === "RESERVA_LEGAL_PROPOSTA") return "Reserva Legal";
   if (tipo === "COBERTURA") return "Cobertura do Solo";
+  if (tipo === "AREA_ANTROPIZADA") return "Área Antropizada";
+  if (tipo === "REMANESCENTE_NATIVO") return "Vegetação Nativa";
+  if (tipo === "AREA_CONSOLIDADA_APP") return "APP Consolidada";
+  if (tipo === "CORPO_DAGUA") return "Lagos/Represas";
   return tipo;
 }
 
@@ -97,7 +102,10 @@ function getFeicaoStyle(f: FeicaoReferencia, tokens: Record<string, string>, isS
   let weight = isSelected ? 4 : 2;
   let fillOpacity = 0.3;
 
-  if (f.tipo.startsWith("APP_")) {
+  if (f.tipo === "APP_GERAL") {
+    color = "#0ea5e9"; // sky-500
+    fillColor = color;
+  } else if (f.tipo.startsWith("APP_")) {
     color = tokens.app || "#00e1ff";
     fillColor = color;
   } else if (f.tipo === "USO_RESTRITO_ENCOSTA") {
@@ -107,6 +115,22 @@ function getFeicaoStyle(f: FeicaoReferencia, tokens: Record<string, string>, isS
     color = tokens.rl || "#00ff00";
     fillColor = color;
     dashArray = "4, 4";
+  } else if (f.tipo === "AREA_CONSOLIDADA_APP") {
+    color = "#0284c7"; // sky-600
+    fillColor = color;
+  } else if (f.tipo === "REMANESCENTE_NATIVO") {
+    color = "#15803d"; // green-700
+    fillColor = color;
+    weight = isSelected ? 4 : 2;
+    fillOpacity = 0.4;
+  } else if (f.tipo === "AREA_ANTROPIZADA") {
+    color = "#d97706"; // amber-600
+    fillColor = color;
+    weight = isSelected ? 4 : 2;
+    fillOpacity = 0.3;
+  } else if (f.tipo === "CORPO_DAGUA") {
+    color = "#1d4ed8"; // blue-700
+    fillColor = color;
   } else if (f.tipo === "COBERTURA") {
     color = "transparent";
     fillColor = tokens.rl || "#00ff00";
@@ -176,10 +200,14 @@ export default function BaseReferenciaMap({
     
     // Define a prioridade de renderização (maior = renderizado por cima)
     const getPriority = (tipo: string) => {
-      if (tipo.startsWith("APP_")) return 4; // Rios, nascentes por cima de tudo
-      if (tipo === "USO_RESTRITO_ENCOSTA") return 3; // Encostas
-      if (tipo === "RESERVA_LEGAL_PROPOSTA") return 2; // Reserva legal
-      if (tipo === "COBERTURA") return 1; // Fundo
+      if (tipo === "CORPO_DAGUA") return 6;
+      if (tipo.startsWith("APP_")) return 5;
+      if (tipo === "AREA_CONSOLIDADA_APP") return 4;
+      if (tipo === "USO_RESTRITO_ENCOSTA") return 3;
+      if (tipo === "RESERVA_LEGAL_PROPOSTA") return 2;
+      if (tipo === "REMANESCENTE_NATIVO") return 1.5;
+      if (tipo === "AREA_ANTROPIZADA") return 1;
+      if (tipo === "COBERTURA") return 0;
       return 0;
     };
 
@@ -257,13 +285,20 @@ export default function BaseReferenciaMap({
       </button>
 
       {/* Legenda — z-[900]: acima do Leaflet mas abaixo do header TUPÃ (1000) */}
-      <div className="absolute bottom-14 left-4 z-[900] bg-card/90 backdrop-blur-sm p-3 rounded-xl shadow border border-border text-xs pointer-events-none space-y-1.5">
+      <div className="absolute bottom-14 left-4 z-[900] bg-card/90 backdrop-blur-sm p-3 rounded-xl shadow border border-border text-xs pointer-events-none flex flex-col max-h-[40vh]">
         <div className="font-semibold text-foreground mb-2">O que as cores significam:</div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-cyan-400" /><span>Preservação (Rios/Nascentes)</span></div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-green-500" /><span>Reserva Legal</span></div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-orange-400" /><span>Uso restrito (Encostas)</span></div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-lime-400" /><span>Cobertura do solo</span></div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-yellow-300 border border-yellow-400" /><span>Limite do imóvel</span></div>
+        <div className="overflow-y-auto pr-2 space-y-1.5 scrollbar-thin">
+          <div className="flex items-center gap-2"><div className="w-3 h-3 shrink-0 rounded-sm bg-[#00e1ff]" /><span>Preservação (Rios/Nascentes)</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 shrink-0 rounded-sm bg-sky-500" /><span>Outras APPs</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 shrink-0 rounded-sm bg-sky-600" /><span>APP Consolidada</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 shrink-0 rounded-sm bg-blue-700" /><span>Lagos/Represas</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 shrink-0 rounded-sm bg-green-500" /><span>Reserva Legal</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 shrink-0 rounded-sm bg-green-700" /><span>Vegetação Nativa</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 shrink-0 rounded-sm bg-orange-400" /><span>Uso restrito (Encostas)</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 shrink-0 rounded-sm bg-amber-600" /><span>Área Antropizada</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 shrink-0 rounded-sm bg-lime-400 opacity-30" /><span>Cobertura do solo</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 shrink-0 rounded-sm bg-transparent border-2 border-yellow-400" /><span>Limite do imóvel</span></div>
+        </div>
       </div>
     </div>
   );

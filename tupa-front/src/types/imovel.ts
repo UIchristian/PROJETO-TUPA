@@ -105,9 +105,14 @@ export type TipoFeicao =
   | "APP_NASCENTE"
   | "APP_LAGO"
   | "APP_VEREDA"
+  | "APP_GERAL"
   | "USO_RESTRITO_ENCOSTA"
   | "RESERVA_LEGAL_PROPOSTA"
   | "COBERTURA"
+  | "AREA_ANTROPIZADA"
+  | "REMANESCENTE_NATIVO"
+  | "AREA_CONSOLIDADA_APP"
+  | "CORPO_DAGUA"
   | (string & {});
 
 export type DecisaoFeicao = "pendente" | "validada" | "ajustada" | "rejeitada";
