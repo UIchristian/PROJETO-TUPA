@@ -13,7 +13,15 @@ import { Textarea } from "@/components/ui/textarea";
 import BaseReferenciaMap from "@/components/BaseReferenciaMap";
 import { FeicaoReferencia, TipoFeicao, NivelConfianca, DecisaoFeicao } from "@/types/imovel";
 import { EnquadramentoRLDialog } from "@/components/EnquadramentoRLDialog";
-import { Layers, ShieldAlert, ArrowRight, Info, AlertTriangle, Scale, FileEdit } from "lucide-react";
+import {
+  Layers,
+  ShieldAlert,
+  ArrowRight,
+  Info,
+  AlertTriangle,
+  Scale,
+  FileEdit,
+} from "lucide-react";
 
 type MapaSearch = {
   municipio?: string;
@@ -391,7 +399,10 @@ function MapaScreen() {
                       onClick={() =>
                         navigate({
                           to: "/diagnostico",
-                          search: { imovelId: selectedFeicao.imovelId!, municipio: municipio || undefined },
+                          search: {
+                            imovelId: selectedFeicao.imovelId!,
+                            municipio: municipio || undefined,
+                          },
                         })
                       }
                     >

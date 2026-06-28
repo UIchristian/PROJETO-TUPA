@@ -5237,3 +5237,14 @@ export async function getCoberturaMunicipios(): Promise<CoberturaMunicipal[]> {
     },
   ];
 }
+
+export async function buscarCarPorNumero(numeroCar: string): Promise<Imovel> {
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  // Find a matching car, or fallback to the first one for the demo
+  const found = MOCK_IMOVEIS.find((i) => i.numeroCAR === numeroCar);
+  if (found) return found;
+
+  const fallback = { ...MOCK_IMOVEIS[0] };
+  fallback.numeroCAR = numeroCar;
+  return fallback;
+}

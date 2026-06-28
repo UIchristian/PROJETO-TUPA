@@ -53,7 +53,9 @@ function ScoreBadge({ score }: { score: number }) {
         ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
         : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400";
   return (
-    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${color}`}>
+    <span
+      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${color}`}
+    >
       {score.toFixed(0)} / 100
     </span>
   );
@@ -143,7 +145,9 @@ function DiagnosticoScreen() {
             <div className="flex items-center gap-3">
               <CheckCircle2 className="w-8 h-8 text-green-500 shrink-0" />
               <div>
-                <p className="font-semibold text-sm text-foreground">Nenhuma divergência detectada</p>
+                <p className="font-semibold text-sm text-foreground">
+                  Nenhuma divergência detectada
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Este imóvel está em conformidade com as camadas de referência geradas.
                 </p>
@@ -154,7 +158,8 @@ function DiagnosticoScreen() {
               <AlertTriangle className="w-7 h-7 text-amber-500 shrink-0" />
               <div>
                 <p className="font-semibold text-sm text-foreground">
-                  {divergencias.length} divergência{divergencias.length > 1 ? "s" : ""} encontrada{divergencias.length > 1 ? "s" : ""}
+                  {divergencias.length} divergência{divergencias.length > 1 ? "s" : ""} encontrada
+                  {divergencias.length > 1 ? "s" : ""}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Clique em uma divergência para iniciar o processo de correção.
@@ -170,14 +175,17 @@ function DiagnosticoScreen() {
             <div key={div.id} className="p-5 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <span className="font-semibold text-sm text-foreground">{div.tipo}</span>
-                <Badge className={`text-xs font-medium border-0 shrink-0 ${SEV_CLASS[div.severidade]}`}>
+                <Badge
+                  className={`text-xs font-medium border-0 shrink-0 ${SEV_CLASS[div.severidade]}`}
+                >
                   {SEV_LABEL[div.severidade]}
                 </Badge>
               </div>
 
               {div.areaHectares > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Área: <span className="font-mono font-medium">{div.areaHectares.toFixed(2)} ha</span>
+                  Área:{" "}
+                  <span className="font-mono font-medium">{div.areaHectares.toFixed(2)} ha</span>
                 </p>
               )}
 

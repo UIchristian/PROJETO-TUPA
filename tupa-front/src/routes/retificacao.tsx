@@ -76,16 +76,13 @@ function RetificacaoScreen() {
 
   // Select the divergência to display
   const divergencia: Divergencia | null =
-    diagnostico?.divergencias.find((d) => d.id === divId) ??
-    diagnostico?.divergencias[0] ??
-    null;
+    diagnostico?.divergencias.find((d) => d.id === divId) ?? diagnostico?.divergencias[0] ?? null;
 
-  const mapGeometry: GeoJSONGeometry | null =
-    hasCoords(divergencia?.poligonoDivergencia)
-      ? divergencia!.poligonoDivergencia
-      : hasCoords(imovel?.poligonoDeclarado)
-        ? imovel!.poligonoDeclarado
-        : null;
+  const mapGeometry: GeoJSONGeometry | null = hasCoords(divergencia?.poligonoDivergencia)
+    ? divergencia!.poligonoDivergencia
+    : hasCoords(imovel?.poligonoDeclarado)
+      ? imovel!.poligonoDeclarado
+      : null;
 
   if (!imovelId) {
     return (
@@ -133,9 +130,7 @@ function RetificacaoScreen() {
             <ArrowLeft className="w-3.5 h-3.5" /> Voltar ao painel
           </button>
           <h1 className="text-lg font-bold text-foreground">Iniciar correção</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {imovel?.municipio} — MG
-          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">{imovel?.municipio} — MG</p>
           <p className="text-xs text-muted-foreground font-mono truncate mt-0.5">
             {imovel?.numeroCAR}
           </p>
@@ -150,13 +145,18 @@ function RetificacaoScreen() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-sm text-foreground">{divergencia.tipo}</span>
-                <Badge className={`text-xs font-medium border-0 ${SEVERITY_CLASS[divergencia.severidade]}`}>
+                <Badge
+                  className={`text-xs font-medium border-0 ${SEVERITY_CLASS[divergencia.severidade]}`}
+                >
                   Severidade {SEVERITY_LABEL[divergencia.severidade]}
                 </Badge>
               </div>
               {divergencia.areaHectares > 0 && (
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Área afetada: <span className="font-mono font-medium">{divergencia.areaHectares.toFixed(2)} ha</span>
+                  Área afetada:{" "}
+                  <span className="font-mono font-medium">
+                    {divergencia.areaHectares.toFixed(2)} ha
+                  </span>
                 </p>
               )}
             </div>
@@ -186,7 +186,9 @@ function RetificacaoScreen() {
                   <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-foreground">Concordo e quero corrigir</div>
+                  <div className="font-semibold text-sm text-foreground">
+                    Concordo e quero corrigir
+                  </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
                     A divergência existe — vejo como regularizar
                   </div>
@@ -222,7 +224,9 @@ function RetificacaoScreen() {
               <div className="bg-muted/40 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <FileEdit className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">Caminho de regularização</span>
+                  <span className="text-sm font-semibold text-foreground">
+                    Caminho de regularização
+                  </span>
                 </div>
                 <p className="text-sm text-foreground leading-relaxed">
                   {divergencia.caminhoRetificacao}
@@ -230,11 +234,17 @@ function RetificacaoScreen() {
               </div>
 
               <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-lg p-3 text-xs text-amber-800 dark:text-amber-400">
-                A correção definitiva deve ser feita no sistema SICAR oficial. Esta análise é um rascunho de referência.
+                A correção definitiva deve ser feita no sistema SICAR oficial. Esta análise é um
+                rascunho de referência.
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setEtapa("selecao")} className="flex-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEtapa("selecao")}
+                  className="flex-1"
+                >
                   Voltar
                 </Button>
                 <Button size="sm" onClick={() => navigate({ to: "/" })} className="flex-1 gap-1.5">
@@ -269,7 +279,12 @@ function RetificacaoScreen() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setEtapa("selecao")} className="flex-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEtapa("selecao")}
+                  className="flex-1"
+                >
                   Voltar
                 </Button>
                 <Button

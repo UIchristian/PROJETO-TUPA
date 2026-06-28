@@ -170,6 +170,8 @@ function MockFallbackBanner() {
 function RootShell({ children }: { children: React.ReactNode }) {
   const { backofficeUser } = useAppState();
   const activeAvatar = PRESET_AVATARS.find((a) => a.id === backofficeUser.avatarId);
+  const router = useRouter();
+  const isPortal = router.state.location.pathname.startsWith("/portal");
 
   return (
     <html lang="pt-BR">
@@ -192,9 +194,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
         <MockFallbackBanner />
 
-        {/* Header do Produto */}
-        <header className="sticky top-0 z-50 w-full border-b border-border bg-card shadow-soft">
-          <div className="flex h-16 items-center px-6">
+        {!isPortal && (
+          <header className="sticky top-0 z-50 w-full border-b border-border bg-card shadow-soft">
+            <div className="flex h-16 items-center px-6">
             <Link to="/" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30">
                 <ShieldCheck className="text-primary w-6 h-6" />
@@ -243,22 +245,27 @@ function RootShell({ children }: { children: React.ReactNode }) {
                 </div>
               </Link>
             </div>
-          </div>
-        </header>
+            </div>
+          </header>
+        )}
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col min-h-0 overflow-hidden">{children}</main>
 
         {/* Rodapé gov.br */}
-        <footer className="w-full bg-navy text-navy-foreground py-2 px-6 hidden md:flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-white/80" />
-            <span className="text-xs font-bold text-white/90">Tupã</span>
-            <span className="text-xs text-white/50">— haCARthon · ENAP / Dataprev / SFB</span>
-          </div>
-          <span className="text-xs text-white/50">Sentinel-2 (Copernicus) · MapBiomas</span>
-        </footer>
-        <BottomNav />
+        {!isPortal && (
+          <>
+            <footer className="w-full bg-navy text-navy-foreground py-2 px-6 hidden md:flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-white/80" />
+                <span className="text-xs font-bold text-white/90">Tupã</span>
+                <span className="text-xs text-white/50">— haCARthon · ENAP / Dataprev / SFB</span>
+              </div>
+              <span className="text-xs text-white/50">Sentinel-2 (Copernicus) · MapBiomas</span>
+            </footer>
+            <BottomNav />
+          </>
+        )}
         <Scripts />
       </body>
     </html>

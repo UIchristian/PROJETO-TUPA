@@ -20,7 +20,10 @@ import { Route as DiagnosticoRouteImport } from './routes/diagnostico'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as BackofficeRouteImport } from './routes/backoffice'
+import { Route as PortalRouteRouteImport } from './routes/portal/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PortalIndexRouteImport } from './routes/portal/index'
+import { Route as PortalImovelCarRouteImport } from './routes/portal/imovel.$car'
 
 const RetificacaoRoute = RetificacaoRouteImport.update({
   id: '/retificacao',
@@ -77,14 +80,30 @@ const BackofficeRoute = BackofficeRouteImport.update({
   path: '/backoffice',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalRouteRoute = PortalRouteRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalIndexRoute = PortalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PortalRouteRoute,
+} as any)
+const PortalImovelCarRoute = PortalImovelCarRouteImport.update({
+  id: '/imovel/$car',
+  path: '/imovel/$car',
+  getParentRoute: () => PortalRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/portal': typeof PortalRouteRouteWithChildren
   '/backoffice': typeof BackofficeRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -96,6 +115,8 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof PerfilRoute
   '/programas': typeof ProgramasRoute
   '/retificacao': typeof RetificacaoRoute
+  '/portal/': typeof PortalIndexRoute
+  '/portal/imovel/$car': typeof PortalImovelCarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,10 +131,13 @@ export interface FileRoutesByTo {
   '/perfil': typeof PerfilRoute
   '/programas': typeof ProgramasRoute
   '/retificacao': typeof RetificacaoRoute
+  '/portal': typeof PortalIndexRoute
+  '/portal/imovel/$car': typeof PortalImovelCarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/portal': typeof PortalRouteRouteWithChildren
   '/backoffice': typeof BackofficeRoute
   '/cadastro': typeof CadastroRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -125,11 +149,14 @@ export interface FileRoutesById {
   '/perfil': typeof PerfilRoute
   '/programas': typeof ProgramasRoute
   '/retificacao': typeof RetificacaoRoute
+  '/portal/': typeof PortalIndexRoute
+  '/portal/imovel/$car': typeof PortalImovelCarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/portal'
     | '/backoffice'
     | '/cadastro'
     | '/configuracoes'
@@ -141,6 +168,8 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/programas'
     | '/retificacao'
+    | '/portal/'
+    | '/portal/imovel/$car'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,9 +184,12 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/programas'
     | '/retificacao'
+    | '/portal'
+    | '/portal/imovel/$car'
   id:
     | '__root__'
     | '/'
+    | '/portal'
     | '/backoffice'
     | '/cadastro'
     | '/configuracoes'
@@ -169,10 +201,13 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/programas'
     | '/retificacao'
+    | '/portal/'
+    | '/portal/imovel/$car'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PortalRouteRoute: typeof PortalRouteRouteWithChildren
   BackofficeRoute: typeof BackofficeRoute
   CadastroRoute: typeof CadastroRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
@@ -265,6 +300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BackofficeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -272,11 +314,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal/': {
+      id: '/portal/'
+      path: '/'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof PortalIndexRouteImport
+      parentRoute: typeof PortalRouteRoute
+    }
+    '/portal/imovel/$car': {
+      id: '/portal/imovel/$car'
+      path: '/imovel/$car'
+      fullPath: '/portal/imovel/$car'
+      preLoaderRoute: typeof PortalImovelCarRouteImport
+      parentRoute: typeof PortalRouteRoute
+    }
   }
 }
 
+interface PortalRouteRouteChildren {
+  PortalIndexRoute: typeof PortalIndexRoute
+  PortalImovelCarRoute: typeof PortalImovelCarRoute
+}
+
+const PortalRouteRouteChildren: PortalRouteRouteChildren = {
+  PortalIndexRoute: PortalIndexRoute,
+  PortalImovelCarRoute: PortalImovelCarRoute,
+}
+
+const PortalRouteRouteWithChildren = PortalRouteRoute._addFileChildren(
+  PortalRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PortalRouteRoute: PortalRouteRouteWithChildren,
   BackofficeRoute: BackofficeRoute,
   CadastroRoute: CadastroRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,

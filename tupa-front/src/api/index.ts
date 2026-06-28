@@ -38,6 +38,7 @@ import {
   getLimitesImovel as mockGetLimitesImovel,
   getEnquadramentoRLMock,
   getCoberturaMunicipios as getCoberturaMunicipiosMock,
+  buscarCarPorNumero as mockBuscarCarPorNumero,
 } from "@/mock";
 
 // Real API implementations
@@ -62,7 +63,11 @@ export const getImoveis = async (): Promise<Imovel[]> => {
   try {
     return await getImoveisApi();
   } catch (err) {
-    fallbackBus.signal(); console.warn("Tupã Auto-Fallback [MOCK ATIVO]: Backend real falhou (getImoveis), retornando mock...", err);
+    fallbackBus.signal();
+    console.warn(
+      "Tupã Auto-Fallback [MOCK ATIVO]: Backend real falhou (getImoveis), retornando mock...",
+      err,
+    );
     return mockGetImoveis();
   }
 };
@@ -193,7 +198,16 @@ export const getCoberturaMunicipios = async () => {
     return await getCoberturaMunicipiosApi();
   } catch (err) {
     fallbackBus.signal();
-    console.warn("Tupã Auto-Fallback [MOCK ATIVO]: Backend real falhou (getCoberturaMunicipios), retornando mock...", err);
+    console.warn(
+      "Tupã Auto-Fallback [MOCK ATIVO]: Backend real falhou (getCoberturaMunicipios), retornando mock...",
+      err,
+    );
     return getCoberturaMunicipiosMock();
   }
+};
+
+export const buscarCarPorNumero = async (numeroCar: string) => {
+  // Não há endpoint real de busca por número de CAR no momento.
+  // Utilizando o mock diretamente.
+  return mockBuscarCarPorNumero(numeroCar);
 };

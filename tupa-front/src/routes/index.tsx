@@ -139,7 +139,9 @@ function useResizable(
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup", onUp);
         setWidth((w) => {
-          try { localStorage.setItem(storageKey, String(w)); } catch {}
+          try {
+            localStorage.setItem(storageKey, String(w));
+          } catch {}
           return w;
         });
       };
@@ -172,7 +174,9 @@ function useResizable(
         document.removeEventListener("touchmove", onMove);
         document.removeEventListener("touchend", onEnd);
         setWidth((w) => {
-          try { localStorage.setItem(storageKey, String(w)); } catch {}
+          try {
+            localStorage.setItem(storageKey, String(w));
+          } catch {}
           return w;
         });
       };
@@ -294,10 +298,7 @@ function PainelCobertura() {
       ? selectedDetail!.poligonoDeclarado
       : null;
 
-  const municipiosCount = useMemo(
-    () => new Set(imoveis.map((i) => i.municipio)).size,
-    [imoveis],
-  );
+  const municipiosCount = useMemo(() => new Set(imoveis.map((i) => i.municipio)).size, [imoveis]);
 
   const { data: baseRef, isLoading: loadingBase } = useQuery({
     queryKey: ["baseReferencia", selected?.municipio],
@@ -307,7 +308,13 @@ function PainelCobertura() {
 
   const resumo = useMemo(() => {
     if (!baseRef?.feicoes) return null;
-    let total = 0, haApp = 0, haRL = 0, haUR = 0, alta = 0, media = 0, baixa = 0;
+    let total = 0,
+      haApp = 0,
+      haRL = 0,
+      haUR = 0,
+      alta = 0,
+      media = 0,
+      baixa = 0;
     baseRef.feicoes.forEach((f) => {
       total++;
       if (f.tipo.startsWith("APP_")) haApp += f.areaHectares;
@@ -318,7 +325,10 @@ function PainelCobertura() {
       else baixa++;
     });
     return {
-      total, haApp, haRL, haUR,
+      total,
+      haApp,
+      haRL,
+      haUR,
       percAlta: total > 0 ? (alta / total) * 100 : 0,
       percMedia: total > 0 ? (media / total) * 100 : 0,
       percBaixa: total > 0 ? (baixa / total) * 100 : 0,
@@ -394,10 +404,7 @@ function PainelCobertura() {
         const step = prev < PHASE1_TARGET ? phase1Step : 0.02;
         const next = Math.min(99, prev + step);
         setCurrentStage(
-          Math.min(
-            Math.floor((next / 100) * PIPELINE_STAGES.length),
-            PIPELINE_STAGES.length - 1,
-          ),
+          Math.min(Math.floor((next / 100) * PIPELINE_STAGES.length), PIPELINE_STAGES.length - 1),
         );
         return next;
       });
@@ -405,8 +412,14 @@ function PainelCobertura() {
   }
 
   function stopAnimation(success: boolean) {
-    if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = null; }
-    if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
+    if (animTimerRef.current) {
+      clearInterval(animTimerRef.current);
+      animTimerRef.current = null;
+    }
+    if (elapsedTimerRef.current) {
+      clearInterval(elapsedTimerRef.current);
+      elapsedTimerRef.current = null;
+    }
     if (success) {
       setProgress(100);
       setCurrentStage(PIPELINE_STAGES.length);
@@ -487,74 +500,74 @@ function PainelCobertura() {
             </button>
           </div>
 
-        <div className="grid grid-cols-2 gap-2 p-3 border-b border-border">
-          <div className="bg-muted/50 rounded-lg p-2">
-            <div className="text-lg font-bold tabular-nums">
-              {isLoading ? "—" : imoveis.length}
+          <div className="grid grid-cols-2 gap-2 p-3 border-b border-border">
+            <div className="bg-muted/50 rounded-lg p-2">
+              <div className="text-lg font-bold tabular-nums">
+                {isLoading ? "—" : imoveis.length}
+              </div>
+              <div className="text-xs text-muted-foreground">CARs disponíveis</div>
             </div>
-            <div className="text-xs text-muted-foreground">CARs disponíveis</div>
-          </div>
-          <div className="bg-muted/50 rounded-lg p-2">
-            <div className="text-lg font-bold tabular-nums">
-              {isLoading ? "—" : municipiosCount}
+            <div className="bg-muted/50 rounded-lg p-2">
+              <div className="text-lg font-bold tabular-nums">
+                {isLoading ? "—" : municipiosCount}
+              </div>
+              <div className="text-xs text-muted-foreground">Municípios de MG</div>
             </div>
-            <div className="text-xs text-muted-foreground">Municípios de MG</div>
           </div>
-        </div>
 
-        <div className="p-3 border-b border-border">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Buscar município ou número CAR..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-sm"
-            />
+          <div className="p-3 border-b border-border">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Buscar município ou número CAR..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-8 text-sm"
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto divide-y divide-border">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">
-              Nenhum CAR encontrado
-            </div>
-          ) : (
-            filtered.map((imovel) => {
-              const isSelected = selectedId === imovel.id;
-              return (
-                <button
-                  key={imovel.id}
-                  onClick={() => handleSelect(imovel.id)}
-                  className={`w-full text-left px-3 py-2 hover:bg-muted/40 transition-colors flex items-center gap-3 border-l-2 ${
-                    isSelected ? "bg-primary/10 border-primary" : "border-transparent"
-                  }`}
-                >
-                  <MapPin
-                    className={`w-4 h-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div
-                      className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}
-                    >
-                      {imovel.municipio} — MG
+          <div className="flex-1 overflow-y-auto divide-y divide-border">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="p-8 text-center text-sm text-muted-foreground">
+                Nenhum CAR encontrado
+              </div>
+            ) : (
+              filtered.map((imovel) => {
+                const isSelected = selectedId === imovel.id;
+                return (
+                  <button
+                    key={imovel.id}
+                    onClick={() => handleSelect(imovel.id)}
+                    className={`w-full text-left px-3 py-2 hover:bg-muted/40 transition-colors flex items-center gap-3 border-l-2 ${
+                      isSelected ? "bg-primary/10 border-primary" : "border-transparent"
+                    }`}
+                  >
+                    <MapPin
+                      className={`w-4 h-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div
+                        className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}
+                      >
+                        {imovel.municipio} — MG
+                      </div>
+                      <div className="text-xs text-muted-foreground font-mono truncate">
+                        {imovel.numeroCAR}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground font-mono truncate">
-                      {imovel.numeroCAR}
-                    </div>
-                  </div>
-                  <ChevronRight
-                    className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground/50"}`}
-                  />
-                </button>
-              );
-            })
-          )}
-        </div>
+                    <ChevronRight
+                      className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground/50"}`}
+                    />
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
 
@@ -643,7 +656,10 @@ function PainelCobertura() {
                     const active = i === currentStage;
                     const Icon = stage.icon;
                     return (
-                      <div key={stage.id} className="flex flex-col items-center gap-1 flex-1 min-w-0">
+                      <div
+                        key={stage.id}
+                        className="flex flex-col items-center gap-1 flex-1 min-w-0"
+                      >
                         <div
                           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 ${
                             done
@@ -692,8 +708,8 @@ function PainelCobertura() {
                 {progress >= 90 && (
                   <p className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                     <Clock className="w-3 h-3 shrink-0" />
-                    Na 1ª extração por município, a Hidrografia (BHO/ANA) pode levar 1–3 min.
-                    Nas próximas o sistema usa o cache — muito mais rápido.
+                    Na 1ª extração por município, a Hidrografia (BHO/ANA) pode levar 1–3 min. Nas
+                    próximas o sistema usa o cache — muito mais rápido.
                   </p>
                 )}
               </div>
