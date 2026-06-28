@@ -26,9 +26,9 @@ function PortalLayout() {
   }, []);
 
   return (
-    <div className="flex h-full overflow-y-auto flex-col bg-background text-foreground font-sans">
+    <div className="flex flex-col min-h-full bg-background text-foreground font-sans">
       {/* Header do Portal da Transparência */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-card shadow-soft">
+      <header className="sticky top-0 z-[1000] w-full border-b border-border bg-card shadow-soft">
         <div className="flex h-16 items-center px-4 md:px-6 justify-between">
           <Link to="/portal" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">

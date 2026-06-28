@@ -258,7 +258,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col min-h-0 overflow-hidden">{children}</main>
+        <main className={`flex-1 flex flex-col min-h-0 ${isPortal ? "overflow-y-auto" : "overflow-hidden"}`}>{children}</main>
 
         {/* Rodapé gov.br */}
         {!isPortal && (

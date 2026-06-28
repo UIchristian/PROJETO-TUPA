@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { MapContainer, TileLayer, Polygon, useMap } from "react-leaflet";
 import L from "leaflet";
+import { Crosshair } from "lucide-react";
 import type { FeicaoReferencia, GeoJSONGeometry, TipoFeicao, NivelConfianca } from "@/types/imovel";
 
 interface LimiteImovel {
@@ -40,6 +41,13 @@ function FitBounds({ positions }: { positions: [number, number][] }) {
       map.fitBounds(bounds, { padding: [16, 16], maxZoom: 16 });
     }
   }, [positions, map]);
+  return null;
+}
+
+// Captures the map instance into a ref so the recenter button (outside MapContainer) can use it
+function MapRefCapture({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null> }) {
+  const map = useMap();
+  useEffect(() => { mapRef.current = map; }, [map, mapRef]);
   return null;
 }
 
@@ -140,10 +148,17 @@ export default function BaseReferenciaMap({
   onSelectFeicao,
 }: BaseReferenciaMapProps) {
   const tokens = useThemeTokens();
+  const mapRef = useRef<L.Map | null>(null);
 
   const limitesPositions = useMemo(() => {
     return limites.map((l) => geomToRings(l.geometry)).flat(2);
   }, [limites]);
+
+  const recenter = useCallback(() => {
+    if (mapRef.current && limitesPositions.length > 0) {
+      mapRef.current.fitBounds(L.latLngBounds(limitesPositions), { padding: [16, 16], maxZoom: 16 });
+    }
+  }, [limitesPositions]);
 
   const visibleFeicoes = useMemo(() => {
     return feicoes.filter((f) => tiposVisiveis.has(f.tipo) && confiancasVisiveis.has(f.confianca));
@@ -163,6 +178,7 @@ export default function BaseReferenciaMap({
         />
 
         <FitBounds positions={limitesPositions} />
+        <MapRefCapture mapRef={mapRef} />
 
         {/* 1. Feições (Rendered first so they are under the limits, or maybe limits first. 
              Usually polygons are filled, so boundaries over polygons. ) */}
@@ -204,6 +220,25 @@ export default function BaseReferenciaMap({
           ));
         })}
       </MapContainer>
+
+      {/* Botão recentralizar — z-[900]: acima do Leaflet (max ~700) mas abaixo do header TUPÃ (1000) */}
+      <button
+        onClick={recenter}
+        title="Centralizar no terreno"
+        className="absolute bottom-4 right-4 z-[900] bg-card/90 backdrop-blur-sm border border-border rounded-xl p-2 shadow hover:bg-card transition-colors cursor-pointer"
+      >
+        <Crosshair className="w-4 h-4 text-foreground" />
+      </button>
+
+      {/* Legenda — z-[900]: acima do Leaflet mas abaixo do header TUPÃ (1000) */}
+      <div className="absolute bottom-4 left-4 z-[900] bg-card/90 backdrop-blur-sm p-3 rounded-xl shadow border border-border text-xs pointer-events-none space-y-1.5">
+        <div className="font-semibold text-foreground mb-2">O que as cores significam:</div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-cyan-400" /><span>Preservação (Rios/Nascentes)</span></div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-green-500" /><span>Reserva Legal</span></div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-orange-400" /><span>Uso restrito (Encostas)</span></div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-lime-400" /><span>Cobertura do solo</span></div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-yellow-300 border border-yellow-400" /><span>Limite do imóvel</span></div>
+      </div>
     </div>
   );
 }

@@ -60,10 +60,10 @@ function PortalIndex() {
             Exemplo:{" "}
             <button
               type="button"
-              onClick={() => setCar("MG-3100104-E9954CB333FD4FF1B66DF696BA778990")}
+              onClick={() => setCar("MG-3148103-E3F2C7EC866848CBB33EE17AA23128B8")}
               className="text-primary hover:underline"
             >
-              MG-3100104-E9954CB333FD4FF1B66DF696BA778990
+              MG-3148103-E3F2C7EC866848CBB33EE17AA23128B8
             </button>
           </div>
         </div>
