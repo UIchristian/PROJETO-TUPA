@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
-import { MapContainer, TileLayer, Polygon, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Polygon, useMap, Tooltip } from "react-leaflet";
 import L from "leaflet";
 import { Crosshair } from "lucide-react";
 import type { FeicaoReferencia, GeoJSONGeometry, TipoFeicao, NivelConfianca } from "@/types/imovel";
@@ -31,6 +31,17 @@ const geomToRings = (geometry: GeoJSONGeometry | undefined): [number, number][][
   const outer = (geometry.coordinates as number[][][])[0];
   return outer ? [outer.map(([lng, lat]) => [lat, lng] as [number, number])] : [];
 };
+
+function formatFeicaoName(tipo: string) {
+  if (tipo.startsWith("APP_")) {
+    const subtipo = tipo.replace("APP_", "").replace(/_/g, " ").toLowerCase();
+    return `Preservação (${subtipo})`;
+  }
+  if (tipo === "USO_RESTRITO_ENCOSTA") return "Uso Restrito (Encosta)";
+  if (tipo === "RESERVA_LEGAL_PROPOSTA") return "Reserva Legal";
+  if (tipo === "COBERTURA") return "Cobertura do Solo";
+  return tipo;
+}
 
 // Component to dynamically fit map view to the current limits
 function FitBounds({ positions }: { positions: [number, number][] }) {
@@ -161,7 +172,18 @@ export default function BaseReferenciaMap({
   }, [limitesPositions]);
 
   const visibleFeicoes = useMemo(() => {
-    return feicoes.filter((f) => tiposVisiveis.has(f.tipo) && confiancasVisiveis.has(f.confianca));
+    const filtered = feicoes.filter((f) => tiposVisiveis.has(f.tipo) && confiancasVisiveis.has(f.confianca));
+    
+    // Define a prioridade de renderização (maior = renderizado por cima)
+    const getPriority = (tipo: string) => {
+      if (tipo.startsWith("APP_")) return 4; // Rios, nascentes por cima de tudo
+      if (tipo === "USO_RESTRITO_ENCOSTA") return 3; // Encostas
+      if (tipo === "RESERVA_LEGAL_PROPOSTA") return 2; // Reserva legal
+      if (tipo === "COBERTURA") return 1; // Fundo
+      return 0;
+    };
+
+    return filtered.sort((a, b) => getPriority(a.tipo) - getPriority(b.tipo));
   }, [feicoes, tiposVisiveis, confiancasVisiveis]);
 
   return (
@@ -199,7 +221,11 @@ export default function BaseReferenciaMap({
               eventHandlers={{
                 click: () => onSelectFeicao?.(f),
               }}
-            />
+            >
+              <Tooltip sticky direction="top" opacity={0.9} className="!bg-white !text-black !rounded-md shadow !border-none !text-xs">
+                <span className="font-semibold">{formatFeicaoName(f.tipo)}</span>
+              </Tooltip>
+            </Polygon>
           ));
         })}
 
@@ -231,7 +257,7 @@ export default function BaseReferenciaMap({
       </button>
 
       {/* Legenda — z-[900]: acima do Leaflet mas abaixo do header TUPÃ (1000) */}
-      <div className="absolute bottom-4 left-4 z-[900] bg-card/90 backdrop-blur-sm p-3 rounded-xl shadow border border-border text-xs pointer-events-none space-y-1.5">
+      <div className="absolute bottom-14 left-4 z-[900] bg-card/90 backdrop-blur-sm p-3 rounded-xl shadow border border-border text-xs pointer-events-none space-y-1.5">
         <div className="font-semibold text-foreground mb-2">O que as cores significam:</div>
         <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-cyan-400" /><span>Preservação (Rios/Nascentes)</span></div>
         <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-green-500" /><span>Reserva Legal</span></div>
