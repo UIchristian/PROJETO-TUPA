@@ -87,3 +87,18 @@ class FeicaoReferencia(Base):
     geometria = Column(Geometry(geometry_type='MULTIPOLYGON', srid=4326))
 
     imovel = relationship("Imovel", back_populates="feicoes_referencia")
+
+
+class NotificacaoRetificacao(Base):
+    """Notificação enviada pelo analista ao agricultor sobre o CAR."""
+    __tablename__ = "notificacao_retificacao"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    car = Column(String, index=True)               # número do CAR do agricultor
+    mensagem = Column(String)
+    tipo = Column(String, default="pendencia")     # pendencia | aprovado | reprovado | info
+    prioridade = Column(String, default="media")   # alta | media | baixa
+    analista_nome = Column(String)
+    status = Column(String, default="nova")        # nova | visualizada
+    criado_em = Column(String)                     # ISO 8601
+    visualizado_em = Column(String, nullable=True)

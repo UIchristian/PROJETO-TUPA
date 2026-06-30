@@ -31,7 +31,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from db.database import get_db, engine, Base
-from db.models import Imovel
+from db.models import Imovel, NotificacaoRetificacao
+from datetime import datetime, timezone
 from engine import calcular_diagnostico_postgis
 from config.settings import regras
 
@@ -777,6 +778,96 @@ def buscar_cars_endpoint(body: BuscarCarsRequest):
         cars_serializados.append(row)
 
     return BuscarCarsResponse(total=len(cars_serializados), cars=cars_serializados)
+
+
+# ---------------------------------------------------------------------------
+# Notificações de Retificação (analista → agricultor)
+# ---------------------------------------------------------------------------
+
+class NotificacaoInput(BaseModel):
+    car: str
+    mensagem: str
+    tipo: str = "pendencia"      # pendencia | aprovado | reprovado | info
+    prioridade: str = "media"    # alta | media | baixa
+    analista_nome: str
+
+
+@app.post("/notificacao/")
+def criar_notificacao(body: NotificacaoInput, db: Session = Depends(get_db)):
+    """Analista envia notificação ao agricultor sobre o CAR."""
+    notif = NotificacaoRetificacao(
+        car=body.car,
+        mensagem=body.mensagem,
+        tipo=body.tipo,
+        prioridade=body.prioridade,
+        analista_nome=body.analista_nome,
+        status="nova",
+        criado_em=datetime.now(timezone.utc).isoformat(),
+    )
+    db.add(notif)
+    db.commit()
+    db.refresh(notif)
+    return {"ok": True, "id": notif.id}
+
+
+@app.get("/notificacao/{car}")
+def listar_notificacoes(car: str, db: Session = Depends(get_db)):
+    """Agricultor consulta notificações enviadas pelo analista para seu CAR."""
+    rows = (
+        db.query(NotificacaoRetificacao)
+        .filter(NotificacaoRetificacao.car == car)
+        .order_by(NotificacaoRetificacao.id.desc())
+        .all()
+    )
+    return [
+        {
+            "id": n.id,
+            "mensagem": n.mensagem,
+            "tipo": n.tipo,
+            "prioridade": n.prioridade,
+            "analista_nome": n.analista_nome,
+            "status": n.status,
+            "criado_em": n.criado_em,
+            "visualizado_em": n.visualizado_em,
+        }
+        for n in rows
+    ]
+
+
+@app.patch("/notificacao/{notif_id}/visualizar")
+def marcar_visualizada(notif_id: int, db: Session = Depends(get_db)):
+    """Agricultor marca notificação como visualizada."""
+    notif = db.query(NotificacaoRetificacao).filter(NotificacaoRetificacao.id == notif_id).first()
+    if not notif:
+        raise HTTPException(status_code=404, detail="Notificação não encontrada")
+    notif.status = "visualizada"
+    notif.visualizado_em = datetime.now(timezone.utc).isoformat()
+    db.commit()
+    return {"ok": True}
+
+
+@app.get("/notificacao/")
+def listar_todas_notificacoes(db: Session = Depends(get_db)):
+    """Analista vê todas as notificações enviadas."""
+    rows = (
+        db.query(NotificacaoRetificacao)
+        .order_by(NotificacaoRetificacao.id.desc())
+        .limit(200)
+        .all()
+    )
+    return [
+        {
+            "id": n.id,
+            "car": n.car,
+            "mensagem": n.mensagem,
+            "tipo": n.tipo,
+            "prioridade": n.prioridade,
+            "analista_nome": n.analista_nome,
+            "status": n.status,
+            "criado_em": n.criado_em,
+        }
+        for n in rows
+    ]
 
 
 if __name__ == "__main__":

@@ -412,18 +412,29 @@ def gerar_reserva_legal(municipio: str, db: Session, imovel_id: str | None = Non
 
 
 def gerar_cobertura(municipio: str, db: Session, imovel_id: str | None = None) -> int:
-    """Copia a cobertura observada para feicao_referencia como camada COBERTURA."""
+    """Classifica a cobertura observada por tipo MapBiomas e gera AREA_CONSOLIDADA_APP."""
     iid_filter = "AND i.id = :iid" if imovel_id else ""
     params: dict = {"m": municipio}
     if imovel_id:
         params["iid"] = imovel_id
+
+    # Passo 1: insere feições classificadas por classe MapBiomas
     result = db.execute(text(f"""
         INSERT INTO feicao_referencia
             (municipio, imovel_id, tipo, subclasse, base_legal, area_hectares, confianca, geometria)
         SELECT
             i.municipio,
             c.imovel_id,
-            'COBERTURA',
+            CASE
+                WHEN c.classe IN ('Floresta Nativa', 'Formação Savânica', 'Formação Campestre')
+                    THEN 'REMANESCENTE_NATIVO'
+                WHEN c.classe = 'Corpos d''Água'
+                    THEN 'CORPO_DAGUA'
+                WHEN c.classe IN ('Pastagem', 'Lavoura Temporária', 'Lavoura Permanente',
+                                  'Mosaico Agropecuário', 'Silvicultura')
+                    THEN 'AREA_ANTROPIZADA'
+                ELSE 'COBERTURA'
+            END,
             c.classe,
             NULL,
             ST_Area(ST_Transform(c.geometria, {SRID_AREA})) / 10000.0,
@@ -433,10 +444,38 @@ def gerar_cobertura(municipio: str, db: Session, imovel_id: str | None = None) -
         JOIN imovel i ON i.id = c.imovel_id
         WHERE i.municipio = :m {iid_filter};
     """), params)
-    db.commit()
     count = result.rowcount if result.rowcount >= 0 else 0
-    logger.info(f"COBERTURA: {count} feições geradas para {municipio}.")
-    return count
+
+    # Passo 2: AREA_CONSOLIDADA_APP = interseção entre APPs e áreas antropizadas
+    # (polígonos com uso humano dentro de área de preservação obrigatória)
+    app_count_result = db.execute(text(f"""
+        INSERT INTO feicao_referencia
+            (municipio, imovel_id, tipo, subclasse, base_legal, area_hectares, confianca, geometria)
+        SELECT
+            app.municipio,
+            app.imovel_id,
+            'AREA_CONSOLIDADA_APP',
+            'Uso consolidado em APP',
+            'Art. 61-A do Código Florestal',
+            ST_Area(ST_Transform(ST_Intersection(app.geometria, antro.geometria), {SRID_AREA})) / 10000.0,
+            'media',
+            ST_Intersection(app.geometria, antro.geometria)
+        FROM feicao_referencia app
+        JOIN feicao_referencia antro
+            ON app.imovel_id = antro.imovel_id
+           AND ST_Intersects(app.geometria, antro.geometria)
+           AND NOT ST_IsEmpty(ST_Intersection(app.geometria, antro.geometria))
+        WHERE app.municipio = :m {iid_filter.replace('i.id', 'app.imovel_id')}
+          AND app.tipo LIKE 'APP_%'
+          AND antro.tipo = 'AREA_ANTROPIZADA'
+          AND ST_Area(ST_Transform(ST_Intersection(app.geometria, antro.geometria), {SRID_AREA})) / 10000.0 > 0.01;
+    """), params)
+    app_count = app_count_result.rowcount if app_count_result.rowcount >= 0 else 0
+
+    db.commit()
+    total = count + app_count
+    logger.info(f"COBERTURA: {count} feições classificadas + {app_count} APP consolidadas para {municipio}.")
+    return total
 
 
 # ---------------------------------------------------------------------------
@@ -464,7 +503,7 @@ def gerar_base_municipio(municipio: str, db: Session) -> dict:
         "APP_VEREDA": gerar_app_veredas(municipio, db),
         "USO_RESTRITO_ENCOSTA": gerar_uso_restrito(municipio, db),
         "RESERVA_LEGAL_PROPOSTA": gerar_reserva_legal(municipio, db),
-        "COBERTURA": gerar_cobertura(municipio, db),
+        "COBERTURA_E_APP_CONSOLIDADA": gerar_cobertura(municipio, db),
     }
 
     total = sum(resumo.values())
@@ -486,7 +525,7 @@ def gerar_base_imovel(imovel_id: str, municipio: str, db: Session) -> dict:
         "APP_VEREDA": gerar_app_veredas(municipio, db, imovel_id),
         "USO_RESTRITO_ENCOSTA": gerar_uso_restrito(municipio, db, imovel_id),
         "RESERVA_LEGAL_PROPOSTA": gerar_reserva_legal(municipio, db, imovel_id),
-        "COBERTURA": gerar_cobertura(municipio, db, imovel_id),
+        "COBERTURA_E_APP_CONSOLIDADA": gerar_cobertura(municipio, db, imovel_id),
     }
 
     total = sum(resumo.values())

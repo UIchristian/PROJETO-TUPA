@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getImoveis, getImovel, getBaseReferencia } from "@/api";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getImoveis, getImovel, getBaseReferencia, getDiagnostico } from "@/api";
+import { useAppState } from "@/lib/app-store";
 import {
   Search,
   MapPin,
@@ -9,6 +10,8 @@ import {
   Satellite,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   Map,
   Layers,
   Waves,
@@ -21,11 +24,14 @@ import {
   PanelLeftOpen,
   Clock,
   Info,
+  FileEdit,
+  Bell,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import type { GeoJSONGeometry, TipoFeicao, NivelConfianca, DecisaoFeicao } from "@/types/imovel";
+import type { GeoJSONGeometry, TipoFeicao, NivelConfianca, DecisaoFeicao, Divergencia } from "@/types/imovel";
 
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -244,7 +250,14 @@ const MapLoader = () => (
   </div>
 );
 
+const SEV_DIV: Record<string, string> = {
+  alta: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  media: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+  baixa: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400",
+};
+
 function PainelCobertura() {
+  const { backofficeUser } = useAppState();
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [processingState, setProcessingState] = useState<ProcessingState>("idle");
@@ -304,6 +317,41 @@ function PainelCobertura() {
     queryKey: ["baseReferencia", selected?.municipio],
     queryFn: () => getBaseReferencia(selected!.municipio),
     enabled: processingState === "done" && !!selected?.municipio,
+  });
+
+  const { data: diagnostico, isLoading: loadingDiag } = useQuery({
+    queryKey: ["diagnostico", selectedId],
+    queryFn: () => getDiagnostico(selectedId!),
+    enabled: processingState === "done" && !!selectedId,
+  });
+
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [diagExpanded, setDiagExpanded] = useState(false);
+  const [notifMensagem, setNotifMensagem] = useState("");
+  const [notifEnviada, setNotifEnviada] = useState(false);
+
+  const enviarNotificacao = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${BASE}/notificacao/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          car: selected?.numeroCAR,
+          mensagem: notifMensagem,
+          tipo: "pendencia",
+          prioridade: "media",
+          analista_nome: backofficeUser.nome,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      setNotifEnviada(true);
+      setNotifMensagem("");
+      setNotifOpen(false);
+      setTimeout(() => setNotifEnviada(false), 4000);
+    },
   });
 
   const resumo = useMemo(() => {
@@ -908,7 +956,7 @@ function PainelCobertura() {
             </div>
 
             {/* Export */}
-            <div className="p-3">
+            <div className="p-3 border-b border-border">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Exportar
               </p>
@@ -923,6 +971,155 @@ function PainelCobertura() {
               <p className="text-[10px] text-muted-foreground text-center mt-2">
                 Arquivo completo com todas as feições
               </p>
+            </div>
+
+            {/* Diagnóstico */}
+            <div className="p-3 border-b border-border">
+              <button
+                onClick={() => setDiagExpanded((v) => !v)}
+                className="w-full flex items-center gap-1.5 mb-2 group"
+              >
+                <FileEdit className="w-3.5 h-3.5 text-muted-foreground" />
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex-1 text-left">
+                  Diagnóstico
+                </p>
+                {diagExpanded ? (
+                  <ChevronUp className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                )}
+              </button>
+              {loadingDiag ? (
+                <div className="space-y-2 animate-pulse">
+                  <div className="h-8 bg-muted/50 rounded" />
+                  <div className="h-6 bg-muted/50 rounded w-3/4" />
+                </div>
+              ) : diagnostico ? (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs text-muted-foreground">Score:</span>
+                    <span
+                      className={`text-sm font-bold px-2 py-0.5 rounded-full ${
+                        diagnostico.scoreConformidade >= 90
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+                          : diagnostico.scoreConformidade >= 70
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
+                            : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
+                      }`}
+                    >
+                      {diagnostico.scoreConformidade.toFixed(0)} / 100
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {diagnostico.divergencias.length} divergência(s)
+                    </span>
+                  </div>
+                  {diagnostico.divergencias.length === 0 ? (
+                    <p className="text-xs text-green-600 dark:text-green-400">
+                      Nenhuma divergência encontrada
+                    </p>
+                  ) : (
+                    <>
+                      <div className="space-y-1.5">
+                        {(diagExpanded
+                          ? diagnostico.divergencias
+                          : diagnostico.divergencias.slice(0, 2)
+                        ).map((div: Divergencia) => (
+                          <div
+                            key={div.id}
+                            className="flex items-start gap-2 bg-muted/30 rounded-lg px-2 py-1.5"
+                          >
+                            <span
+                              className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded ${SEV_DIV[div.severidade] ?? SEV_DIV.baixa}`}
+                            >
+                              {div.severidade.toUpperCase().slice(0, 3)}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-semibold leading-tight text-foreground truncate">
+                                {div.tipo.replace(/_/g, " ")}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-2">
+                                {div.textoLinguagemSimples}
+                              </p>
+                              <p className="text-[10px] text-primary/70 font-mono mt-0.5">
+                                {div.areaHectares.toFixed(1)} ha
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {diagnostico.divergencias.length > 2 && (
+                        <button
+                          onClick={() => setDiagExpanded((v) => !v)}
+                          className="mt-2 w-full text-[11px] text-primary font-semibold flex items-center justify-center gap-1 hover:underline"
+                        >
+                          {diagExpanded ? (
+                            <>
+                              <ChevronUp className="w-3 h-3" />
+                              Mostrar menos
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-3 h-3" />
+                              Ver mais {diagnostico.divergencias.length - 2} divergência(s)
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">Sem dados de diagnóstico</p>
+              )}
+            </div>
+
+            {/* Notificar Agricultor */}
+            <div className="p-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Bell className="w-3.5 h-3.5" />
+                Notificar Agricultor
+              </p>
+              {notifEnviada && (
+                <div className="mb-2 flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg px-3 py-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  Notificação enviada com sucesso!
+                </div>
+              )}
+              {!notifOpen ? (
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => setNotifOpen(true)}
+                >
+                  <Bell className="w-4 h-4" />
+                  Enviar notificação
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <textarea
+                    className="w-full text-sm border border-border rounded-lg p-2 bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[80px]"
+                    placeholder="Mensagem para o agricultor..."
+                    value={notifMensagem}
+                    onChange={(e) => setNotifMensagem(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setNotifOpen(false); setNotifMensagem(""); }}
+                      className="flex-1 text-xs border border-border rounded-lg py-1.5 text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      disabled={!notifMensagem.trim() || enviarNotificacao.isPending}
+                      onClick={() => enviarNotificacao.mutate()}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs bg-primary text-primary-foreground rounded-lg py-1.5 font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      {enviarNotificacao.isPending ? "Enviando…" : "Enviar"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

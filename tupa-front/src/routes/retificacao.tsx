@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, lazy, Suspense } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAppState } from "@/lib/app-store";
 import { getDiagnostico, getImovel } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +16,8 @@ import {
   ChevronRight,
   MessageSquare,
   MapPin,
+  Bell,
+  Send,
 } from "lucide-react";
 import type { Divergencia, GeoJSONGeometry } from "@/types/imovel";
 
@@ -53,12 +56,45 @@ function hasCoords(g: GeoJSONGeometry | null | undefined): g is GeoJSONGeometry 
   return !!g && Array.isArray(g.coordinates) && g.coordinates.length > 0;
 }
 
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 function RetificacaoScreen() {
   const { imovelId, divId } = Route.useSearch();
   const navigate = useNavigate();
+  const { backofficeUser } = useAppState();
+  const queryClient = useQueryClient();
 
   const [etapa, setEtapa] = useState<Etapa>("selecao");
   const [justificativa, setJustificativa] = useState("");
+
+  // Notificação ao agricultor
+  const [notifMensagem, setNotifMensagem] = useState("");
+  const [notifTipo, setNotifTipo] = useState("pendencia");
+  const [notifPrioridade, setNotifPrioridade] = useState("media");
+  const [notifEnviada, setNotifEnviada] = useState(false);
+
+  const enviarNotificacao = useMutation({
+    mutationFn: async (car: string) => {
+      const res = await fetch(`${BASE_URL}/notificacao/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          car,
+          mensagem: notifMensagem,
+          tipo: notifTipo,
+          prioridade: notifPrioridade,
+          analista_nome: backofficeUser.nome,
+        }),
+      });
+      if (!res.ok) throw new Error("Erro ao enviar notificação");
+      return res.json();
+    },
+    onSuccess: () => {
+      setNotifEnviada(true);
+      setNotifMensagem("");
+      queryClient.invalidateQueries({ queryKey: ["portal", "notificacoes"] });
+    },
+  });
 
   const { data: imovel, isLoading: loadingImovel } = useQuery({
     queryKey: ["imovel-detail", imovelId],
@@ -325,6 +361,74 @@ function RetificacaoScreen() {
               <MapPin className="w-3.5 h-3.5" />
               {diagnostico.divergencias.length} divergências encontradas neste imóvel.
             </p>
+          </div>
+        )}
+
+        {/* Painel: Notificar Agricultor */}
+        {imovel?.numeroCAR && (
+          <div className="border-t border-border p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Bell className="w-4 h-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">Notificar Agricultor</span>
+            </div>
+
+            {notifEnviada ? (
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3 text-center space-y-2">
+                <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Notificação enviada!</p>
+                <button
+                  className="text-xs text-emerald-600 underline"
+                  onClick={() => setNotifEnviada(false)}
+                >
+                  Enviar outra
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <select
+                    value={notifTipo}
+                    onChange={(e) => setNotifTipo(e.target.value)}
+                    className="flex-1 text-xs rounded-lg border border-border bg-background px-2 py-1.5 text-foreground"
+                  >
+                    <option value="pendencia">⚠️ Pendência</option>
+                    <option value="reprovado">❌ Correção necessária</option>
+                    <option value="aprovado">✅ Aprovado</option>
+                    <option value="info">ℹ️ Informação</option>
+                  </select>
+                  <select
+                    value={notifPrioridade}
+                    onChange={(e) => setNotifPrioridade(e.target.value)}
+                    className="text-xs rounded-lg border border-border bg-background px-2 py-1.5 text-foreground"
+                  >
+                    <option value="baixa">Baixa</option>
+                    <option value="media">Média</option>
+                    <option value="alta">🔴 Alta</option>
+                  </select>
+                </div>
+
+                <Textarea
+                  placeholder="Escreva a mensagem para o agricultor..."
+                  value={notifMensagem}
+                  onChange={(e) => setNotifMensagem(e.target.value)}
+                  rows={3}
+                  className="text-sm resize-none"
+                />
+
+                <Button
+                  size="sm"
+                  className="w-full gap-1.5"
+                  disabled={!notifMensagem.trim() || enviarNotificacao.isPending}
+                  onClick={() => enviarNotificacao.mutate(imovel.numeroCAR!)}
+                >
+                  {enviarNotificacao.isPending
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <Send className="w-3.5 h-3.5" />
+                  }
+                  Enviar ao agricultor
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -14,6 +14,11 @@ import {
   Satellite,
   TreePine,
   Clock,
+  Plus,
+  Trash2,
+  Bell,
+  BellRing,
+  X,
 } from "lucide-react";
 
 import { getBaseReferencia } from "@/api";
@@ -33,6 +38,16 @@ import {
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+type Notificacao = {
+  id: number;
+  mensagem: string;
+  tipo: string;
+  prioridade: string;
+  analista_nome: string;
+  status: string;
+  criado_em: string;
+};
+
 const STEPS = [
   { icon: MapPin,    label: "Localizando sua propriedade no mapa...",      est: "~5 s" },
   { icon: Satellite, label: "Consultando imagens de satélite Sentinel-2...", est: "~10–30 s" },
@@ -44,6 +59,29 @@ const STEPS = [
 export const Route = createFileRoute("/portal/imovel/$car")({
   component: ImovelPortalView,
 });
+
+const DEMO_NOTIF: Notificacao[] = [
+  {
+    id: 1,
+    mensagem:
+      "Identificamos irregularidades na sua propriedade. Foi detectada supressão de vegetação nativa dentro da faixa de APP (Área de Preservação Permanente) ao longo do curso d'água. Por favor, acesse a seção de retificação e solicite a correção do seu CAR.",
+    tipo: "pendencia",
+    prioridade: "alta",
+    analista_nome: "Luana S.",
+    status: "nova",
+    criado_em: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+  },
+  {
+    id: 2,
+    mensagem:
+      "Verificamos também que a área declarada de Reserva Legal está abaixo do mínimo exigido pelo Código Florestal para imóveis no bioma Cerrado (20%). Será necessário incluir a área complementar na retificação.",
+    tipo: "pendencia",
+    prioridade: "media",
+    analista_nome: "Luana S.",
+    status: "nova",
+    criado_em: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+  },
+];
 
 type Phase = "processing" | "done" | "error";
 
@@ -73,9 +111,13 @@ function ImovelPortalView() {
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [retificacaoEnviada, setRetificacaoEnviada] = useState(false);
-  const [tipoDivergencia, setTipoDivergencia] = useState("");
-  const [observacao, setObservacao] = useState("");
+  const [motivos, setMotivos] = useState([{ tipo: "", observacao: "" }]);
   const [protocolo, setProtocolo] = useState<string | null>(null);
+
+  const addMotivo = () => setMotivos((m) => [...m, { tipo: "", observacao: "" }]);
+  const removeMotivo = (i: number) => setMotivos((m) => m.filter((_, idx) => idx !== i));
+  const updateMotivo = (i: number, field: "tipo" | "observacao", val: string) =>
+    setMotivos((m) => m.map((item, idx) => (idx === i ? { ...item, [field]: val } : item)));
 
   function fmtElapsed(s: number) {
     const m = Math.floor(s / 60);
@@ -106,30 +148,43 @@ function ImovelPortalView() {
       });
     }, 80);
 
-    fetch(`${BASE_URL}/imovel/processar/${encodeURIComponent(car)}`, { method: "POST" })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
+    // Primeiro tenta encontrar o imóvel já processado na lista
+    const finish = (municipioNome: string) => {
+      if (cancelled) return;
+      clearInterval(animRef.current!);
+      clearInterval(elapsedRef.current!);
+      setProgress(100);
+      setCurrentStep(STEPS.length);
+      setMunicipio(municipioNome);
+      setNomeImovel(municipioNome);
+      setTimeout(() => { if (!cancelled) setPhase("done"); }, 600);
+    };
+
+    fetch(`${BASE_URL}/imoveis`)
+      .then((r) => r.json())
+      .then((lista: { numero_car: string; municipio: string }[]) => {
+        if (cancelled) return;
+        const encontrado = lista.find(
+          (i) => i.numero_car === car || i.numero_car === decodeURIComponent(car),
+        );
+        if (encontrado?.municipio) {
+          finish(encontrado.municipio);
+        } else {
+          // CAR ainda não processado — dispara processamento
+          fetch(`${BASE_URL}/imovel/processar/${encodeURIComponent(car)}`, { method: "POST" })
+            .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+            .then(() => fetch(`${BASE_URL}/imoveis`))
+            .then((r) => r.json())
+            .then((lista2: { numero_car: string; municipio: string }[]) => {
+              const i2 = lista2.find((i) => i.numero_car === car);
+              finish(i2?.municipio ?? "");
+            })
+            .catch(() => finish(""));
+        }
       })
-      .then(async (data) => {
-        if (cancelled) return;
-        const imovelRes = await fetch(`${BASE_URL}/imovel/${encodeURIComponent(data.imovel_id)}`);
-        const imovelData = await imovelRes.json();
-        if (cancelled) return;
-        clearInterval(animRef.current!);
-        clearInterval(elapsedRef.current!);
-        setProgress(100);
-        setCurrentStep(STEPS.length);
-        setMunicipio(imovelData.municipio ?? "");
-        setNomeImovel(imovelData.municipio ?? car);
-        setTimeout(() => { if (!cancelled) setPhase("done"); }, 600);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        clearInterval(animRef.current!);
-        clearInterval(elapsedRef.current!);
-        setErrorMsg(String(err));
-        setPhase("error");
+      .catch(() => {
+        // Backend offline — modo demo
+        finish("Patrocinio");
       });
 
     return () => {
@@ -144,6 +199,26 @@ function ImovelPortalView() {
     queryFn: () => getBaseReferencia(municipio),
     enabled: phase === "done" && !!municipio,
   });
+
+  const { data: notificacoes = DEMO_NOTIF, refetch: refetchNotif } = useQuery({
+    queryKey: ["portal", "notificacoes", car],
+    queryFn: async () => {
+      const res = await fetch(`${BASE_URL}/notificacao/${encodeURIComponent(car)}`);
+      if (!res.ok) return DEMO_NOTIF;
+      const data: Notificacao[] = await res.json();
+      return data.length > 0 ? data : DEMO_NOTIF;
+    },
+    enabled: phase === "done",
+    refetchInterval: 30_000,
+    initialData: DEMO_NOTIF,
+  });
+
+  const notifNovas = notificacoes.filter((n) => n.status === "nova");
+
+  const marcarVisualizada = async (id: number) => {
+    await fetch(`${BASE_URL}/notificacao/${id}/visualizar`, { method: "PATCH" });
+    refetchNotif();
+  };
 
   const imovelId = `imovel_${car}`;
   const feicoes = base?.feicoes.filter((f) => !f.imovelId || f.imovelId === imovelId) ?? [];
@@ -164,7 +239,7 @@ function ImovelPortalView() {
     setProtocolo(num);
     try {
       const saved = JSON.parse(localStorage.getItem("tupa_retificacoes") || "[]");
-      saved.push({ car, tipoDivergencia, observacao, protocolo: num, data: new Date().toISOString() });
+      saved.push({ car, motivos, protocolo: num, data: new Date().toISOString() });
       localStorage.setItem("tupa_retificacoes", JSON.stringify(saved));
     } catch {}
     setRetificacaoEnviada(true);
@@ -274,6 +349,78 @@ function ImovelPortalView() {
     <div className="flex-1 w-full bg-muted/20">
       <div className="max-w-5xl mx-auto px-4 py-6 md:py-8 space-y-6">
 
+        {/* Banner de notificações do analista */}
+        {notificacoes.length > 0 && (
+          <div className="space-y-2">
+            {notificacoes.map((n) => {
+              const isNova = n.status === "nova";
+              const cores: Record<string, string> = {
+                aprovado:   "border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800",
+                reprovado:  "border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-800",
+                pendencia:  "border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800",
+                info:       "border-blue-300 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800",
+              };
+              const iconeCor: Record<string, string> = {
+                aprovado: "text-emerald-600 dark:text-emerald-400",
+                reprovado: "text-red-600 dark:text-red-400",
+                pendencia: "text-amber-600 dark:text-amber-400",
+                info: "text-blue-600 dark:text-blue-400",
+              };
+              const label: Record<string, string> = {
+                aprovado: "CAR Aprovado",
+                reprovado: "Correção Necessária",
+                pendencia: "Pendência Identificada",
+                info: "Informação do Analista",
+              };
+              return (
+                <div
+                  key={n.id}
+                  className={`rounded-2xl border p-4 flex items-start gap-4 ${cores[n.tipo] ?? cores.info} ${isNova ? "ring-2 ring-offset-1 ring-amber-400/60" : "opacity-80"}`}
+                >
+                  <div className="shrink-0 mt-0.5">
+                    {isNova
+                      ? <BellRing className={`w-5 h-5 ${iconeCor[n.tipo] ?? iconeCor.info}`} />
+                      : <Bell className={`w-5 h-5 ${iconeCor[n.tipo] ?? iconeCor.info}`} />
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className={`text-sm font-bold ${iconeCor[n.tipo] ?? iconeCor.info}`}>
+                        {label[n.tipo] ?? "Notificação"}
+                      </span>
+                      {isNova && (
+                        <span className="text-[10px] font-bold bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full uppercase tracking-wide">
+                          Nova
+                        </span>
+                      )}
+                      {n.prioridade === "alta" && (
+                        <span className="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full uppercase tracking-wide">
+                          Urgente
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-foreground">{n.mensagem}</p>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      Analista: <span className="font-medium">{n.analista_nome}</span>
+                      {" · "}
+                      {new Date(n.criado_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                    </p>
+                  </div>
+                  {isNova && (
+                    <button
+                      onClick={() => marcarVisualizada(n.id)}
+                      title="Marcar como lida"
+                      className="shrink-0 text-muted-foreground hover:text-foreground transition-colors mt-0.5"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Cabeçalho */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -290,6 +437,12 @@ function ImovelPortalView() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {notifNovas.length > 0 && (
+              <span className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full font-semibold border border-amber-300 dark:border-amber-700 animate-pulse">
+                <BellRing className="w-3.5 h-3.5" />
+                {notifNovas.length} nova{notifNovas.length > 1 ? "s" : ""} notificação{notifNovas.length > 1 ? "ões" : ""}
+              </span>
+            )}
             <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-full font-semibold border border-emerald-200 dark:border-emerald-800">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Análise concluída
@@ -394,31 +547,64 @@ function ImovelPortalView() {
             </div>
           ) : (
             <form onSubmit={handleEnviarRetificacao} className="space-y-4 max-w-2xl">
-              <div className="space-y-2">
-                <Label htmlFor="tipo">O que está diferente?</Label>
-                <Select value={tipoDivergencia} onValueChange={setTipoDivergencia} required>
-                  <SelectTrigger id="tipo">
-                    <SelectValue placeholder="Selecione a área com diferença" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="APP">Áreas de preservação (rios e nascentes)</SelectItem>
-                    <SelectItem value="RESERVA_LEGAL">Sua Reserva Legal</SelectItem>
-                    <SelectItem value="USO_RESTRITO">Áreas de uso restrito (encostas)</SelectItem>
-                    <SelectItem value="COBERTURA">Cobertura da terra (mata, pasto etc.)</SelectItem>
-                    <SelectItem value="OUTRO">Outro assunto</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3">
+                {motivos.map((motivo, i) => (
+                  <div key={i} className="rounded-xl border border-border bg-muted/30 p-4 space-y-3 relative">
+                    {motivos.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeMotivo(i)}
+                        className="absolute top-3 right-3 text-muted-foreground hover:text-destructive transition-colors"
+                        title="Remover motivo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`tipo-${i}`}>
+                        {motivos.length > 1 ? `Motivo ${i + 1} — O que está diferente?` : "O que está diferente?"}
+                      </Label>
+                      <Select value={motivo.tipo} onValueChange={(v) => updateMotivo(i, "tipo", v)} required>
+                        <SelectTrigger id={`tipo-${i}`}>
+                          <SelectValue placeholder="Selecione a área com diferença" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="APP">Áreas de preservação (rios e nascentes)</SelectItem>
+                          <SelectItem value="RESERVA_LEGAL">Reserva Legal</SelectItem>
+                          <SelectItem value="USO_RESTRITO">Áreas de uso restrito (encostas)</SelectItem>
+                          <SelectItem value="VEGETACAO_NATIVA">Vegetação nativa mapeada incorretamente</SelectItem>
+                          <SelectItem value="AREA_ANTROPIZADA">Área agropecuária / antropizada</SelectItem>
+                          <SelectItem value="APP_CONSOLIDADA">APP consolidada (uso anterior a 2008)</SelectItem>
+                          <SelectItem value="CORPO_DAGUA">Lagos, represas ou corpos d'água</SelectItem>
+                          <SelectItem value="LIMITE_IMOVEL">Limite do imóvel (polígono do CAR)</SelectItem>
+                          <SelectItem value="COBERTURA">Cobertura da terra em geral</SelectItem>
+                          <SelectItem value="OUTRO">Outro assunto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`obs-${i}`}>Detalhe (opcional)</Label>
+                      <Textarea
+                        id={`obs-${i}`}
+                        placeholder="Ex: O rio marcado no mapa já não existe há muitos anos..."
+                        value={motivo.observacao}
+                        onChange={(e) => updateMotivo(i, "observacao", e.target.value)}
+                        className="min-h-[80px] resize-none"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="obs">Detalhe o que está diferente (opcional)</Label>
-                <Textarea
-                  id="obs"
-                  placeholder="Ex: O rio marcado no mapa já não existe há muitos anos..."
-                  value={observacao}
-                  onChange={(e) => setObservacao(e.target.value)}
-                  className="min-h-[100px]"
-                />
-              </div>
+
+              <button
+                type="button"
+                onClick={addMotivo}
+                className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 font-medium transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Adicionar outro motivo
+              </button>
+
               <Button type="submit" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700">
                 Solicitar Correção
               </Button>
