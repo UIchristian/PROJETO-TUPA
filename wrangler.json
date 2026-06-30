@@ -1,5 +1,5 @@
 {
-  "name": "tupa",
+  "name": "projetotupa",
   "compatibility_date": "2026-06-08",
   "main": "tupa-front/dist/server/index.mjs",
   "compatibility_flags": [
